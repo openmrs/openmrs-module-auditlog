@@ -25,22 +25,25 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
  * This class configured as controller using annotation and mapped with the URL of
- * 'module/auditlog/settings.form'.
+ * 'module/auditlog/viewAuditLog.form'.
  */
 @Controller
-public class SettingsFormController {
+public class ViewAuditLogFormController {
 	
 	/** Logger for this class and subclasses */
-	private static final Log log = LogFactory.getLog(SettingsFormController.class);
+	private static final Log log = LogFactory.getLog(ViewAuditLogFormController.class);
 	
 	/** Success form view name */
-	private final String SETTINGS_FORM = "module/" + AuditLogConstants.MODULE_ID + "/settings";
+	private final String VIEW_AUDIT_LOG_FORM = "module/" + AuditLogConstants.MODULE_ID + "/viewAuditLog";
 	
 	/**
 	 * @return
 	 */
-	@RequestMapping(value = SETTINGS_FORM, method = RequestMethod.GET)
+	@RequestMapping(value = VIEW_AUDIT_LOG_FORM, method = RequestMethod.GET)
 	public void showForm(ModelMap model) {
+		if (log.isDebugEnabled())
+			log.debug("Fetching audit log entries...");
+		
 		model.addAttribute("auditLogs",
 		    Context.getService(AuditLogService.class).getAuditLogs(null, null, null, null, null, null));
 	}

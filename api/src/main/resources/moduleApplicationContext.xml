@@ -22,10 +22,6 @@
   		    http://www.springframework.org/schema/util
   		    http://www.springframework.org/schema/util/spring-util-3.0.xsd">
 
-  <!-- Mapping webpages -->
-  <bean class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping"/>
-  <context:component-scan base-package="${project.parent.groupId}.${project.parent.artifactId}.web.controller" />
-  
   <!-- 
   	Trying to make this the very last intercepter in order to catch all updates, inserts and deletes.
   	Typically this should be after the AuditableInterceptor from core so that dateChanged and changedBy

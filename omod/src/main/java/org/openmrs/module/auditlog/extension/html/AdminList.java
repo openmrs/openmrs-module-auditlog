@@ -47,7 +47,7 @@ public class AdminList extends AdministrationSectionExt {
 		
 		Map<String, String> map = new HashMap<String, String>();
 		
-		map.put("module/" + AuditLogConstants.MODULE_ID + "/settings.form", AuditLogConstants.MODULE_ID + ".manage.settings");
+		map.put("module/" + AuditLogConstants.MODULE_ID + "/viewAuditLog.htm", AuditLogConstants.MODULE_ID + ".viewAuditLog");
 		
 		return map;
 	}
