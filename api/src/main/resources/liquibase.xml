@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ 
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
+                  http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+ 
+    <!--
+        See http://www.liquibase.org/manual/home#available_database_refactorings
+        for a list of supported elements and attributes
+    -->
+ 	<changeSet id="auditlog-20120418-2050" author="wyclif">
+ 		<preConditions onFail="MARK_RAN">
+			<not><tableExists tableName="auditlog_audit_log" /></not>
+		</preConditions>
+		<comment>Adding auditlog_audit_log table</comment>
+		<createTable tableName="auditlog_audit_log">
+			<column name="audit_log_id" type="int" autoIncrement="true" >
+				<constraints nullable="false" primaryKey="true"/>
+			</column>			
+			<column name="class_name" type="varchar(512)"><constraints nullable="false"/></column>
+			<column name="object_uuid" type="varchar(38)"><constraints nullable="false"/></column>
+			<column name="action" type="varchar(50)"><constraints nullable="false"/></column>
+			<column name="user_details" type="varchar(512)"><constraints nullable="false"/></column>
+			<column name="date_created" type="DATETIME"><constraints nullable="false"/></column>
+			<column name="uuid" type="varchar(38)"><constraints nullable="false"/></column>
+		</createTable>
+ 	</changeSet>
+ 	
+ 	<changeSet id="auditlog-20120428-1500" author="wyclif">
+ 		<preConditions onFail="MARK_RAN">
+			<not><tableExists tableName="auditlog_monitored_object" /></not>
+		</preConditions>
+		<comment>Adding auditlog_monitored_object table</comment>
+		<createTable tableName="auditlog_monitored_object">
+			<column name="monitored_object_id" type="int" autoIncrement="true" >
+				<constraints nullable="false" primaryKey="true"/>
+			</column>			
+			<column name="class_name" type="varchar(512)"><constraints nullable="false"/></column>
+			<column name="creator_details" type="varchar(512)"><constraints nullable="false"/></column>
+			<column name="date_created" type="DATETIME"><constraints nullable="false"/></column>
+			<column name="uuid" type="varchar(38)"><constraints nullable="false"/></column>
+		</createTable>
+ 	</changeSet>
+ 
+</databaseChangeLog>
