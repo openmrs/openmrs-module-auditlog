@@ -16,21 +16,32 @@ package org.openmrs.module.auditlog.web.controller;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.auditlog.api.AuditLogService;
+import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
- * The main controller.
+ * This class configured as controller using annotation and mapped with the URL of
+ * 'module/auditlog/settings.form'.
  */
 @Controller
-public class  AuditLogManageController {
+public class SettingsFormController {
 	
-	protected final Log log = LogFactory.getLog(getClass());
+	/** Logger for this class and subclasses */
+	private static final Log log = LogFactory.getLog(SettingsFormController.class);
 	
-	@RequestMapping(value = "/module/auditlog/manage", method = RequestMethod.GET)
-	public void manage(ModelMap model) {
-		model.addAttribute("user", Context.getAuthenticatedUser());
+	/** Success form view name */
+	private final String SETTINGS_FORM = "module/" + AuditLogConstants.MODULE_ID + "/settings";
+	
+	/**
+	 * @return
+	 */
+	@RequestMapping(value = SETTINGS_FORM, method = RequestMethod.GET)
+	public void showForm(ModelMap model) {
+		model.addAttribute("auditLogs",
+		    Context.getService(AuditLogService.class).getAuditLogs(null, null, null, null, null, null));
 	}
 }

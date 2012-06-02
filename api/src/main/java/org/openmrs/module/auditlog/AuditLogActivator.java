@@ -13,58 +13,50 @@
  */
 package org.openmrs.module.auditlog;
 
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.openmrs.module.ModuleActivator;
+import org.openmrs.module.BaseModuleActivator;
 
 /**
- * This class contains the logic that is run every time this module is either started or stopped.
+ * This class contains the logic that is run every time this module is either started or shutdown
  */
-public class AuditLogActivator implements ModuleActivator {
+public class AuditLogActivator extends BaseModuleActivator {
 	
-	protected Log log = LogFactory.getLog(getClass());
-		
-	/**
-	 * @see ModuleActivator#willRefreshContext()
-	 */
-	public void willRefreshContext() {
-		log.info("Refreshing Audit Log Module");
-	}
+	private static final Log log = LogFactory.getLog(AuditLogActivator.class);
 	
 	/**
-	 * @see ModuleActivator#contextRefreshed()
+	 * @see org.openmrs.module.BaseModuleActivator#started()
 	 */
-	public void contextRefreshed() {
-		log.info("Audit Log Module refreshed");
-	}
-	
-	/**
-	 * @see ModuleActivator#willStart()
-	 */
-	public void willStart() {
-		log.info("Starting Audit Log Module");
-	}
-	
-	/**
-	 * @see ModuleActivator#started()
-	 */
+	@Override
 	public void started() {
-		log.info("Audit Log Module started");
+		if (log.isInfoEnabled())
+			log.info("Started Audit Log Module...");
 	}
 	
 	/**
-	 * @see ModuleActivator#willStop()
+	 * @see org.openmrs.module.BaseModuleActivator#stopped()
 	 */
-	public void willStop() {
-		log.info("Stopping Audit Log Module");
-	}
-	
-	/**
-	 * @see ModuleActivator#stopped()
-	 */
+	@Override
 	public void stopped() {
-		log.info("Audit Log Module stopped");
+		if (log.isInfoEnabled())
+			log.info("Stopped Audit Log Module...");
 	}
-		
+	
+	/**
+	 * @see org.openmrs.module.BaseModuleActivator#willStart()
+	 */
+	@Override
+	public void willStart() {
+		if (log.isDebugEnabled())
+			log.debug("Starting Audit Log Module...");
+	}
+	
+	/**
+	 * @see org.openmrs.module.BaseModuleActivator#willStop()
+	 */
+	@Override
+	public void willStop() {
+		if (log.isDebugEnabled())
+			log.debug("Stopping Audit Log Module...");
+	}
 }

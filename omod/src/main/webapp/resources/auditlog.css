@@ -1,0 +1,17 @@
+.auditlog_CREATED{
+	background-color: #BAEEBA;
+}
+/*
+.auditlog_UPDATED{
+	background-color: #FCF4B8;
+}
+*/
+.auditlog_DELETED{
+	background-color: #FCDCDC;
+}
+div#auditlog_filter, div#auditlog_length{
+	padding-bottom: 5px;
+}
+div#auditlog_info, div#auditlog_paginate{
+	padding-top: 10px;
+}

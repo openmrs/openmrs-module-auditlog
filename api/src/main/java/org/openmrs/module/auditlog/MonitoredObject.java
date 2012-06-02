@@ -16,73 +16,53 @@ package org.openmrs.module.auditlog;
 import java.io.Serializable;
 import java.util.Date;
 
-import org.openmrs.User;
-import org.openmrs.module.auditlog.util.AuditLogUtil;
+import org.openmrs.BaseOpenmrsObject;
 
 /**
  * Encapsulates data for a single audit log entry
  */
-public final class AuditLog implements Serializable {
+public final class MonitoredObject extends BaseOpenmrsObject implements Serializable {
 	
 	private static final long serialVersionUID = 1L;
 	
-	private Integer auditLogId;
+	private Integer monitoredObjectId;
 	
 	private String className;
 	
-	private String objectUuid;
-	
-	private Action action;
-	
 	//We actually store user details as 'user.uuid|user.username|user.fullName' and not id
 	//We don't want to have foreign keys to users table so that a user can be purged
-	//and we still keep the audit logs for the changes they made
-	private String userDetails;
+	//and we still keep the monitored object they added and their username/fullname
+	private String creatorDetails;
 	
 	private Date dateCreated;
-	
-	private String uuid;
-	
-	public enum Action {
-		CREATED, UPDATED, DELETED
-	}
 	
 	/**
 	 * Default constructor
 	 */
-	public AuditLog() {
+	public MonitoredObject() {
 	}
 	
 	/**
-	 * Convenience constructor
+	 * Convenience constructor that takes in a className
 	 * 
 	 * @param className
-	 * @param objectId
-	 * @param action
-	 * @param user
-	 * @param dateCreated
 	 */
-	public AuditLog(String className, String objectUuid, Action action, User user, Date dateCreated, String uuid) {
+	public MonitoredObject(String className) {
 		this.className = className;
-		this.objectUuid = objectUuid;
-		this.action = action;
-		this.userDetails = AuditLogUtil.getUserDetails(user);
-		this.dateCreated = dateCreated;
-		this.uuid = uuid;
 	}
 	
 	/**
-	 * @return the auditLogId
+	 * @return the monitoredObjectId
 	 */
-	public Integer getAuditLogId() {
-		return auditLogId;
+	public Integer getMonitoredObjectId() {
+		return monitoredObjectId;
 	}
 	
 	/**
-	 * @param auditLogId the auditLogId to set
+	 * @param monitoredObjectId the monitoredObjectId to set
 	 */
-	public void setAuditLogId(Integer auditLogId) {
-		this.auditLogId = auditLogId;
+	public void setMonitoredObjectId(Integer monitoredObjectId) {
+		this.monitoredObjectId = monitoredObjectId;
 	}
 	
 	/**
@@ -100,45 +80,17 @@ public final class AuditLog implements Serializable {
 	}
 	
 	/**
-	 * @return the objectUuid
+	 * @return the creatorDetails
 	 */
-	public String getObjectUuid() {
-		return objectUuid;
+	public String getCreatorDetails() {
+		return creatorDetails;
 	}
 	
 	/**
-	 * @param objectUuid the objectUuid to set
+	 * @param creatorDetails the creatorDetails to set
 	 */
-	public void setObjectUuid(String objectUuid) {
-		this.objectUuid = objectUuid;
-	}
-	
-	/**
-	 * @return the action
-	 */
-	public Action getAction() {
-		return action;
-	}
-	
-	/**
-	 * @param action the action to set
-	 */
-	public void setAction(Action action) {
-		this.action = action;
-	}
-	
-	/**
-	 * @return the user details
-	 */
-	public String getUserDetails() {
-		return userDetails;
-	}
-	
-	/**
-	 * @param userDetails the user to set
-	 */
-	public void setUserDetails(String userDetails) {
-		this.userDetails = userDetails;
+	public void setCreatorDetails(String creatorDetails) {
+		this.creatorDetails = creatorDetails;
 	}
 	
 	/**
@@ -156,20 +108,6 @@ public final class AuditLog implements Serializable {
 	}
 	
 	/**
-	 * @return the uuid
-	 */
-	public String getUuid() {
-		return uuid;
-	}
-	
-	/**
-	 * @param uuid the uuid to set
-	 */
-	public void setUuid(String uuid) {
-		this.uuid = uuid;
-	}
-	
-	/**
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -177,10 +115,10 @@ public final class AuditLog implements Serializable {
 		if (this == obj)
 			return true;
 		
-		if (!(obj instanceof AuditLog))
+		if (!(obj instanceof MonitoredObject))
 			return false;
 		
-		AuditLog other = (AuditLog) obj;
+		MonitoredObject other = (MonitoredObject) obj;
 		if (getUuid() == null)
 			return false;
 		
@@ -195,6 +133,22 @@ public final class AuditLog implements Serializable {
 		if (getUuid() == null)
 			return super.hashCode();
 		return getUuid().hashCode();
+	}
+	
+	/**
+	 * @see org.openmrs.OpenmrsObject#getId()
+	 */
+	@Override
+	public Integer getId() {
+		return getMonitoredObjectId();
+	}
+	
+	/**
+	 * @see org.openmrs.OpenmrsObject#setId(java.lang.Integer)
+	 */
+	@Override
+	public void setId(Integer id) {
+		setMonitoredObjectId(id);
 	}
 	
 }

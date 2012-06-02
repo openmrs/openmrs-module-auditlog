@@ -11,20 +11,12 @@
  *
  * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
  */
-package org.openmrs.module.auditlog.api;
-
-import static org.junit.Assert.*;
-import org.junit.Test;
-import org.openmrs.api.context.Context;
-import org.openmrs.test.BaseModuleContextSensitiveTest;
+package org.openmrs.module.auditlog.util;
 
 /**
- * Tests {@link ${AuditLogService}}.
+ * Constants used by the audit log module.
  */
-public class  AuditLogServiceTest extends BaseModuleContextSensitiveTest {
+public final class AuditLogConstants {
 	
-	@Test
-	public void shouldSetupContext() {
-		assertNotNull(Context.getService(AuditLogService.class));
-	}
+	public static final String MODULE_ID = "auditlog";
 }

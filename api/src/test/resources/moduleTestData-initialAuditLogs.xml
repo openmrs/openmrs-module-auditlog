@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+	<auditlog_audit_log audit_log_id="1" class_name="org.openmrs.Concept" object_uuid="c607c80f-1ea9-4da3-bb88-6276ce8868dd" action="CREATED" user_details="1010d442-e134-11de-babe-001e378eb67e|admin|Super User" date_created="2012-04-01 00:00:00.0" uuid="4f7d57f0-9077-11e1-aaa4-00248140a5eb" />
+	<auditlog_audit_log audit_log_id="2" class_name="org.openmrs.Concept" object_uuid="c607c80f-1ea9-4da3-bb88-6276ce8868dd" action="UPDATED" user_details="1010d442-e134-11de-babe-001e378eb67e|admin|Super User" date_created="2012-04-01 00:01:00.0" uuid="4f7d57f0-9077-11e1-aaa4-00248140a5ec" />
+    <auditlog_audit_log audit_log_id="3" class_name="org.openmrs.Concept" object_uuid="c607c80f-1ea9-4da3-bb88-6276ce8868dd" action="UPDATED" user_details="c1d8f5c2-e131-11de-babe-001e378eb67e|bruno|Bruno Otterbourg" date_created="2012-04-01 00:03:00.0" uuid="4f7d57f0-9077-11e1-aaa4-00248140a5ed" />
+    <auditlog_audit_log audit_log_id="4" class_name="org.openmrs.ConceptName" object_uuid="c607c80f-1ea9-4da3-bb88-6276ce8868de" action="DELETED" user_details="1010d442-e134-11de-babe-001e378eb67e|admin|Super User" date_created="2012-04-01 00:05:00.0" uuid="4f7d57f0-9077-11e1-aaa4-00248140a5ef" />
+</dataset>

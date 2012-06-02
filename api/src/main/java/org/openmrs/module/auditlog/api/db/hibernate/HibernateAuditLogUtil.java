@@ -11,16 +11,18 @@
  *
  * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
  */
-package org.openmrs.module.auditlog.api.db;
+package org.openmrs.module.auditlog.api.db.hibernate;
 
-import org.openmrs.module.auditlog.api.AuditLogService;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.openmrs.OpenmrsObject;
+import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
-/**
- *  Database methods for {@link AuditLogService}.
- */
-public interface AuditLogDAO {
+public class HibernateAuditLogUtil extends HibernateDaoSupport {
 	
-	/*
-	 * Add DAO methods here
-	 */
+	private static final Log log = LogFactory.getLog(HibernateAuditLogUtil.class);
+	
+	public void saveAuditLog(OpenmrsObject object) {
+		
+	}
 }
