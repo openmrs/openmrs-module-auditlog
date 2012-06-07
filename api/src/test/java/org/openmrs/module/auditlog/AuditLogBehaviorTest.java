@@ -54,12 +54,14 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		conceptService = Context.getConceptService();
 		encounterService = Context.getEncounterService();
 		auditLogService = Context.getService(AuditLogService.class);
+		
+		//No log entries should be existing
+		Assert.assertTrue(auditLogService.getAuditLogs(null, null, null, null, null, null).isEmpty());
 	}
 	
 	@Test
 	@NotTransactional
 	public void shouldCreateAnAuditLogEntryWhenANewObjectIsCreated() {
-		int originalLogCount = auditLogService.getAuditLogs(null, null, null, null, null, null).size();
 		Concept concept = new Concept();
 		ConceptName cn = new ConceptName("new", Locale.ENGLISH);
 		cn.setConcept(concept);
@@ -70,7 +72,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		List<AuditLog> logs = auditLogService.getAuditLogs(null, null, null, null, null, null);
 		Assert.assertNotNull(concept.getConceptId());
 		//Should have created an entry for the concept and concept name
-		Assert.assertEquals(originalLogCount + 2, logs.size());
+		Assert.assertEquals(2, logs.size());
 		//The latest logs come first
 		Assert.assertEquals(Action.CREATED, logs.get(0).getAction());
 		Assert.assertEquals(Action.CREATED, logs.get(1).getAction());
@@ -79,19 +81,17 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@Test
 	@NotTransactional
 	public void shouldCreateAnAuditLogEntryWhenAnObjectIsDeleted() throws Exception {
-		int originalLogCount = auditLogService.getAuditLogs(null, null, null, null, null, null).size();
 		EncounterType encounterType = encounterService.getEncounterType(6);
 		encounterService.purgeEncounterType(encounterType);
 		List<AuditLog> logs = auditLogService.getAuditLogs(null, null, null, null, null, null);
 		//Should have created a log entry for deleted Encounter type
-		Assert.assertEquals(++originalLogCount, logs.size());
+		Assert.assertEquals(1, logs.size());
 		Assert.assertEquals(Action.DELETED, logs.get(0).getAction());
 	}
 	
 	@Test
 	@NotTransactional
 	public void shouldCreateAnAuditLogEntryWhenAnObjectIsEdited() throws Exception {
-		int originalLogCount = auditLogService.getAuditLogs(null, null, null, null, null, null).size();
 		Concept concept = conceptService.getConcept(3);
 		ConceptClass cc = conceptService.getConceptClass(2);
 		Assert.assertNotSame(cc, concept.getConceptClass());
@@ -99,23 +99,21 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		conceptService.saveConcept(concept);
 		List<AuditLog> logs = auditLogService.getAuditLogs(null, null, null, null, null, null);
 		//Should have created a log entry for deleted Encounter type
-		Assert.assertEquals(++originalLogCount, logs.size());
+		Assert.assertEquals(1, logs.size());
 		Assert.assertEquals(Action.UPDATED, logs.get(0).getAction());
 	}
 	
 	@Test
 	@NotTransactional
 	public void shouldCreateNoLogEntryIfNoChangesAreMadeToAnExistingObject() throws Exception {
-		int originalLogCount = auditLogService.getAuditLogs(null, null, null, null, null, null).size();
 		EncounterType encounterType = encounterService.getEncounterType(2);
 		encounterService.saveEncounterType(encounterType);
-		Assert.assertEquals(originalLogCount, auditLogService.getAuditLogs(null, null, null, null, null, null).size());
+		Assert.assertTrue(auditLogService.getAuditLogs(null, null, null, null, null, null).isEmpty());
 	}
 	
 	@Test
 	@NotTransactional
 	public void shouldIgnoreDateChangedAndCreatedFields() throws Exception {
-		int originalLogCount = auditLogService.getAuditLogs(null, null, null, null, null, null).size();
 		Concept concept = conceptService.getConcept(3);
 		//sanity checks
 		Assert.assertNull(concept.getDateChanged());
@@ -123,7 +121,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		concept.setDateChanged(new Date());
 		concept.setChangedBy(Context.getAuthenticatedUser());
 		conceptService.saveConcept(concept);
-		Assert.assertEquals(originalLogCount, auditLogService.getAuditLogs(null, null, null, null, null, null).size());
+		Assert.assertTrue(auditLogService.getAuditLogs(null, null, null, null, null, null).isEmpty());
 	}
 	
 	@Test
@@ -189,14 +187,13 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	
 	@Test
 	public void shouldNotCreateAuditLogsForUnMonitoredObjects() {
-		int originalLogCount = auditLogService.getAuditLogs(null, null, null, null, null, null).size();
 		Location location = new Location();
 		location.setName("najja");
 		location.setAddress1("test address");
 		Location savedLocation = Context.getLocationService().saveLocation(location);
 		Assert.assertNotNull(savedLocation.getLocationId());//sanity check that it was actually created
 		//Should not have created any logs
-		Assert.assertEquals(originalLogCount, auditLogService.getAuditLogs(null, null, null, null, null, null).size());
+		Assert.assertTrue(auditLogService.getAuditLogs(null, null, null, null, null, null).isEmpty());
 	}
 	
 	@Test
