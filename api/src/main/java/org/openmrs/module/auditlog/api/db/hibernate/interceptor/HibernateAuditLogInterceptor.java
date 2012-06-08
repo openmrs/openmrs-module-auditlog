@@ -3,16 +3,23 @@ package org.openmrs.module.auditlog.api.db.hibernate.interceptor;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
 
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.EmptyInterceptor;
+import org.hibernate.EntityMode;
 import org.hibernate.Interceptor;
+import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.type.StringType;
 import org.hibernate.type.TextType;
 import org.hibernate.type.Type;
@@ -24,6 +31,7 @@ import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.MonitoredObject;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.util.OpenmrsUtil;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -47,6 +55,9 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	private ThreadLocal<HashSet<OpenmrsObject>> updates = new ThreadLocal<HashSet<OpenmrsObject>>();
 	
 	private ThreadLocal<HashSet<OpenmrsObject>> deletes = new ThreadLocal<HashSet<OpenmrsObject>>();
+	
+	//Mapping between object uuid to the map of its changed property names and their older values
+	private ThreadLocal<TreeMap<String, Map<String, String>>> objectPropertyOldValuesMap = new ThreadLocal<TreeMap<String, Map<String, String>>>();
 	
 	private ThreadLocal<Boolean> disableInterceptor = new ThreadLocal<Boolean>();
 	
@@ -99,8 +110,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				inserts.set(new HashSet<OpenmrsObject>());
 			
 			inserts.get().add(openmrsObject);
-			System.out.println("Creating log entry for CREATED object with uuid:" + openmrsObject.getUuid() + " of type:"
-			        + entity.getClass().getName());
 		}
 		
 		return false;
@@ -115,7 +124,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	                            String[] propertyNames, Type[] types) {
 		if (isMonitored(entity) && propertyNames != null) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
-			boolean hasChanges = false;
+			Map<String, String> propertyOldValueMap = null;
+			SessionFactory sessionFactory = ((SessionFactory) applicationContext.getBean("sessionFactory"));
 			for (int i = 0; i < propertyNames.length; i++) {
 				//we need ignore dateChanged and changedBy fields 
 				if ("dateChanged".equals(propertyNames[i]) || "changedBy".equals(propertyNames[i]))
@@ -141,15 +151,34 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 							continue;
 					}
 					
+					if (propertyOldValueMap == null)
+						propertyOldValueMap = new Hashtable<String, String>();
+					
+					//Class<?> clazz = ReflectionUtils.findField(entity.getClass(), propertyNames[i]).getType();
+					Class<?> propertyType = BeanUtils.getPropertyDescriptor(entity.getClass(), propertyNames[i])
+					        .getPropertyType();
+					ClassMetadata metadata = sessionFactory.getClassMetadata(propertyType);
+					Object value = null;
+					
+					if (BeanUtils.isSimpleValueType(propertyType)) {
+						//TODO take care of Dates, Enums, Class in a special way
+						value = previousValue;
+					} else {
+						//this is a compound property, store the primary key value
+						//TODO take care of composite primary keys
+						
+						//value = PropertyUtils.getProperty(previousValue, metadata.getIdentifierPropertyName());
+						value = metadata.getIdentifier(previousValue, EntityMode.POJO);
+					}
+					
+					propertyOldValueMap.put(propertyNames[i], (value != null) ? value.toString() : null);
 					/*System.err.println("\nid=" + openmrsObject.getId() + ", " + propertyNames[i] + ", "
-					        + entity.getClass().getSimpleName() + " -> CURRENT=[" + currentState[i] + "], PREV=["
-					        + previousState[i] + "]\n");*/
-					hasChanges = true;
-					break;
+					+ entity.getClass().getSimpleName() + " -> CURRENT=[" + currentState[i] + "], PREV=["
+					+ previousState[i] + "]\n");*/
 				}
 			}
 			
-			if (hasChanges) {
+			if (MapUtils.isNotEmpty(propertyOldValueMap)) {
 				if (log.isDebugEnabled())
 					log.debug("Creating log entry for EDITED object with uuid:" + openmrsObject.getUuid() + " of type:"
 					        + entity.getClass().getName());
@@ -158,8 +187,10 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					updates.set(new HashSet<OpenmrsObject>());
 				
 				updates.get().add(openmrsObject);
-				System.out.println("Creating log entry for EDITED object with uuid:" + openmrsObject.getUuid() + " of type:"
-				        + entity.getClass().getName());
+				
+				if (objectPropertyOldValuesMap.get() == null)
+					objectPropertyOldValuesMap.set(new TreeMap<String, Map<String, String>>());
+				objectPropertyOldValuesMap.get().put(openmrsObject.getUuid(), propertyOldValueMap);
 			}
 		}
 		
@@ -182,8 +213,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				deletes.set(new HashSet<OpenmrsObject>());
 			
 			deletes.get().add(openmrsObject);
-			System.out.println("Creating log entry for DELETED object with uuid:" + openmrsObject.getUuid() + " of type:"
-			        + entity.getClass().getName());
 		}
 	}
 	
@@ -224,9 +253,11 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 						for (OpenmrsObject update : updates.get()) {
 							if (checkAgainForMonitoredClasses && !monitoredClassNames.contains(update.getClass().getName()))
 								continue;
+							AuditLog auditLog = new AuditLog(update.getClass().getName(), update.getUuid(), Action.UPDATED,
+							        user, date, UUID.randomUUID().toString());
+							auditLog.setPreviousValues(objectPropertyOldValuesMap.get().get(update.getUuid()));
 							
-							createLog(new AuditLog(update.getClass().getName(), update.getUuid(), Action.UPDATED, user,
-							        date, UUID.randomUUID().toString()));
+							createLog(auditLog);
 						}
 					}
 					

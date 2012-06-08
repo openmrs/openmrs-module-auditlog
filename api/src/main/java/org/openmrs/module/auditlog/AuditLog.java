@@ -15,6 +15,8 @@ package org.openmrs.module.auditlog;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.openmrs.User;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
@@ -28,10 +30,13 @@ public final class AuditLog implements Serializable {
 	
 	private Integer auditLogId;
 	
+	//the fully qualified java class name of the create/updated/deleted object
 	private String className;
 	
+	//the uuid of the created/updated/deleted object
 	private String objectUuid;
 	
+	//the performed operation that which could be a create, update or delete
 	private Action action;
 	
 	//We actually store user details as 'user.uuid|user.username|user.fullName' and not id
@@ -42,6 +47,9 @@ public final class AuditLog implements Serializable {
 	private Date dateCreated;
 	
 	private String uuid;
+	
+	//property name old value map, NOTE we store all old values as Strings
+	private Map<String, String> previousValues;
 	
 	public enum Action {
 		CREATED, UPDATED, DELETED
@@ -167,6 +175,24 @@ public final class AuditLog implements Serializable {
 	 */
 	public void setUuid(String uuid) {
 		this.uuid = uuid;
+	}
+	
+	/**
+	 * @return the previousValues
+	 */
+	public Map<String, String> getPreviousValues() {
+		//we use a tree map because we don't expect duplicate property names
+		if (previousValues == null)
+			previousValues = new TreeMap<String, String>();
+		
+		return previousValues;
+	}
+	
+	/**
+	 * @param previousValues the previousValues to set
+	 */
+	public void setPreviousValues(Map<String, String> previousValues) {
+		this.previousValues = previousValues;
 	}
 	
 	/**

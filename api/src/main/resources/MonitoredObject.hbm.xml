@@ -15,13 +15,13 @@
 		
 		<discriminator column="monitored_object_id" insert="false" />
 		
-		<property name="className" type="java.lang.String" column="class_name" length="512" unique="true" not-null="true" update="false" />
+		<property name="className" type="string" column="class_name" length="512" unique="true" not-null="true" update="false" />
 		
-		<property name="creatorDetails" type="java.lang.String" column="creator_details" length="512" not-null="true" update="false" />
+		<property name="creatorDetails" type="string" column="creator_details" length="512" not-null="true" update="false" />
 		
 		<property name="dateCreated" type="java.util.Date" column="date_created" length="19" not-null="true" update="false" />
 		
-		<property name="uuid" type="java.lang.String" length="38" unique="true" not-null="true" update="false" />
+		<property name="uuid" type="string" length="38" unique="true" not-null="true" update="false" />
 		
 	</class>
 </hibernate-mapping>

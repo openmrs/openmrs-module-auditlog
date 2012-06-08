@@ -19,6 +19,7 @@ import java.util.List;
 
 import junit.framework.Assert;
 
+import org.hibernate.Hibernate;
 import org.junit.Before;
 import org.junit.Test;
 import org.openmrs.DrugOrder;

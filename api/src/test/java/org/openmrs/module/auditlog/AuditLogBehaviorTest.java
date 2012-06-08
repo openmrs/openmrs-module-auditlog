@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.openmrs.Concept;
 import org.openmrs.ConceptClass;
+import org.openmrs.ConceptDatatype;
 import org.openmrs.ConceptName;
 import org.openmrs.EncounterType;
 import org.openmrs.Location;
@@ -93,14 +94,32 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@NotTransactional
 	public void shouldCreateAnAuditLogEntryWhenAnObjectIsEdited() throws Exception {
 		Concept concept = conceptService.getConcept(3);
+		Integer oldConceptClassId = concept.getConceptClass().getConceptClassId();
+		Integer oldDatatypeId = concept.getDatatype().getConceptDatatypeId();
 		ConceptClass cc = conceptService.getConceptClass(2);
+		ConceptDatatype dt = conceptService.getConceptDatatype(3);
+		String oldVersion = concept.getVersion();
+		String newVersion = "new v";
 		Assert.assertNotSame(cc, concept.getConceptClass());
+		Assert.assertNotSame(dt, concept.getDatatype());
+		Assert.assertNotSame(newVersion, oldVersion);
+		
 		concept.setConceptClass(cc);
+		concept.setDatatype(dt);
+		concept.setVersion(newVersion);
 		conceptService.saveConcept(concept);
+		
 		List<AuditLog> logs = auditLogService.getAuditLogs(null, null, null, null, null, null);
-		//Should have created a log entry for deleted Encounter type
+		//Should have created a log entry for edited concept
 		Assert.assertEquals(1, logs.size());
-		Assert.assertEquals(Action.UPDATED, logs.get(0).getAction());
+		AuditLog auditLog = logs.get(0);
+		
+		//Should have created entries for the changes properties and their old values
+		Assert.assertEquals(Action.UPDATED, auditLog.getAction());
+		Assert.assertEquals(3, auditLog.getPreviousValues().size());
+		Assert.assertEquals(oldConceptClassId.toString(), auditLog.getPreviousValues().get("conceptClass"));
+		Assert.assertEquals(oldDatatypeId.toString(), auditLog.getPreviousValues().get("datatype"));
+		Assert.assertEquals(oldVersion, auditLog.getPreviousValues().get("version"));
 	}
 	
 	@Test

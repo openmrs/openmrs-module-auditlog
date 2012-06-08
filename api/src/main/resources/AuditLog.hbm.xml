@@ -15,9 +15,9 @@
 		
 		<discriminator column="audit_log_id" insert="false" />
 		
-		<property name="className" type="java.lang.String" column="class_name" length="512" not-null="true" update="false" />
+		<property name="className" type="string" column="class_name" length="512" not-null="true" update="false" />
 		
-		<property name="objectUuid" type="java.lang.String" column="object_uuid" length="38" not-null="true" update="false" />
+		<property name="objectUuid" type="string" column="object_uuid" length="38" not-null="true" update="false" />
 		
 		<property name="action" length="50" not-null="true" update="false">
 			<type name="org.openmrs.util.HibernateEnumType">
@@ -25,10 +25,21 @@
 			</type>
 		</property>
 		
-		<property name="userDetails" type="java.lang.String" column="user_details" length="512" not-null="true" update="false" />
+		<property name="userDetails" type="string" column="user_details" length="512" not-null="true" update="false" />
 		
 		<property name="dateCreated" type="java.util.Date" column="date_created" length="19" not-null="true" update="false" />
 		
-		<property name="uuid" type="java.lang.String" length="38" unique="true" not-null="true" update="false" />
+		<property name="uuid" type="string" length="38" unique="true" not-null="true" update="false" />
+		
+		<map name="previousValues" table="auditlog_old_property_name_value_map" cascade="all,delete-orphan,evict">
+    		<key column="audit_log_id" not-null="true" />
+    		<!-- Dont expect field names longer than 60 char -->
+    		<map-key column="property_name" type="string" length="60" />
+    		
+    		<!-- We only support logs of fields with size up to MEDIUMTEXT -->
+    		<element column="property_value" type="string" length="16777215" />
+		</map>
+		
 	</class>
+	
 </hibernate-mapping>
