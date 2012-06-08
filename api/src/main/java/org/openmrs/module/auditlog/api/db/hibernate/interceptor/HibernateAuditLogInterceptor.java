@@ -59,19 +59,17 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	//Mapping between object uuid to the map of its changed property names and their older values
 	private ThreadLocal<TreeMap<String, Map<String, String>>> objectPropertyOldValuesMap = new ThreadLocal<TreeMap<String, Map<String, String>>>();
 	
+	//we will need to disable the interceptor when saving the auditlog to avoid going in circles
 	private ThreadLocal<Boolean> disableInterceptor = new ThreadLocal<Boolean>();
 	
 	private static Set<String> monitoredClassNames = null;
 	
-	//will be used to determining if there was an exception so that we don't try 
-	//to commit the transaction associated to the saved audit log entry
-	private ThreadLocal<Boolean> hadErrorsOnSave = new ThreadLocal<Boolean>();
-	
 	private AuditLogDAO auditLogDao;
 	
 	/**
-	 * We need access to this to populate the dao property, the saveAuditLog method is not available
-	 * to in auditLogservice to ensure no other code creates log entries
+	 * We need access to this to get the auditLogDao bean, the saveAuditLog method is not available
+	 * to in auditLogservice to ensure no other code creates log entries. We also need the
+	 * sessionFactory instance to be able to get class metadata of mapped classes,
 	 */
 	private ApplicationContext applicationContext;
 	
@@ -96,7 +94,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	/**
 	 * @see org.hibernate.EmptyInterceptor#onSave(java.lang.Object, java.io.Serializable,
 	 *      java.lang.Object[], java.lang.String[], org.hibernate.type.Type[])
-	 * @should create an audit log entry with create type
 	 */
 	@Override
 	public boolean onSave(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
@@ -127,7 +124,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 			Map<String, String> propertyOldValueMap = null;
 			SessionFactory sessionFactory = ((SessionFactory) applicationContext.getBean("sessionFactory"));
 			for (int i = 0; i < propertyNames.length; i++) {
-				//we need ignore dateChanged and changedBy fields 
+				//we need ignore dateChanged and changedBy fields since they saved along with the auditlog
+				//TODO Should we take care of personDateChanged and personDateChangedBy
 				if ("dateChanged".equals(propertyNames[i]) || "changedBy".equals(propertyNames[i]))
 					continue;
 				
@@ -136,6 +134,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				Object previousValue = (previousState != null) ? previousState[i] : null;
 				if (!OpenmrsUtil.nullSafeEquals(currentState[i], previousValue)) {
 					//For string properties, ignore changes from null to blank and vice versa
+					//TODO This should user configurable via a module GP
 					if (StringType.class.getName().equals(types[i].getClass().getName())
 					        || TextType.class.getName().equals(types[i].getClass().getName())) {
 						String currentStateString = null;
@@ -146,7 +145,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 						if (previousValue != null && !StringUtils.isBlank(previousValue.toString()))
 							previousValueString = previousValue.toString();
 						
-						//TODO Case sensibility here should be configurable via a GP
+						//TODO Case sensibility here should be configurable via a GP by admin
 						if (OpenmrsUtil.nullSafeEqualsIgnoreCase(previousValueString, currentStateString))
 							continue;
 					}
@@ -154,7 +153,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					if (propertyOldValueMap == null)
 						propertyOldValueMap = new Hashtable<String, String>();
 					
-					//Class<?> clazz = ReflectionUtils.findField(entity.getClass(), propertyNames[i]).getType();
 					Class<?> propertyType = BeanUtils.getPropertyDescriptor(entity.getClass(), propertyNames[i])
 					        .getPropertyType();
 					ClassMetadata metadata = sessionFactory.getClassMetadata(propertyType);
@@ -172,9 +170,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					}
 					
 					propertyOldValueMap.put(propertyNames[i], (value != null) ? value.toString() : null);
-					/*System.err.println("\nid=" + openmrsObject.getId() + ", " + propertyNames[i] + ", "
-					+ entity.getClass().getSimpleName() + " -> CURRENT=[" + currentState[i] + "], PREV=["
-					+ previousState[i] + "]\n");*/
 				}
 			}
 			
@@ -244,8 +239,9 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 							if (checkAgainForMonitoredClasses && !monitoredClassNames.contains(insert.getClass().getName()))
 								continue;
 							
-							createLog(new AuditLog(insert.getClass().getName(), insert.getUuid(), Action.CREATED, user,
-							        date, UUID.randomUUID().toString()));
+							getAuditLogDao().save(
+							    new AuditLog(insert.getClass().getName(), insert.getUuid(), Action.CREATED, user, date, UUID
+							            .randomUUID().toString()));
 						}
 					}
 					
@@ -257,7 +253,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 							        user, date, UUID.randomUUID().toString());
 							auditLog.setPreviousValues(objectPropertyOldValuesMap.get().get(update.getUuid()));
 							
-							createLog(auditLog);
+							getAuditLogDao().save(auditLog);
 						}
 					}
 					
@@ -266,24 +262,22 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 							if (checkAgainForMonitoredClasses && !monitoredClassNames.contains(delete.getClass().getName()))
 								continue;
 							
-							createLog(new AuditLog(delete.getClass().getName(), delete.getUuid(), Action.DELETED, user,
-							        date, UUID.randomUUID().toString()));
+							getAuditLogDao().save(
+							    new AuditLog(delete.getClass().getName(), delete.getUuid(), Action.DELETED, user, date, UUID
+							            .randomUUID().toString()));
 						}
 					}
 					
-					//Ensures 'afterTransactionCompletion(tx)' is not called recursively
+					//Ensures 'afterTransactionCompletion(tx)' is not called over and over again
 					disableInterceptor.set(true);
 					
-					//Hibernate will bomb if we attempt to flush after an exception
-					if (hadErrorsOnSave.get() == null) {
-						//at this point, the transaction is already committed, 
-						//so we need to call commit() again to save to the DB
-						tx.commit();
-					}
+					//at this point, the transaction is already committed, 
+					//so we need to call commit() again to sync to the DB
+					tx.commit();
 				}
 				catch (Exception e) {
-					//error should not bubble out of the interceptor
-					log.error("An error occured while creating audit log(s)");
+					//error should not bubble out of the intercepter
+					log.error("An error occured while creating audit log(s):", e);
 				}
 			}
 		}
@@ -295,26 +289,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				updates.remove();
 			if (deletes.get() != null)
 				deletes.remove();
-			if (hadErrorsOnSave.get() != null)
-				hadErrorsOnSave.remove();
 			if (disableInterceptor.get() != null)
 				disableInterceptor.remove();
-		}
-	}
-	
-	/**
-	 * Saves the log entry to the database
-	 * 
-	 * @param auditLog
-	 */
-	private void createLog(AuditLog auditLog) {
-		try {
-			getAuditLogDao().save(auditLog);
-		}
-		catch (Exception e) {
-			//should not bubble out of the interceptor
-			log.error("An error occured while saving audit log");
-			hadErrorsOnSave.set(true);
 		}
 	}
 	

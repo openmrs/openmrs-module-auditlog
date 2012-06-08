@@ -53,6 +53,7 @@ public final class AuditLog implements Serializable {
 	
 	public enum Action {
 		CREATED, UPDATED, DELETED
+		//, REVERTED
 	}
 	
 	/**
@@ -64,11 +65,11 @@ public final class AuditLog implements Serializable {
 	/**
 	 * Convenience constructor
 	 * 
-	 * @param className
-	 * @param objectId
-	 * @param action
-	 * @param user
-	 * @param dateCreated
+	 * @param className the fully qualified classname of the Object type
+	 * @param objectId the id of the object
+	 * @param action the operation performed on the object
+	 * @param user the user that triggered the operation
+	 * @param dateCreated the date when the operation was triggered
 	 */
 	public AuditLog(String className, String objectUuid, Action action, User user, Date dateCreated, String uuid) {
 		this.className = className;
