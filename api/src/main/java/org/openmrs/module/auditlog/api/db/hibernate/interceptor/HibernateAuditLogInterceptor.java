@@ -159,7 +159,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					Object value = null;
 					
 					if (BeanUtils.isSimpleValueType(propertyType)) {
-						//TODO take care of Dates, Enums, Class in a special way
+						//TODO take care of Dates, Enums, Class, Locale
 						value = previousValue;
 					} else {
 						//this is a compound property, store the primary key value
@@ -232,6 +232,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					}
 					
 					User user = Context.getAuthenticatedUser();
+					//TODO handle daemon or un authenticated operations
+					
 					if (inserts.get() != null) {
 						for (OpenmrsObject insert : inserts.get()) {
 							//We should filter out objects of un monitored types that got included 
@@ -268,7 +270,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 						}
 					}
 					
-					//Ensures 'afterTransactionCompletion(tx)' is not called over and over again
+					//Ensure we don't step through the interceptor methods again when saving the auditLog
 					disableInterceptor.set(true);
 					
 					//at this point, the transaction is already committed, 
