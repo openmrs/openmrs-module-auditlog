@@ -9,9 +9,11 @@
 .auditlog_DELETED{
 	background-color: #FCDCDC;
 }
+
 div#auditlog_filter, div#auditlog_length{
 	padding-bottom: 5px;
 }
+
 div#auditlog_info, div#auditlog_paginate{
 	padding-top: 10px;
 }

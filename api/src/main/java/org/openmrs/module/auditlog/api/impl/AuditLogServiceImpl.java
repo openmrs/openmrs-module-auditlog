@@ -89,6 +89,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 			
 		}
 		
+		//TODO Update the mapped classes in the interceptor 
 		return savedMonitoredObjects;
 	}
 	

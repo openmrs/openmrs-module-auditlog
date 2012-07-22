@@ -16,7 +16,8 @@
 		    iDisplayLength: 15,
 		    bJQueryUI: true,
 		    bSort:false,
-		    sDom: 'flt<"ui-helper-clearfix"ip>',
+		    //sDom: 'flt<"ui-helper-clearfix"ip>',
+		    sDom: '<fl>t<"ui-helper-clearfix"ip>',
 		    oLanguage: {
 	    		"sInfo": omsgs.sInfoLabel,
 	    		"oPaginate": {"sFirst": omsgs.first, "sPrevious": omsgs.previous, "sNext": omsgs.next, "sLast": omsgs.last},

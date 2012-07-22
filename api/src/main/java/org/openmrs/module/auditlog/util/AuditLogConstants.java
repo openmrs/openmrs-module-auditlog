@@ -19,4 +19,7 @@ package org.openmrs.module.auditlog.util;
 public final class AuditLogConstants {
 	
 	public static final String MODULE_ID = "auditlog";
+	
+	//Custom value to represent a null value
+	public static final String AUDITLOG_UNDEFINED_VALUE = "AUDITLOG_UNDEFINED_VALUE";
 }
