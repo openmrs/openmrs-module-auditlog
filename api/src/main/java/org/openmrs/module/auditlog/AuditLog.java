@@ -73,15 +73,14 @@ public final class AuditLog implements Serializable {
 	 * @param objectId the id of the object
 	 * @param action the operation performed on the object
 	 * @param user the user that triggered the operation
-	 * @param dateCreated the date when the operation was triggered
+	 * @param dateCreated the date when the operation was done
 	 */
-	public AuditLog(String className, String objectUuid, Action action, User user, Date dateCreated, String uuid) {
+	public AuditLog(String className, String objectUuid, Action action, User user, Date dateCreated) {
 		this.className = className;
 		this.objectUuid = objectUuid;
 		this.action = action;
 		this.user = user;
 		this.dateCreated = dateCreated;
-		this.uuid = uuid;
 	}
 	
 	/**

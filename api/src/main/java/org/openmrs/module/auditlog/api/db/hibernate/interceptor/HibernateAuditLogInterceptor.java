@@ -314,9 +314,10 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 							if (checkAgainForMonitoredClasses && !monitoredClassNames.contains(insert.getClass().getName()))
 								continue;
 							
-							getAuditLogDao().save(
-							    new AuditLog(insert.getClass().getName(), insert.getUuid(), Action.CREATED, user, date, UUID
-							            .randomUUID().toString()));
+							AuditLog auditLog = new AuditLog(insert.getClass().getName(), insert.getUuid(), Action.CREATED,
+							        user, date);
+							auditLog.setUuid(UUID.randomUUID().toString());
+							getAuditLogDao().save(auditLog);
 						}
 					}
 					
@@ -324,8 +325,10 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 						for (OpenmrsObject update : updates.get()) {
 							if (checkAgainForMonitoredClasses && !monitoredClassNames.contains(update.getClass().getName()))
 								continue;
+							
 							AuditLog auditLog = new AuditLog(update.getClass().getName(), update.getUuid(), Action.UPDATED,
-							        user, date, UUID.randomUUID().toString());
+							        user, date);
+							auditLog.setUuid(UUID.randomUUID().toString());
 							if (objectPropertyValuesMap.get() != null) {
 								Map<String, Object[]> propertyValuesMap = objectPropertyValuesMap.get()
 								        .get(update.getUuid());
@@ -346,9 +349,10 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 							if (checkAgainForMonitoredClasses && !monitoredClassNames.contains(delete.getClass().getName()))
 								continue;
 							
-							getAuditLogDao().save(
-							    new AuditLog(delete.getClass().getName(), delete.getUuid(), Action.DELETED, user, date, UUID
-							            .randomUUID().toString()));
+							AuditLog auditLog = new AuditLog(delete.getClass().getName(), delete.getUuid(), Action.DELETED,
+							        user, date);
+							auditLog.setUuid(UUID.randomUUID().toString());
+							getAuditLogDao().save(auditLog);
 						}
 					}
 					
