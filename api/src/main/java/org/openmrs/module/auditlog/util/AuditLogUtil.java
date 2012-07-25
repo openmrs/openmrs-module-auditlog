@@ -13,6 +13,8 @@
  */
 package org.openmrs.module.auditlog.util;
 
+import java.util.Map;
+
 /**
  * Contains static utility methods
  */
@@ -29,16 +31,17 @@ public class AuditLogUtil {
 	public static final String ATTRIBUTE_NAME = "name";
 	
 	/**
-	 * Utility method that generates the xml for the old and new property values of an edited object
+	 * Utility method that generates the xml for edited properties including their previous and new
+	 * property values of an edited object
 	 * 
-	 * @param propertyName The name of the edited property
-	 * @param previousValue the old value of the property
-	 * @param newValue the new value of the property
+	 * @param propertyValuesMap mapping of edited properties to their previous and new values
 	 * @return the generated xml text
 	 */
-	public static String generateNewAndPreviousValuesXml(String propertyName, Object previousValue, Object newValue) {
+	public static String generatePreviousAndNewValuesXml(Map<String, Object[]> propertyValuesMap) {
 		StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-		sb.append("Not yet implemented");
+		for (Map.Entry<String, Object[]> entry : propertyValuesMap.entrySet()) {
+			//entry.getKey(), entry.getValue()[0], entry.getValue()[1]));
+		}
 		
 		return sb.toString();
 	}

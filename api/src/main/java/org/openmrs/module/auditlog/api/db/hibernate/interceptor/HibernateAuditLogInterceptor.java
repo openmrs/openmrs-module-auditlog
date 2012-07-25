@@ -333,10 +333,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 								Map<String, Object[]> propertyValuesMap = objectPropertyValuesMap.get()
 								        .get(update.getUuid());
 								if (propertyValuesMap != null) {
-									for (Map.Entry<String, Object[]> entry : propertyValuesMap.entrySet()) {
-										auditLog.setNewAndPreviousValuesXml(AuditLogUtil.generateNewAndPreviousValuesXml(
-										    entry.getKey(), entry.getValue()[0], entry.getValue()[1]));
-									}
+									auditLog.setNewAndPreviousValuesXml(AuditLogUtil
+									        .generatePreviousAndNewValuesXml(propertyValuesMap));
 								}
 							}
 							
