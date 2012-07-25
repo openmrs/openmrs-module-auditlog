@@ -15,11 +15,8 @@ package org.openmrs.module.auditlog;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.Map;
-import java.util.TreeMap;
 
 import org.openmrs.User;
-import org.openmrs.module.auditlog.util.AuditLogUtil;
 
 /**
  * Encapsulates data for a single audit log entry
@@ -39,17 +36,24 @@ public final class AuditLog implements Serializable {
 	//the performed operation that which could be a create, update or delete
 	private Action action;
 	
-	//We actually store user details as 'user.uuid|user.username|user.fullName' and not id
-	//We don't want to have foreign keys to users table so that a user can be purged
-	//and we still keep the audit logs for the changes they made
-	private String userDetails;
+	private User user;
 	
 	private Date dateCreated;
 	
 	private String uuid;
 	
-	//property name old value map, NOTE we store all old values as Strings
-	private Map<String, String> previousValues;
+	/**
+	 * Xml for new and old values in case of edited fields
+	 * 
+	 * <pre>
+	 * 		<property name="property_name">
+	 * 			<previous>.....</previous>
+	 * 			<new>....</new>
+	 * 		</property>
+	 * 		.....
+	 * </pre>
+	 */
+	private String newAndPreviousValuesXml;
 	
 	public enum Action {
 		CREATED, UPDATED, DELETED
@@ -75,7 +79,7 @@ public final class AuditLog implements Serializable {
 		this.className = className;
 		this.objectUuid = objectUuid;
 		this.action = action;
-		this.userDetails = AuditLogUtil.getUserDetails(user);
+		this.user = user;
 		this.dateCreated = dateCreated;
 		this.uuid = uuid;
 	}
@@ -137,17 +141,17 @@ public final class AuditLog implements Serializable {
 	}
 	
 	/**
-	 * @return the user details
+	 * @return the user
 	 */
-	public String getUserDetails() {
-		return userDetails;
+	public User getUser() {
+		return user;
 	}
 	
 	/**
-	 * @param userDetails the user to set
+	 * @param user the user to set
 	 */
-	public void setUserDetails(String userDetails) {
-		this.userDetails = userDetails;
+	public void setUser(User user) {
+		this.user = user;
 	}
 	
 	/**
@@ -179,21 +183,17 @@ public final class AuditLog implements Serializable {
 	}
 	
 	/**
-	 * @return the previousValues
+	 * @return the newAndPreviousValuesXml
 	 */
-	public Map<String, String> getPreviousValues() {
-		//we use a tree map because we don't expect duplicate property names
-		if (previousValues == null)
-			previousValues = new TreeMap<String, String>();
-		
-		return previousValues;
+	public String getNewAndPreviousValuesXml() {
+		return newAndPreviousValuesXml;
 	}
 	
 	/**
-	 * @param previousValues the previousValues to set
+	 * @param newAndPreviousValuesXml the newAndPreviousValuesXml to set
 	 */
-	public void setPreviousValues(Map<String, String> previousValues) {
-		this.previousValues = previousValues;
+	public void setNewAndPreviousValuesXml(String newAndPreviousValuesXml) {
+		this.newAndPreviousValuesXml = newAndPreviousValuesXml;
 	}
 	
 	/**

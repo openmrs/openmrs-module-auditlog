@@ -120,10 +120,11 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		
 		//Should have created entries for the changes properties and their old values
 		Assert.assertEquals(Action.UPDATED, auditLog.getAction());
-		Assert.assertEquals(3, auditLog.getPreviousValues().size());
-		Assert.assertEquals(oldConceptClassId.toString(), auditLog.getPreviousValues().get("conceptClass"));
-		Assert.assertEquals(oldDatatypeId.toString(), auditLog.getPreviousValues().get("datatype"));
-		Assert.assertEquals(oldVersion, auditLog.getPreviousValues().get("version"));
+		//Check that there 3 property tag entries
+		Assert.assertEquals(3, "");
+		Assert.assertEquals(oldConceptClassId.toString(), "conceptClass");
+		Assert.assertEquals(oldDatatypeId.toString(), "datatype");
+		Assert.assertEquals(oldVersion, "version");
 	}
 	
 	@Test

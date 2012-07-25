@@ -13,9 +13,6 @@
  */
 package org.openmrs.module.auditlog.util;
 
-import org.apache.commons.lang.StringUtils;
-import org.openmrs.User;
-
 /**
  * Contains static utility methods
  */
@@ -23,28 +20,26 @@ public class AuditLogUtil {
 	
 	//private static final Log log = LogFactory.getLog(AuditLogUtil.class);
 	
-	public static final String USER_DETAILS_DELIMITER = "|";
+	public static final String NODE_PROPERTY = "property";
 	
-	public static final String USER_DETAILS_BLANK_FIELD = "-";
+	public static final String NODE_PREVIOUS = "previous";
+	
+	public static final String NODE_NEW = "new";
+	
+	public static final String ATTRIBUTE_NAME = "name";
 	
 	/**
-	 * Utility method that generates user details from the specified user object i.e user uuid,
-	 * username and fullname separated by a pipe character
+	 * Utility method that generates the xml for the old and new property values of an edited object
 	 * 
-	 * @param user the user to use to generate details
-	 * @return a string consisting of the user details
+	 * @param propertyName The name of the edited property
+	 * @param previousValue the old value of the property
+	 * @param newValue the new value of the property
+	 * @return the generated xml text
 	 */
-	public static String getUserDetails(User user) {
-		if (user == null)
-			return "";
+	public static String generateNewAndPreviousValuesXml(String propertyName, Object previousValue, Object newValue) {
+		StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+		sb.append("Not yet implemented");
 		
-		String personName = "";
-		if (user.getPerson() != null && user.getPerson().getPersonName() != null) {
-			personName = user.getPerson().getPersonName().getFullName();
-		}
-		
-		return user.getUuid() + USER_DETAILS_DELIMITER
-		        + (StringUtils.isBlank(user.getUsername()) ? USER_DETAILS_BLANK_FIELD : user.getUsername())
-		        + USER_DETAILS_DELIMITER + personName;
+		return sb.toString();
 	}
 }

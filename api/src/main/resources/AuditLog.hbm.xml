@@ -25,20 +25,13 @@
 			</type>
 		</property>
 		
-		<property name="userDetails" type="string" column="user_details" length="512" not-null="true" update="false" />
+		<property name="newAndPreviousValuesXml" type="string" column="new_and_previous_values_xml" length="16777215" />
 		
 		<property name="dateCreated" type="java.util.Date" column="date_created" length="19" not-null="true" update="false" />
 		
-		<property name="uuid" type="string" length="38" unique="true" not-null="true" update="false" />
+		<many-to-one name="user" class="org.openmrs.User" column="user" not-null="true" />
 		
-		<map name="previousValues" table="auditlog_old_property_name_value_map" cascade="all,delete-orphan,evict">
-    		<key column="audit_log_id" not-null="true" />
-    		<!-- Dont expect field names longer than 60 char -->
-    		<map-key column="property_name" type="string" length="60" />
-    		
-    		<!-- We only support logs of fields with size up to MEDIUMTEXT -->
-    		<element column="property_value" type="string" length="16777215" />
-		</map>
+		<property name="uuid" type="string" length="38" unique="true" not-null="true" update="false" />
 		
 	</class>
 	

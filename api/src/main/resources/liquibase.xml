@@ -21,10 +21,14 @@
 			<column name="class_name" type="varchar(512)"><constraints nullable="false"/></column>
 			<column name="object_uuid" type="varchar(38)"><constraints nullable="false"/></column>
 			<column name="action" type="varchar(50)"><constraints nullable="false"/></column>
-			<column name="user_details" type="varchar(512)"><constraints nullable="false"/></column>
+			<column name="user" type="int"><constraints nullable="false"/></column>
+			<column name="new_and_previous_values_xml" type="mediumtext"></column>
 			<column name="date_created" type="DATETIME"><constraints nullable="false"/></column>
 			<column name="uuid" type="varchar(38)"><constraints nullable="false"/></column>
 		</createTable>
+		<addForeignKeyConstraint constraintName="authenticated_user" 
+		 	baseTableName="auditlog_audit_log" baseColumnNames="user"   
+		 	referencedTableName="users" referencedColumnNames="user_id" />
  	</changeSet>
  	
  	<changeSet id="auditlog-20120428-1500" author="wyclif">

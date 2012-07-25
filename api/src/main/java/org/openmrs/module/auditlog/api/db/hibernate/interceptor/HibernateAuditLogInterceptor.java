@@ -3,12 +3,11 @@ package org.openmrs.module.auditlog.api.db.hibernate.interceptor;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.UUID;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -35,7 +34,7 @@ import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.MonitoredObject;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
-import org.openmrs.module.auditlog.util.AuditLogConstants;
+import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.util.OpenmrsUtil;
 import org.openmrs.util.Reflect;
 import org.springframework.beans.BeanUtils;
@@ -63,8 +62,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	
 	private ThreadLocal<HashSet<OpenmrsObject>> deletes = new ThreadLocal<HashSet<OpenmrsObject>>();
 	
-	//Mapping between object uuid to the map of its changed property names and their older values
-	private ThreadLocal<TreeMap<String, Map<String, String>>> objectPropertyOldValuesMap = new ThreadLocal<TreeMap<String, Map<String, String>>>();
+	//Mapping between object uuid to the map of its changed property names and their older values, the first item in the array is the old value while the the second is the new value
+	private ThreadLocal<Map<String, Map<String, Object[]>>> objectPropertyValuesMap = new ThreadLocal<Map<String, Map<String, Object[]>>>();
 	
 	//we will need to disable the interceptor when saving the auditlog to avoid going in circles
 	private ThreadLocal<Boolean> disableInterceptor = new ThreadLocal<Boolean>();
@@ -128,7 +127,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	                            String[] propertyNames, Type[] types) {
 		if (isMonitored(entity) && propertyNames != null) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
-			Map<String, String> propertyOldValueMap = null;
+			Map<String, Object[]> propertyValuesMap = null;
 			SessionFactory sessionFactory = ((SessionFactory) applicationContext.getBean("sessionFactory"));
 			for (int i = 0; i < propertyNames.length; i++) {
 				//we need ignore dateChanged and changedBy fields since they saved along with the auditlog
@@ -159,8 +158,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 							continue;
 					}
 					
-					if (propertyOldValueMap == null)
-						propertyOldValueMap = new Hashtable<String, String>();
+					if (propertyValuesMap == null)
+						propertyValuesMap = new HashMap<String, Object[]>();
 					
 					ClassMetadata metadata = sessionFactory.getClassMetadata(propertyType);
 					Object previousValueObj = null;
@@ -178,12 +177,11 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 						}
 					}
 					
-					propertyOldValueMap.put(propertyNames[i], (previousValueObj != null) ? previousValueObj.toString()
-					        : AuditLogConstants.AUDITLOG_UNDEFINED_VALUE);
+					propertyValuesMap.put(propertyNames[i], new Object[] { previousValueObj, currentState[i] });
 				}
 			}
 			
-			if (MapUtils.isNotEmpty(propertyOldValueMap)) {
+			if (MapUtils.isNotEmpty(propertyValuesMap)) {
 				if (log.isDebugEnabled())
 					log.debug("Creating log entry for EDITED object with uuid:" + openmrsObject.getUuid() + " of type:"
 					        + entity.getClass().getName());
@@ -193,9 +191,10 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				
 				updates.get().add(openmrsObject);
 				
-				if (objectPropertyOldValuesMap.get() == null)
-					objectPropertyOldValuesMap.set(new TreeMap<String, Map<String, String>>());
-				objectPropertyOldValuesMap.get().put(openmrsObject.getUuid(), propertyOldValueMap);
+				if (objectPropertyValuesMap.get() == null)
+					objectPropertyValuesMap.set(new HashMap<String, Map<String, Object[]>>());
+				
+				objectPropertyValuesMap.get().put(openmrsObject.getUuid(), propertyValuesMap);
 			}
 		}
 		
@@ -327,8 +326,16 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 								continue;
 							AuditLog auditLog = new AuditLog(update.getClass().getName(), update.getUuid(), Action.UPDATED,
 							        user, date, UUID.randomUUID().toString());
-							if (objectPropertyOldValuesMap.get() != null)
-								auditLog.setPreviousValues(objectPropertyOldValuesMap.get().get(update.getUuid()));
+							if (objectPropertyValuesMap.get() != null) {
+								Map<String, Object[]> propertyValuesMap = objectPropertyValuesMap.get()
+								        .get(update.getUuid());
+								if (propertyValuesMap != null) {
+									for (Map.Entry<String, Object[]> entry : propertyValuesMap.entrySet()) {
+										auditLog.setNewAndPreviousValuesXml(AuditLogUtil.generateNewAndPreviousValuesXml(
+										    entry.getKey(), entry.getValue()[0], entry.getValue()[1]));
+									}
+								}
+							}
 							
 							getAuditLogDao().save(auditLog);
 						}

@@ -19,7 +19,6 @@ import java.util.List;
 
 import junit.framework.Assert;
 
-import org.hibernate.Hibernate;
 import org.junit.Before;
 import org.junit.Test;
 import org.openmrs.DrugOrder;
@@ -29,7 +28,6 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.MonitoredObject;
-import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.openmrs.test.Verifies;
 
@@ -141,7 +139,6 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 			Assert.assertNotNull(savedObject.getMonitoredObjectId());
 			Assert.assertNotNull(savedObject.getDateCreated());
 			Assert.assertNotNull(savedObject.getCreatorDetails());
-			Assert.assertEquals(AuditLogUtil.getUserDetails(Context.getAuthenticatedUser()), savedObject.getCreatorDetails());
 		}
 	}
 	
@@ -162,6 +159,5 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		//Should have set the creator details and date created
 		Assert.assertNotNull(monitoredObject.getDateCreated());
 		Assert.assertNotNull(monitoredObject.getCreatorDetails());
-		Assert.assertEquals(AuditLogUtil.getUserDetails(Context.getAuthenticatedUser()), monitoredObject.getCreatorDetails());
 	}
 }

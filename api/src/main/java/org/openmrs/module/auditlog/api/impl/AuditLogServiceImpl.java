@@ -21,14 +21,12 @@ import java.util.UUID;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.OpenmrsObject;
-import org.openmrs.api.context.Context;
 import org.openmrs.api.impl.BaseOpenmrsService;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.MonitoredObject;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
-import org.openmrs.module.auditlog.util.AuditLogUtil;
 
 public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogService {
 	
@@ -67,13 +65,13 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	@Override
 	public <C extends OpenmrsObject> List<MonitoredObject> markAsMonitoredObjects(Class<C> clazz,
 	                                                                              List<Class<? extends C>> subclassesToInclude) {
-		String userDetails = AuditLogUtil.getUserDetails(Context.getAuthenticatedUser());
+		//String userDetails = AuditLogUtil.getUserDetails(Context.getAuthenticatedUser());
 		Date dateCreated = new Date();
 		List<MonitoredObject> savedMonitoredObjects = new ArrayList<MonitoredObject>();
 		
 		MonitoredObject monitoredObject = new MonitoredObject(clazz.getName());
 		monitoredObject.setUuid(UUID.randomUUID().toString());
-		monitoredObject.setCreatorDetails(userDetails);
+		//monitoredObject.setCreatorDetails(userDetails);
 		monitoredObject.setDateCreated(dateCreated);
 		savedMonitoredObjects.add(dao.save(monitoredObject));
 		
@@ -82,7 +80,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 			for (Class<?> subclass : subclassesToInclude) {
 				MonitoredObject subMonitoredObject = new MonitoredObject(subclass.getName());
 				subMonitoredObject.setUuid(UUID.randomUUID().toString());
-				subMonitoredObject.setCreatorDetails(userDetails);
+				//subMonitoredObject.setCreatorDetails(userDetails);
 				subMonitoredObject.setDateCreated(dateCreated);
 				savedMonitoredObjects.add(dao.save(subMonitoredObject));
 			}
