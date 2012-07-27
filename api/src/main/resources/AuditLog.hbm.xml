@@ -25,7 +25,7 @@
 			</type>
 		</property>
 		
-		<property name="newAndPreviousValuesXml" type="string" column="new_and_previous_values_xml" length="16777215" />
+		<property name="changesXml" type="string" column="changes_xml" length="16777215" />
 		
 		<property name="dateCreated" type="java.util.Date" column="date_created" length="19" not-null="true" update="false" />
 		

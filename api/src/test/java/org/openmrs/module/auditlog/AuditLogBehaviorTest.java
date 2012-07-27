@@ -22,6 +22,7 @@ import java.util.Vector;
 
 import junit.framework.Assert;
 
+import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.openmrs.Concept;
@@ -39,8 +40,12 @@ import org.openmrs.api.PatientService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.api.AuditLogService;
+import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.test.annotation.NotTransactional;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 @SuppressWarnings("deprecation")
 public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
@@ -103,7 +108,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		ConceptClass cc = conceptService.getConceptClass(2);
 		ConceptDatatype dt = conceptService.getConceptDatatype(3);
 		String oldVersion = concept.getVersion();
-		String newVersion = "new v";
+		String newVersion = "1.11";
 		Assert.assertNotSame(cc, concept.getConceptClass());
 		Assert.assertNotSame(dt, concept.getDatatype());
 		Assert.assertNotSame(newVersion, oldVersion);
@@ -121,10 +126,24 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		//Should have created entries for the changes properties and their old values
 		Assert.assertEquals(Action.UPDATED, auditLog.getAction());
 		//Check that there 3 property tag entries
-		Assert.assertEquals(3, "");
-		Assert.assertEquals(oldConceptClassId.toString(), "conceptClass");
-		Assert.assertEquals(oldDatatypeId.toString(), "datatype");
-		Assert.assertEquals(oldVersion, "version");
+		String changesXml = auditLog.getChangesXml();
+		Document doc = AuditLogUtil.createDocument(changesXml);
+		Assert.assertFalse(StringUtils.isBlank(changesXml));
+		Element changesElement = doc.getDocumentElement();
+		Assert.assertEquals(3, getCountOfPropertyTags(changesElement));
+		Assert.assertEquals(oldConceptClassId.toString(),
+		    AuditLogUtil.getPreviousOrNewPropertyValue(changesElement, "conceptClass", AuditLogUtil.NODE_PREVIOUS));
+		Assert.assertEquals(oldDatatypeId.toString(),
+		    AuditLogUtil.getPreviousOrNewPropertyValue(changesElement, "datatype", AuditLogUtil.NODE_PREVIOUS));
+		Assert.assertEquals(oldVersion,
+		    AuditLogUtil.getPreviousOrNewPropertyValue(changesElement, "version", AuditLogUtil.NODE_PREVIOUS));
+		
+		Assert.assertEquals(cc.getConceptClassId().toString(),
+		    AuditLogUtil.getPreviousOrNewPropertyValue(changesElement, "conceptClass", AuditLogUtil.NODE_NEW));
+		Assert.assertEquals(dt.getConceptDatatypeId().toString(),
+		    AuditLogUtil.getPreviousOrNewPropertyValue(changesElement, "datatype", AuditLogUtil.NODE_NEW));
+		Assert.assertEquals(newVersion,
+		    AuditLogUtil.getPreviousOrNewPropertyValue(changesElement, "version", AuditLogUtil.NODE_NEW));
 	}
 	
 	@Test
@@ -297,5 +316,19 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		List<AuditLog> updateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.UPDATED), null,
 		    null, null, null);
 		Assert.assertEquals(1, updateLogs.size());
+	}
+	
+	/**
+	 * Gets the count of property tags in the specified {@link Document}
+	 * 
+	 * @param doc
+	 * @return the count
+	 * @throws Exception
+	 */
+	private int getCountOfPropertyTags(Element rootElement) throws Exception {
+		NodeList nodeList = rootElement.getElementsByTagName(AuditLogUtil.NODE_PROPERTY);
+		if (nodeList != null)
+			return nodeList.getLength();
+		return 0;
 	}
 }

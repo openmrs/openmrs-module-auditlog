@@ -46,14 +46,16 @@ public final class AuditLog implements Serializable {
 	 * Xml for new and old values in case of edited fields
 	 * 
 	 * <pre>
-	 * 		<property name="property_name">
-	 * 			<previous>.....</previous>
-	 * 			<new>....</new>
-	 * 		</property>
+	 * 		<changes>
+	 * 			<property name="property_name">
+	 * 				<previous>.....</previous>
+	 * 				<new>....</new>
+	 * 			</property>
 	 * 		.....
+	 * 		</changes>
 	 * </pre>
 	 */
-	private String newAndPreviousValuesXml;
+	private String changesXml;
 	
 	public enum Action {
 		CREATED, UPDATED, DELETED
@@ -184,15 +186,15 @@ public final class AuditLog implements Serializable {
 	/**
 	 * @return the newAndPreviousValuesXml
 	 */
-	public String getNewAndPreviousValuesXml() {
-		return newAndPreviousValuesXml;
+	public String getChangesXml() {
+		return changesXml;
 	}
 	
 	/**
 	 * @param newAndPreviousValuesXml the newAndPreviousValuesXml to set
 	 */
-	public void setNewAndPreviousValuesXml(String newAndPreviousValuesXml) {
-		this.newAndPreviousValuesXml = newAndPreviousValuesXml;
+	public void setChangesXml(String newAndPreviousValuesXml) {
+		this.changesXml = newAndPreviousValuesXml;
 	}
 	
 	/**

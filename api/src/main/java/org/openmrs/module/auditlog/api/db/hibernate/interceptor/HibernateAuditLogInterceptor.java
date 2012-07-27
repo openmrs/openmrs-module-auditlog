@@ -63,7 +63,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	private ThreadLocal<HashSet<OpenmrsObject>> deletes = new ThreadLocal<HashSet<OpenmrsObject>>();
 	
 	//Mapping between object uuid to the map of its changed property names and their older values, the first item in the array is the old value while the the second is the new value
-	private ThreadLocal<Map<String, Map<String, Object[]>>> objectPropertyValuesMap = new ThreadLocal<Map<String, Map<String, Object[]>>>();
+	private ThreadLocal<Map<String, Map<String, Object[]>>> objectChangesMap = new ThreadLocal<Map<String, Map<String, Object[]>>>();
 	
 	//we will need to disable the interceptor when saving the auditlog to avoid going in circles
 	private ThreadLocal<Boolean> disableInterceptor = new ThreadLocal<Boolean>();
@@ -127,7 +127,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	                            String[] propertyNames, Type[] types) {
 		if (isMonitored(entity) && propertyNames != null) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
-			Map<String, Object[]> propertyValuesMap = null;
+			Map<String, Object[]> propertyChangesMap = null;
 			SessionFactory sessionFactory = ((SessionFactory) applicationContext.getBean("sessionFactory"));
 			for (int i = 0; i < propertyNames.length; i++) {
 				//we need ignore dateChanged and changedBy fields since they saved along with the auditlog
@@ -138,16 +138,17 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				//TODO Ignore user defined ignored properties
 				
 				Object previousValue = (previousState != null) ? previousState[i] : null;
+				Object currentValue = (currentState != null) ? currentState[i] : null;
 				Class<?> propertyType = BeanUtils.getPropertyDescriptor(entity.getClass(), propertyNames[i])
 				        .getPropertyType();
-				if (!OpenmrsUtil.nullSafeEquals(currentState[i], previousValue) && !Reflect.isCollection(propertyType)) {
+				if (!OpenmrsUtil.nullSafeEquals(currentValue, previousValue) && !Reflect.isCollection(propertyType)) {
 					//For string properties, ignore changes from null to blank and vice versa
 					//TODO This should user configurable via a module GP
 					if (StringType.class.getName().equals(types[i].getClass().getName())
 					        || TextType.class.getName().equals(types[i].getClass().getName())) {
 						String currentStateString = null;
-						if (currentState[i] != null && !StringUtils.isBlank(currentState[i].toString()))
-							currentStateString = currentState[i].toString();
+						if (currentValue != null && !StringUtils.isBlank(currentValue.toString()))
+							currentStateString = currentValue.toString();
 						
 						String previousValueString = null;
 						if (previousValue != null && !StringUtils.isBlank(previousValue.toString()))
@@ -158,30 +159,33 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 							continue;
 					}
 					
-					if (propertyValuesMap == null)
-						propertyValuesMap = new HashMap<String, Object[]>();
+					if (propertyChangesMap == null)
+						propertyChangesMap = new HashMap<String, Object[]>();
 					
 					ClassMetadata metadata = sessionFactory.getClassMetadata(propertyType);
-					Object previousValueObj = null;
+					Object flattenedPreviousValue = null;
+					Object flattenedCurrentValue = null;
 					
-					if (previousValue != null) {
-						if (BeanUtils.isSimpleValueType(propertyType)) {
-							//TODO take care of Dates, Enums, Class, Locale
-							previousValueObj = previousValue;
-						} else {
-							//this is a compound property, store the primary key value
-							//TODO take care of composite primary keys
-							
-							//value = PropertyUtils.getProperty(previousValue, metadata.getIdentifierPropertyName());
-							previousValueObj = metadata.getIdentifier(previousValue, EntityMode.POJO);
-						}
+					if (BeanUtils.isSimpleValueType(propertyType)) {
+						//TODO take care of Dates, Enums, Class, Locale
+						flattenedPreviousValue = previousValue;
+						flattenedCurrentValue = currentValue;
+					} else {
+						//this is a compound property, store the primary key value
+						//TODO take care of composite primary keys
+						
+						//value = PropertyUtils.getProperty(previousValue, metadata.getIdentifierPropertyName());
+						if (previousValue != null)
+							flattenedPreviousValue = metadata.getIdentifier(previousValue, EntityMode.POJO);
+						if (currentValue != null)
+							flattenedCurrentValue = metadata.getIdentifier(currentValue, EntityMode.POJO);
 					}
 					
-					propertyValuesMap.put(propertyNames[i], new Object[] { previousValueObj, currentState[i] });
+					propertyChangesMap.put(propertyNames[i], new Object[] { flattenedPreviousValue, flattenedCurrentValue });
 				}
 			}
 			
-			if (MapUtils.isNotEmpty(propertyValuesMap)) {
+			if (MapUtils.isNotEmpty(propertyChangesMap)) {
 				if (log.isDebugEnabled())
 					log.debug("Creating log entry for EDITED object with uuid:" + openmrsObject.getUuid() + " of type:"
 					        + entity.getClass().getName());
@@ -191,10 +195,10 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				
 				updates.get().add(openmrsObject);
 				
-				if (objectPropertyValuesMap.get() == null)
-					objectPropertyValuesMap.set(new HashMap<String, Map<String, Object[]>>());
+				if (objectChangesMap.get() == null)
+					objectChangesMap.set(new HashMap<String, Map<String, Object[]>>());
 				
-				objectPropertyValuesMap.get().put(openmrsObject.getUuid(), propertyValuesMap);
+				objectChangesMap.get().put(openmrsObject.getUuid(), propertyChangesMap);
 			}
 		}
 		
@@ -329,12 +333,10 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 							AuditLog auditLog = new AuditLog(update.getClass().getName(), update.getUuid(), Action.UPDATED,
 							        user, date);
 							auditLog.setUuid(UUID.randomUUID().toString());
-							if (objectPropertyValuesMap.get() != null) {
-								Map<String, Object[]> propertyValuesMap = objectPropertyValuesMap.get()
-								        .get(update.getUuid());
+							if (objectChangesMap.get() != null) {
+								Map<String, Object[]> propertyValuesMap = objectChangesMap.get().get(update.getUuid());
 								if (propertyValuesMap != null) {
-									auditLog.setNewAndPreviousValuesXml(AuditLogUtil
-									        .generatePreviousAndNewValuesXml(propertyValuesMap));
+									auditLog.setChangesXml(AuditLogUtil.generateChangesXml(propertyValuesMap));
 								}
 							}
 							
