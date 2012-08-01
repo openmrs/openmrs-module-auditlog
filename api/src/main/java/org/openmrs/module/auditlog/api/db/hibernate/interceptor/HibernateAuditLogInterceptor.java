@@ -360,6 +360,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				deletes.remove();
 			if (disableInterceptor.get() != null)
 				disableInterceptor.remove();
+			if (objectChangesMap.get() != null)
+				objectChangesMap.remove();
 		}
 	}
 	
