@@ -371,17 +371,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	 * @return true if the object is a monitored one otherwise false
 	 */
 	private boolean isMonitored(Object obj) {
-		if (monitoredClassNames == null)
-			setMonitoredClassNames();
-		
-		return OpenmrsObject.class.isAssignableFrom(obj.getClass())
-		        && OpenmrsUtil.collectionContains(monitoredClassNames, obj.getClass().getName());
-	}
-	
-	/**
-	 * Convenience method that populates the set of class names for the monitored objects
-	 */
-	private void setMonitoredClassNames() {
 		if (monitoredClassNames == null) {
 			SessionFactory sessionFactory = ((SessionFactory) applicationContext.getBean("sessionFactory"));
 			Session session = sessionFactory.getCurrentSession();
@@ -397,5 +386,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				session.setFlushMode(originalFlushMode);
 			}
 		}
+		
+		return OpenmrsObject.class.isAssignableFrom(obj.getClass())
+		        && OpenmrsUtil.collectionContains(monitoredClassNames, obj.getClass().getName());
 	}
 }
