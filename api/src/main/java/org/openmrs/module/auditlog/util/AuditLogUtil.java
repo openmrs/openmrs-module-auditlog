@@ -14,13 +14,21 @@
 package org.openmrs.module.auditlog.util;
 
 import java.io.StringReader;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.openmrs.GlobalProperty;
+import org.openmrs.OpenmrsObject;
+import org.openmrs.api.AdministrationService;
+import org.openmrs.api.GlobalPropertyListener;
+import org.openmrs.api.context.Context;
 import org.openmrs.util.OpenmrsUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -30,7 +38,7 @@ import org.xml.sax.InputSource;
 /**
  * Contains static utility methods
  */
-public abstract class AuditLogUtil {
+public class AuditLogUtil implements GlobalPropertyListener {
 	
 	private static final Log log = LogFactory.getLog(AuditLogUtil.class);
 	
@@ -43,6 +51,56 @@ public abstract class AuditLogUtil {
 	public static final String NODE_NEW = "new";
 	
 	public static final String ATTRIBUTE_NAME = "name";
+	
+	private static Set<String> monitoredClassnamesCache;
+	
+	/**
+	 * Marks the specified classes as monitored by adding their class names to the
+	 * {@link GlobalProperty} {@link AuditLogConstants#AUDITLOG_GP_MONITORED_CLASSES}
+	 * 
+	 * @param clazzes the classes to monitor
+	 * @param subclassesToInclude list of subclasses to mark as monitored objects
+	 * @should add the class names to the monitored objects global property
+	 */
+	public static void startMonitoring(Set<Class<? extends OpenmrsObject>> clazzes) {
+		updateMonitoredClassesGP(clazzes, true);
+	}
+	
+	/**
+	 * Marks the specified classes as not monitored by removing their class names from the
+	 * {@link GlobalProperty} {@link AuditLogConstants#AUDITLOG_GP_MONITORED_CLASSES}
+	 * 
+	 * @param clazzes the class to stop monitoring
+	 * @should remove the class names from the monitored objects global property
+	 */
+	public static void stopMonitoring(Set<Class<? extends OpenmrsObject>> clazzes) {
+		updateMonitoredClassesGP(clazzes, false);
+	}
+	
+	/**
+	 * Convenience method that checks if the class with the specified fully qualified name is
+	 * monitored
+	 * 
+	 * @param classname the class name to check against
+	 * @return true if the class with the specified fully qualified name is monitored otherwise
+	 *         false
+	 * @should return a list of monitored class names
+	 */
+	public static Set<String> getMonitoredClassNames() {
+		if (monitoredClassnamesCache == null) {
+			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
+			    AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES);
+			monitoredClassnamesCache = new HashSet<String>();
+			if (gp != null && StringUtils.isNotBlank(gp.getPropertyValue())) {
+				String[] classnameArray = StringUtils.split(gp.getPropertyValue(), ",");
+				for (String classname : classnameArray) {
+					monitoredClassnamesCache.add(classname.trim());
+				}
+			}
+		}
+		
+		return monitoredClassnamesCache;
+	}
 	
 	/**
 	 * Utility method that generates the xml for edited properties including their previous and new
@@ -148,5 +206,69 @@ public abstract class AuditLogUtil {
 				log.warn("Invalid changes xml: Found multiple " + tagName + " tags");
 		}
 		return null;
+	}
+	
+	/**
+	 * Update the value of the {@link GlobalProperty}
+	 * {@link AuditLogConstants#AUDITLOG_GP_MONITORED_CLASSES} in the database
+	 * 
+	 * @param clazzes the classes to add or remove
+	 * @param startMonitoring specifies if the the classes are getting added to removed
+	 */
+	private static void updateMonitoredClassesGP(Set<Class<? extends OpenmrsObject>> clazzes, boolean startMonitoring) {
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES);
+		if (gp == null) {
+			if (!startMonitoring) {
+				//should of course be null since the GP is blank too
+				monitoredClassnamesCache = null;
+				return;
+			}
+			gp = new GlobalProperty(AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES, null,
+			        "Specifies the class names of objects for which to maintain an audit log");
+		}
+		
+		if (monitoredClassnamesCache == null)
+			getMonitoredClassNames();//should effectively load the set
+			
+		for (Class<? extends OpenmrsObject> clazz : clazzes) {
+			if (startMonitoring)
+				monitoredClassnamesCache.add(clazz.getName());
+			else
+				monitoredClassnamesCache.remove(clazz.getName());
+		}
+		
+		gp.setPropertyValue(StringUtils.join(monitoredClassnamesCache, ","));
+		try {
+			as.saveGlobalProperty(gp);
+		}
+		catch (Exception e) {
+			//In case the changes were not persisted, the cache should still get updated
+			monitoredClassnamesCache = null;
+		}
+	}
+	
+	/**
+	 * @see org.openmrs.api.GlobalPropertyListener#globalPropertyChanged(org.openmrs.GlobalProperty)
+	 */
+	@Override
+	public void globalPropertyChanged(GlobalProperty gp) {
+		monitoredClassnamesCache = null;
+	}
+	
+	/**
+	 * @see org.openmrs.api.GlobalPropertyListener#globalPropertyDeleted(java.lang.String)
+	 */
+	@Override
+	public void globalPropertyDeleted(String arg0) {
+		monitoredClassnamesCache = null;
+	}
+	
+	/**
+	 * @see org.openmrs.api.GlobalPropertyListener#supportsPropertyName(java.lang.String)
+	 */
+	@Override
+	public boolean supportsPropertyName(String propertyName) {
+		return propertyName.equals(AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES);
 	}
 }

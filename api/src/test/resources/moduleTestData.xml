@@ -1,7 +1,4 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <dataset>
-	<auditlog_monitored_object monitored_object_id="1" class_name="org.openmrs.Concept" creator_details="c1d8f5c2-e131-11de-babe-001e378eb67e|bruno|Bruno Otterbourg" date_created="2012-04-01 00:00:00.0" uuid="bbc05786-9019-11e1-aaa4-00248140a5eb" />
-	<auditlog_monitored_object monitored_object_id="2" class_name="org.openmrs.ConceptName" creator_details="c1d8f5c2-e131-11de-babe-001e378eb67e|bruno|Bruno Otterbourg" date_created="2012-04-01 00:00:00.0" uuid="bbc05786-9019-11e1-aaa4-00248140a5ec" />
-	<auditlog_monitored_object monitored_object_id="3" class_name="org.openmrs.EncounterType" creator_details="c1d8f5c2-e131-11de-babe-001e378eb67e|bruno|Bruno Otterbourg" date_created="2012-04-01 00:00:00.0" uuid="bbc05786-9019-11e1-aaa4-00248140a5ed" />
-	<auditlog_monitored_object monitored_object_id="4" class_name="org.openmrs.PatientIdentifierType" creator_details="c1d8f5c2-e131-11de-babe-001e378eb67e|bruno|Bruno Otterbourg" date_created="2012-04-01 00:00:00.0" uuid="bbc05786-9019-11e1-aaa4-00248140a5ee" />
+	<global_property property="${project.parent.artifactId}.monitoredClasses" property_value="org.openmrs.Concept,org.openmrs.ConceptName, org.openmrs.EncounterType,org.openmrs.PatientIdentifierType" uuid="bbc05786-9019-11e1-aaa4-00248140a5eb" />
 </dataset>

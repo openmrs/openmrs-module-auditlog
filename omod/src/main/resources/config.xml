@@ -26,10 +26,16 @@
 		<class>${project.parent.groupId}.${project.parent.artifactId}.extension.html.AdminList</class>
 	</extension>
 	
+	<!-- Global properties -->
+	<globalProperty>
+		<property>${project.parent.artifactId}.monitoredClasses</property>
+		<defaultValue></defaultValue>
+		<description>Specifies the class names of objects for which to maintain an audit log</description>
+	</globalProperty>
+	
 	<!-- Maps hibernate file's, if present -->
 	<mappingFiles>
-		AuditLog.hbm.xml
-		MonitoredObject.hbm.xml				
+		AuditLog.hbm.xml			
 	</mappingFiles>
 
 	<!-- Internationalization -->

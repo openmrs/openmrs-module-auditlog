@@ -13,10 +13,8 @@
  */
 package org.openmrs.module.auditlog.api.impl;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,7 +22,6 @@ import org.openmrs.OpenmrsObject;
 import org.openmrs.api.impl.BaseOpenmrsService;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
-import org.openmrs.module.auditlog.MonitoredObject;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 
@@ -49,62 +46,13 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.AuditLogService#getAuditLogs(java.lang.Class, List,
-	 *      java.util.Date, java.util.Date, java.lang.Integer, java.lang.Integer)
+	 * @see org.openmrs.module.auditlog.AuditLogService#getAuditLogs(List, List, java.util.Date,
+	 *      java.util.Date, java.lang.Integer, java.lang.Integer)
 	 */
 	@Override
-	public List<AuditLog> getAuditLogs(Class<?> clazz, List<Action> actions, Date startDate, Date endDate, Integer start,
-	                                   Integer length) {
-		return dao.getAuditLogs(clazz, actions, startDate, endDate, start, length);
-	}
-	
-	/**
-	 * @see org.openmrs.module.auditlog.AuditLogService#createMonitoredObjects(Class<C>,
-	 *      List<Class<? extends C>>)
-	 */
-	@Override
-	public <C extends OpenmrsObject> List<MonitoredObject> markAsMonitoredObjects(Class<C> clazz,
-	                                                                              List<Class<? extends C>> subclassesToInclude) {
-		//String userDetails = AuditLogUtil.getUserDetails(Context.getAuthenticatedUser());
-		Date dateCreated = new Date();
-		List<MonitoredObject> savedMonitoredObjects = new ArrayList<MonitoredObject>();
-		
-		MonitoredObject monitoredObject = new MonitoredObject(clazz.getName());
-		monitoredObject.setUuid(UUID.randomUUID().toString());
-		//monitoredObject.setCreatorDetails(userDetails);
-		monitoredObject.setDateCreated(dateCreated);
-		savedMonitoredObjects.add(dao.save(monitoredObject));
-		
-		//mark the subclasses as monitored if any
-		if (subclassesToInclude != null) {
-			for (Class<?> subclass : subclassesToInclude) {
-				MonitoredObject subMonitoredObject = new MonitoredObject(subclass.getName());
-				subMonitoredObject.setUuid(UUID.randomUUID().toString());
-				//subMonitoredObject.setCreatorDetails(userDetails);
-				subMonitoredObject.setDateCreated(dateCreated);
-				savedMonitoredObjects.add(dao.save(subMonitoredObject));
-			}
-			
-		}
-		
-		//TODO Update the mapped classes in the interceptor 
-		return savedMonitoredObjects;
-	}
-	
-	/**
-	 * @see org.openmrs.module.auditlog.AuditLogService#getAllMonitoredObjects()
-	 */
-	@Override
-	public List<MonitoredObject> getAllMonitoredObjects() {
-		return dao.getAllMonitoredObjects();
-	}
-	
-	/**
-	 * @see org.openmrs.module.auditlog.AuditLogService#purgeMonitoredObject(org.openmrs.module.auditlog.MonitoredObject)
-	 */
-	@Override
-	public void purgeMonitoredObject(MonitoredObject monitoredObject) {
-		dao.delete(monitoredObject);
+	public List<AuditLog> getAuditLogs(List<Class<OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
+	                                   Date endDate, Integer start, Integer length) {
+		return dao.getAuditLogs(clazzes, actions, startDate, endDate, start, length);
 	}
 	
 	/**

@@ -21,7 +21,6 @@ import org.openmrs.OpenmrsObject;
 import org.openmrs.api.OpenmrsService;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
-import org.openmrs.module.auditlog.MonitoredObject;
 
 /**
  * Contains service methods related to {@link AuditLog}s
@@ -31,7 +30,7 @@ public interface AuditLogService extends OpenmrsService {
 	/**
 	 * Fetches the audit log entries matching the specified arguments
 	 * 
-	 * @param clazz the class type to match against e.g for objects of type {@link Concept}
+	 * @param clazzes the class type to match against e.g for objects of type {@link Concept}
 	 * @param actions the list of {@link Action}s to match against
 	 * @param startDate the creation date of the log entries to return should be after or equal to
 	 *            this date
@@ -44,37 +43,8 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should return all audit logs in the database if all args are null
 	 * @should match on the specified audit log action
 	 */
-	public List<AuditLog> getAuditLogs(Class<?> clazz, List<Action> actions, Date startDate, Date endDate, Integer start,
-	                                   Integer length);
-	
-	/**
-	 * Marks the specified class and subclasses as monitored by creating corresponding
-	 * {@link MonitoredObject}s and saving them to the database
-	 * 
-	 * @param clazz the class to mark as monitored
-	 * @param subclassesToInclude list of subclasses to mark as monitored objects
-	 * @return the list of saved monitored objects
-	 * @should save the monitored object to the db
-	 * @should return a list of all saved monitored objects
-	 */
-	public <C extends OpenmrsObject> List<MonitoredObject> markAsMonitoredObjects(Class<C> clazz,
-	                                                                              List<Class<? extends C>> subclassesToInclude);
-	
-	/**
-	 * Fetches all the monitored objects
-	 * 
-	 * @return a list of all monitored objects
-	 * @should get all the monitored objects in the db
-	 */
-	public List<MonitoredObject> getAllMonitoredObjects();
-	
-	/**
-	 * Deletes a monitored objects
-	 * 
-	 * @param monitoredObject the object to delete
-	 * @should delete the monitored object from the db
-	 */
-	public void purgeMonitoredObject(MonitoredObject monitoredObject);
+	public List<AuditLog> getAuditLogs(List<Class<OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
+	                                   Date endDate, Integer start, Integer length);
 	
 	/**
 	 * Fetches a saved object with the specified objectId

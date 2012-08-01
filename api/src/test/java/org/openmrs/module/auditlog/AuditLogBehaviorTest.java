@@ -41,6 +41,7 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
+import org.openmrs.module.auditlog.util.AuditLogUtilTest;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.test.annotation.NotTransactional;
 import org.w3c.dom.Document;
@@ -288,16 +289,21 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	public void shouldCreateAnAuditLogEntryWhenAnElementIsRemovedFormAChildCollection() throws Exception {
 		Concept concept = conceptService.getConcept(5089);
 		Assert.assertTrue(concept.isNumeric());
-		//This is a ConceptNumeric, so we need to mark it as monitored
-		auditLogService.markAsMonitoredObjects(ConceptNumeric.class, null);
-		Assert.assertFalse(concept.getConceptMappings().isEmpty());
-		
-		concept.removeDescription(concept.getDescription());
-		conceptService.saveConcept(concept);
-		
-		List<AuditLog> updateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.UPDATED), null,
-		    null, null, null);
-		Assert.assertEquals(1, updateLogs.size());
+		try {
+			//This is a ConceptNumeric, so we need to mark it as monitored
+			AuditLogUtilTest.startMonitoring(ConceptNumeric.class);
+			Assert.assertFalse(concept.getConceptMappings().isEmpty());
+			
+			concept.removeDescription(concept.getDescription());
+			conceptService.saveConcept(concept);
+			
+			List<AuditLog> updateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.UPDATED), null,
+			    null, null, null);
+			Assert.assertEquals(1, updateLogs.size());
+		}
+		finally {
+			AuditLogUtilTest.stopMonitoring(ConceptNumeric.class);
+		}
 	}
 	
 	@Test
@@ -305,17 +311,22 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	public void shouldCreateAnAuditLogEntryWhenAnElementIsAddedToAChildCollection() throws Exception {
 		Concept concept = conceptService.getConcept(5089);
 		Assert.assertTrue(concept.isNumeric());
-		//This is a ConceptNumeric, so we need to mark it as monitored
-		auditLogService.markAsMonitoredObjects(ConceptNumeric.class, null);
-		ConceptDescription cd1 = new ConceptDescription("desc1", Locale.ENGLISH);
-		cd1.setDateCreated(new Date());
-		cd1.setCreator(Context.getAuthenticatedUser());
-		concept.addDescription(cd1);
-		conceptService.saveConcept(concept);
-		
-		List<AuditLog> updateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.UPDATED), null,
-		    null, null, null);
-		Assert.assertEquals(1, updateLogs.size());
+		try {
+			//This is a ConceptNumeric, so we need to mark it as monitored
+			AuditLogUtilTest.startMonitoring(ConceptNumeric.class);
+			ConceptDescription cd1 = new ConceptDescription("desc1", Locale.ENGLISH);
+			cd1.setDateCreated(new Date());
+			cd1.setCreator(Context.getAuthenticatedUser());
+			concept.addDescription(cd1);
+			conceptService.saveConcept(concept);
+			
+			List<AuditLog> updateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.UPDATED), null,
+			    null, null, null);
+			Assert.assertEquals(1, updateLogs.size());
+		}
+		finally {
+			AuditLogUtilTest.stopMonitoring(ConceptNumeric.class);
+		}
 	}
 	
 	/**

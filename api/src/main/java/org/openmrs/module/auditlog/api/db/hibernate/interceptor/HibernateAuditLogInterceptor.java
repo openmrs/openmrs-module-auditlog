@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -18,7 +17,9 @@ import org.apache.commons.logging.LogFactory;
 import org.hibernate.CallbackException;
 import org.hibernate.EmptyInterceptor;
 import org.hibernate.EntityMode;
+import org.hibernate.FlushMode;
 import org.hibernate.Interceptor;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.collection.PersistentCollection;
@@ -32,7 +33,6 @@ import org.openmrs.User;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
-import org.openmrs.module.auditlog.MonitoredObject;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.util.OpenmrsUtil;
@@ -44,10 +44,10 @@ import org.springframework.context.ApplicationContextAware;
 
 /**
  * A hibernate {@link Interceptor} implementation, intercepts any database inserts, updates and
- * deletes and creates audit log entries for {@link MonitoredObject}s, it logs changes for a single
- * session meaning that if User A and B concurrently make changes to the same object, there will be
- * 2 log entries in the DB, one for each user's session. Any changes/inserts/deletes made to the DB
- * that are not made through the application won't be deteceted by the module.
+ * deletes and creates audit log entries for Monitored Objects, it logs changes for a single session
+ * meaning that if User A and B concurrently make changes to the same object, there will be 2 log
+ * entries in the DB, one for each user's session. Any changes/inserts/deletes made to the DB that
+ * are not made through the application won't be detected by the module.
  */
 public class HibernateAuditLogInterceptor extends EmptyInterceptor implements ApplicationContextAware {
 	
@@ -300,24 +300,11 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					return;
 				
 				try {
-					//it is the first time since application startup to access this list we can now
-					//populate it without worrying about hibernate flushes for newly created objects.
-					boolean checkAgainForMonitoredClasses = false;
-					if (monitoredClassNames == null) {
-						checkAgainForMonitoredClasses = true;
-						loadMonitoredClassNames();
-					}
-					
 					User user = Context.getAuthenticatedUser();
 					//TODO handle daemon or un authenticated operations
 					
 					if (inserts.get() != null) {
 						for (OpenmrsObject insert : inserts.get()) {
-							//We should filter out objects of un monitored types that got included 
-							//because the list of monitored classnames was still null
-							if (checkAgainForMonitoredClasses && !monitoredClassNames.contains(insert.getClass().getName()))
-								continue;
-							
 							AuditLog auditLog = new AuditLog(insert.getClass().getName(), insert.getUuid(), Action.CREATED,
 							        user, date);
 							auditLog.setUuid(UUID.randomUUID().toString());
@@ -327,9 +314,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					
 					if (updates.get() != null) {
 						for (OpenmrsObject update : updates.get()) {
-							if (checkAgainForMonitoredClasses && !monitoredClassNames.contains(update.getClass().getName()))
-								continue;
-							
 							AuditLog auditLog = new AuditLog(update.getClass().getName(), update.getUuid(), Action.UPDATED,
 							        user, date);
 							auditLog.setUuid(UUID.randomUUID().toString());
@@ -346,9 +330,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					
 					if (deletes.get() != null) {
 						for (OpenmrsObject delete : deletes.get()) {
-							if (checkAgainForMonitoredClasses && !monitoredClassNames.contains(delete.getClass().getName()))
-								continue;
-							
 							AuditLog auditLog = new AuditLog(delete.getClass().getName(), delete.getUuid(), Action.DELETED,
 							        user, date);
 							auditLog.setUuid(UUID.randomUUID().toString());
@@ -390,20 +371,31 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	 * @return true if the object is a monitored one otherwise false
 	 */
 	private boolean isMonitored(Object obj) {
-		//If monitoredClassNames is still null, we can't load it yet because in case there are 
-		//any new objects, hibernate will flush and them bomb since they have no ids yet
+		if (monitoredClassNames == null)
+			setMonitoredClassNames();
+		
 		return OpenmrsObject.class.isAssignableFrom(obj.getClass())
-		        && (monitoredClassNames == null || monitoredClassNames.contains(obj.getClass().getName()));
+		        && OpenmrsUtil.collectionContains(monitoredClassNames, obj.getClass().getName());
 	}
 	
 	/**
 	 * Convenience method that populates the set of class names for the monitored objects
 	 */
-	private void loadMonitoredClassNames() {
-		List<MonitoredObject> monitoredObjs = getAuditLogDao().getAllMonitoredObjects();
-		monitoredClassNames = new HashSet<String>();
-		
-		for (MonitoredObject monitoredObject : monitoredObjs)
-			monitoredClassNames.add(monitoredObject.getClassName());
+	private void setMonitoredClassNames() {
+		if (monitoredClassNames == null) {
+			SessionFactory sessionFactory = ((SessionFactory) applicationContext.getBean("sessionFactory"));
+			Session session = sessionFactory.getCurrentSession();
+			//If monitoredClassNames is still null, we can't load it yet because in case there are 
+			//any new objects, hibernate will flush and them bomb since they have no ids yet
+			FlushMode originalFlushMode = session.getFlushMode();
+			session.setFlushMode(FlushMode.MANUAL);
+			try {
+				monitoredClassNames = AuditLogUtil.getMonitoredClassNames();
+			}
+			finally {
+				//reset
+				session.setFlushMode(originalFlushMode);
+			}
+		}
 	}
 }

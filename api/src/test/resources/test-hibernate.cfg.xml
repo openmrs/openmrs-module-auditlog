@@ -6,6 +6,5 @@
 <hibernate-configuration>
     <session-factory>
       <mapping resource="AuditLog.hbm.xml" />
-      <mapping resource="MonitoredObject.hbm.xml" />
     </session-factory>
 </hibernate-configuration>

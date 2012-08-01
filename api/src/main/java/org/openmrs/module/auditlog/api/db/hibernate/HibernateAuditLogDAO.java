@@ -20,9 +20,9 @@ import org.hibernate.Criteria;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
+import org.openmrs.OpenmrsObject;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
-import org.openmrs.module.auditlog.MonitoredObject;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,14 +40,14 @@ public class HibernateAuditLogDAO implements AuditLogDAO {
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.db.AuditLogDAO#getAuditLogs(java.lang.Class, List,
-	 *      java.util.Date, java.util.Date, java.lang.Integer, java.lang.Integer)
+	 * @see org.openmrs.module.auditlog.db.AuditLogDAO#getAuditLogs(List, List, java.util.Date,
+	 *      java.util.Date, java.lang.Integer, java.lang.Integer)
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	@Transactional(readOnly = true)
-	public List<AuditLog> getAuditLogs(Class<?> clazz, List<Action> actions, Date startDate, Date endDate, Integer start,
-	                                   Integer length) {
+	public List<AuditLog> getAuditLogs(List<Class<OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
+	                                   Date endDate, Integer start, Integer length) {
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(AuditLog.class);
 		if (actions != null)
 			criteria.add(Restrictions.in("action", actions));
@@ -70,16 +70,6 @@ public class HibernateAuditLogDAO implements AuditLogDAO {
 	public <T> T save(T object) {
 		sessionFactory.getCurrentSession().save(object);
 		return object;
-	}
-	
-	/**
-	 * @see org.openmrs.module.auditlog.db.AuditLogDAO#getAllMonitoredObjects()
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	@Transactional(readOnly = true)
-	public List<MonitoredObject> getAllMonitoredObjects() {
-		return sessionFactory.getCurrentSession().createCriteria(MonitoredObject.class).list();
 	}
 	
 	/**

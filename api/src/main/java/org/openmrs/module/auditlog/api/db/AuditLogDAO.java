@@ -17,9 +17,9 @@ package org.openmrs.module.auditlog.api.db;
 import java.util.Date;
 import java.util.List;
 
+import org.openmrs.OpenmrsObject;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
-import org.openmrs.module.auditlog.MonitoredObject;
 import org.openmrs.module.auditlog.api.AuditLogService;
 
 /**
@@ -28,10 +28,10 @@ import org.openmrs.module.auditlog.api.AuditLogService;
 public interface AuditLogDAO {
 	
 	/**
-	 * @see AuditLogService#getAuditLogs(Class, List, Date, Date, Integer, Integer)
+	 * @see AuditLogService#getAuditLogs(List, List, Date, Date, Integer, Integer)
 	 */
-	public List<AuditLog> getAuditLogs(Class<?> clazz, List<Action> actions, Date startDate, Date endDate, Integer start,
-	                                   Integer length);
+	public List<AuditLog> getAuditLogs(List<Class<OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
+	                                   Date endDate, Integer start, Integer length);
 	
 	/**
 	 * Saves the specified object to the database
@@ -42,12 +42,7 @@ public interface AuditLogDAO {
 	public <T> T save(T object);
 	
 	/**
-	 * @see AuditLogService#getAllMonitoredObjects()
-	 */
-	public List<MonitoredObject> getAllMonitoredObjects();
-	
-	/**
-	 * @see AuditLogService#purgeMonitoredObject(MonitoredObject)
+	 * @see AuditLogService
 	 */
 	public void delete(Object object);
 	
