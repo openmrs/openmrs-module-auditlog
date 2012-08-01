@@ -337,7 +337,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 						}
 					}
 					
-					//Ensure we don't step through the interceptor methods again when saving the auditLog
+					//Ensures we don't step through the interceptor methods again when saving the auditLog
 					disableInterceptor.set(true);
 					
 					//at this point, the transaction is already committed, 
@@ -377,7 +377,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 			SessionFactory sessionFactory = ((SessionFactory) applicationContext.getBean("sessionFactory"));
 			Session session = sessionFactory.getCurrentSession();
 			//If monitoredClassNames is still null, we can't load it yet because in case there are 
-			//any new objects, hibernate will flush and them bomb since they have no ids yet
+			//any new objects, hibernate will flush and them bomb with because of new objects with no ids
 			FlushMode originalFlushMode = session.getFlushMode();
 			session.setFlushMode(FlushMode.MANUAL);
 			try {
