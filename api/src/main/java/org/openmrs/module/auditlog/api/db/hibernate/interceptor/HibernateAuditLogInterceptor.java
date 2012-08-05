@@ -34,6 +34,7 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
+import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.util.OpenmrsUtil;
 import org.openmrs.util.Reflect;
@@ -67,8 +68,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	
 	//we will need to disable the interceptor when saving the auditlog to avoid going in circles
 	private ThreadLocal<Boolean> disableInterceptor = new ThreadLocal<Boolean>();
-	
-	private static Set<String> monitoredClassNames = null;
 	
 	private AuditLogDAO auditLogDao;
 	
@@ -366,22 +365,23 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	}
 	
 	/**
-	 * Checks if specified object is among the ones that are monitored and is an
-	 * {@link OpenmrsObject}
+	 * Checks if specified object is monitored, it actually delegates to
+	 * {@link #isMonitoredInternal(Class)} Its role is to check if the monitored classes are not yet
+	 * cached so that it turns off hibernate auto flushing in case we have new objects without ids
+	 * when the Global Property {@link AuditLogConstants#AUDITLOG_GP_MONITORED_CLASSES} is getting
+	 * read
 	 * 
 	 * @param obj the object the check
 	 * @return true if the object is a monitored one otherwise false
 	 */
 	private boolean isMonitored(Object obj) {
-		if (monitoredClassNames == null) {
+		if (!AuditLogUtil.areMonitoredClassnamesCached()) {
 			SessionFactory sessionFactory = ((SessionFactory) applicationContext.getBean("sessionFactory"));
 			Session session = sessionFactory.getCurrentSession();
-			//If monitoredClassNames is still null, we can't load it yet because in case there are 
-			//any new objects, hibernate will flush and them bomb with because of new objects with no ids
 			FlushMode originalFlushMode = session.getFlushMode();
 			session.setFlushMode(FlushMode.MANUAL);
 			try {
-				monitoredClassNames = AuditLogUtil.getMonitoredClassNames();
+				return isMonitoredInternal(obj.getClass());
 			}
 			finally {
 				//reset
@@ -389,7 +389,18 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 			}
 		}
 		
-		return OpenmrsObject.class.isAssignableFrom(obj.getClass())
-		        && OpenmrsUtil.collectionContains(monitoredClassNames, obj.getClass().getName());
+		return isMonitoredInternal(obj.getClass());
+	}
+	
+	/**
+	 * Checks if specified object is among the ones that are monitored and is an
+	 * {@link OpenmrsObject}
+	 * 
+	 * @param clazz the class to check against
+	 * @return true if it is monitored otherwise false
+	 */
+	private boolean isMonitoredInternal(Class<?> clazz) {
+		return OpenmrsObject.class.isAssignableFrom(clazz)
+		        && OpenmrsUtil.collectionContains(AuditLogUtil.getMonitoredClassNames(), clazz.getName());
 	}
 }

@@ -51,7 +51,7 @@
 		<tr class="${moduleId}_${auditLog.action}">
    			<td>${auditLog.className}</td>
    			<td>${auditLog.objectUuid}</td>
-   			<td>${auditLog.userDetails}</td>
+   			<td>${auditLog.user.personName}</td>
    			<td><openmrs:formatDate date="${auditLog.dateCreated}" type="long" /></td>
 		</tr>
 	</c:forEach>

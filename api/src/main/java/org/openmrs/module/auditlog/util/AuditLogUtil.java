@@ -27,7 +27,6 @@ import org.apache.commons.logging.LogFactory;
 import org.openmrs.GlobalProperty;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.api.AdministrationService;
-import org.openmrs.api.GlobalPropertyListener;
 import org.openmrs.api.context.Context;
 import org.openmrs.util.OpenmrsUtil;
 import org.w3c.dom.Document;
@@ -38,7 +37,7 @@ import org.xml.sax.InputSource;
 /**
  * Contains static utility methods
  */
-public class AuditLogUtil implements GlobalPropertyListener {
+public class AuditLogUtil {
 	
 	private static final Log log = LogFactory.getLog(AuditLogUtil.class);
 	
@@ -53,6 +52,10 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	public static final String ATTRIBUTE_NAME = "name";
 	
 	private static Set<String> monitoredClassnamesCache;
+	
+	public static boolean areMonitoredClassnamesCached() {
+		return monitoredClassnamesCache != null;
+	}
 	
 	/**
 	 * Marks the specified classes as monitored by adding their class names to the
@@ -242,33 +245,9 @@ public class AuditLogUtil implements GlobalPropertyListener {
 		try {
 			as.saveGlobalProperty(gp);
 		}
-		catch (Exception e) {
-			//In case the changes were not persisted, the cache should still get updated
+		finally {
+			//The cache needs to be rebuilt
 			monitoredClassnamesCache = null;
 		}
-	}
-	
-	/**
-	 * @see org.openmrs.api.GlobalPropertyListener#globalPropertyChanged(org.openmrs.GlobalProperty)
-	 */
-	@Override
-	public void globalPropertyChanged(GlobalProperty gp) {
-		monitoredClassnamesCache = null;
-	}
-	
-	/**
-	 * @see org.openmrs.api.GlobalPropertyListener#globalPropertyDeleted(java.lang.String)
-	 */
-	@Override
-	public void globalPropertyDeleted(String arg0) {
-		monitoredClassnamesCache = null;
-	}
-	
-	/**
-	 * @see org.openmrs.api.GlobalPropertyListener#supportsPropertyName(java.lang.String)
-	 */
-	@Override
-	public boolean supportsPropertyName(String propertyName) {
-		return propertyName.equals(AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES);
 	}
 }
