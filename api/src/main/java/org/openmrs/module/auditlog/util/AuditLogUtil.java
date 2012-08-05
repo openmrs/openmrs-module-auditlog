@@ -106,6 +106,15 @@ public class AuditLogUtil {
 	}
 	
 	/**
+	 * Drops the monitored class names cache so that it gets rebuilt, typicallly this si supposed to
+	 * be called when the {@link GlobalProperty}
+	 * {@link AuditLogConstants#AUDITLOG_GP_MONITORED_CLASSES} gets edited
+	 */
+	public static void invalidateMonitoredClassNamesCache() {
+		monitoredClassnamesCache = null;
+	}
+	
+	/**
 	 * Utility method that generates the xml for edited properties including their previous and new
 	 * property values of an edited object
 	 * 
@@ -245,8 +254,9 @@ public class AuditLogUtil {
 		try {
 			as.saveGlobalProperty(gp);
 		}
-		finally {
-			//The cache needs to be rebuilt
+		catch (Exception e) {
+			//The cache needs to be rebuilt since we already updated the 
+			//cached above but the GP value didn't get updated in the DB
 			monitoredClassnamesCache = null;
 		}
 	}

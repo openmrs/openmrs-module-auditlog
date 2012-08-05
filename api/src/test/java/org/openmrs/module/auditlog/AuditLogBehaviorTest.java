@@ -16,9 +16,11 @@ package org.openmrs.module.auditlog;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Vector;
+import java.util.Set;
 
 import junit.framework.Assert;
 
@@ -32,14 +34,17 @@ import org.openmrs.ConceptDescription;
 import org.openmrs.ConceptName;
 import org.openmrs.ConceptNumeric;
 import org.openmrs.EncounterType;
+import org.openmrs.GlobalProperty;
 import org.openmrs.Location;
 import org.openmrs.PatientIdentifierType;
+import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.PatientService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.api.AuditLogService;
+import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.module.auditlog.util.AuditLogUtilTest;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
@@ -171,7 +176,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@Test
 	public void shouldHandleInsertsOrUpdatesOrDeletesInEachTransactionIndependently() throws InterruptedException {
 		final int N = 50;
-		final List<Thread> threads = new Vector<Thread>();
+		final Set<Thread> threads = new LinkedHashSet<Thread>();
 		
 		for (int i = 0; i < N; i++) {
 			threads.add(new Thread(new Runnable() {
@@ -208,11 +213,13 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 			}, new Integer(i).toString()));
 		}
 		
-		for (int i = 0; i < N; ++i)
-			threads.get(i).start();
+		for (Thread thread : threads) {
+			thread.start();
+		}
 		
-		for (int i = 0; i < N; ++i)
-			threads.get(i).join();
+		for (Thread thread : threads) {
+			thread.join();
+		}
 		
 		Assert.assertEquals(N, auditLogService.getAuditLogs(null, null, null, null, null, null).size());
 		
@@ -290,6 +297,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		Concept concept = conceptService.getConcept(5089);
 		Assert.assertTrue(concept.isNumeric());
 		try {
+			AuditLogUtil.getMonitoredClassNames();
 			//This is a ConceptNumeric, so we need to mark it as monitored
 			AuditLogUtilTest.startMonitoring(ConceptNumeric.class);
 			Assert.assertFalse(concept.getConceptMappings().isEmpty());
@@ -327,6 +335,55 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		finally {
 			AuditLogUtilTest.stopMonitoring(ConceptNumeric.class);
 		}
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldUpdateTheMonitoredClassCacheWhenTheMonitoredClassGlobalPropertyIsUpdatedWithAnAddition()
+	    throws Exception {
+		Assert.assertFalse(AuditLogUtil.getMonitoredClassNames().contains(ConceptNumeric.class.getName()));
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES);
+		Set<String> monitoredClasses = new HashSet<String>();
+		try {
+			monitoredClasses.addAll(AuditLogUtil.getMonitoredClassNames());
+			monitoredClasses.add(ConceptNumeric.class.getName());
+			gp.setPropertyValue(StringUtils.join(monitoredClasses, ","));
+			as.saveGlobalProperty(gp);
+			Assert.assertTrue(AuditLogUtil.getMonitoredClassNames().contains(ConceptNumeric.class.getName()));
+		}
+		finally {
+			//reset
+			monitoredClasses.remove(ConceptNumeric.class.getName());
+			gp.setPropertyValue(StringUtils.join(monitoredClasses, ","));
+			as.saveGlobalProperty(gp);
+		}
+		Assert.assertFalse(AuditLogUtil.getMonitoredClassNames().contains(ConceptNumeric.class.getName()));
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldUpdateTheMonitoredClassCacheWhenTheMonitoredClassGlobalPropertyIsUpdatedWithARemoval()
+	    throws Exception {
+		Assert.assertTrue(AuditLogUtil.getMonitoredClassNames().contains(Concept.class.getName()));
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES);
+		Set<String> monitoredClasses = new HashSet<String>();
+		try {
+			monitoredClasses.addAll(AuditLogUtil.getMonitoredClassNames());
+			monitoredClasses.remove(Concept.class.getName());
+			gp.setPropertyValue(StringUtils.join(monitoredClasses, ","));
+			as.saveGlobalProperty(gp);
+			Assert.assertFalse(AuditLogUtil.getMonitoredClassNames().contains(Concept.class.getName()));
+		}
+		finally {
+			
+			//reset
+			monitoredClasses.add(Concept.class.getName());
+			gp.setPropertyValue(StringUtils.join(monitoredClasses, ","));
+			as.saveGlobalProperty(gp);
+		}
+		Assert.assertTrue(AuditLogUtil.getMonitoredClassNames().contains(Concept.class.getName()));
 	}
 	
 	/**

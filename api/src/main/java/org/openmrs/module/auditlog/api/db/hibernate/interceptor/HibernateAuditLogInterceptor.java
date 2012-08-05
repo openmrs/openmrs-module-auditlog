@@ -28,6 +28,7 @@ import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.type.StringType;
 import org.hibernate.type.TextType;
 import org.hibernate.type.Type;
+import org.openmrs.GlobalProperty;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.User;
 import org.openmrs.api.context.Context;
@@ -102,6 +103,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	 */
 	@Override
 	public boolean onSave(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
+		invalidateMonitoredClassnameCachedfNecessary(entity);
 		if (isMonitored(entity)) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			if (log.isDebugEnabled())
@@ -124,6 +126,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	@Override
 	public boolean onFlushDirty(Object entity, Serializable id, Object[] currentState, Object[] previousState,
 	                            String[] propertyNames, Type[] types) {
+		
+		invalidateMonitoredClassnameCachedfNecessary(entity);
 		if (isMonitored(entity) && propertyNames != null) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			Map<String, Object[]> propertyChangesMap = null;
@@ -210,6 +214,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	 */
 	@Override
 	public void onDelete(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
+		invalidateMonitoredClassnameCachedfNecessary(entity);
 		if (isMonitored(entity)) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			if (log.isDebugEnabled())
@@ -402,5 +407,19 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	private boolean isMonitoredInternal(Class<?> clazz) {
 		return OpenmrsObject.class.isAssignableFrom(clazz)
 		        && OpenmrsUtil.collectionContains(AuditLogUtil.getMonitoredClassNames(), clazz.getName());
+	}
+	
+	/**
+	 * Sends a signal to invalidate the monitored class names cache when the
+	 * {@link AuditLogConstants#AUDITLOG_GP_MONITORED_CLASSES} global property gets edited, created
+	 * or deleted
+	 * 
+	 * @param entity the created/edited/updated object
+	 */
+	private void invalidateMonitoredClassnameCachedfNecessary(Object entity) {
+		if (GlobalProperty.class.isAssignableFrom(entity.getClass())) {
+			if (AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES.equals(((GlobalProperty) entity).getProperty()))
+				AuditLogUtil.invalidateMonitoredClassNamesCache();
+		}
 	}
 }
