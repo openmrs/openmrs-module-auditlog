@@ -28,7 +28,6 @@ import org.openmrs.GlobalProperty;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.context.Context;
-import org.openmrs.util.OpenmrsUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -155,21 +154,18 @@ public class AuditLogUtil {
 	 * Gets the text content of a nested previous or new tag inside a property tag with a name
 	 * attribute matching the specified property name
 	 * 
-	 * @param rootElement {@link Element} object
-	 * @param propertyName
-	 * @param nestedTagName specifies the name of the nested tag of a property tag whose value to
-	 *            return i.e previous vs new
+	 * @param propertyEle {@link Element} object
+	 * @param getNew specifies which value to value to return i.e previous vs new
 	 * @return the text content of the nested tag
 	 * @throws Exception
 	 */
-	public static String getPreviousOrNewPropertyValue(Element rootElement, String propertyName, String nestedTagName)
-	    throws Exception {
-		Element propertyEle = getPropertyTagByNameAttribute(rootElement, propertyName);
+	public static String getPreviousOrNewPropertyValue(Element propertyEle, boolean getNew) throws Exception {
 		if (propertyEle != null) {
-			Element newEle = getElement(propertyEle, nestedTagName);
-			if (newEle != null) {
-				if (newEle.getTextContent() != null)
-					return newEle.getTextContent().trim();
+			String tagName = (getNew) ? NODE_NEW : NODE_PREVIOUS;
+			Element ele = getElement(propertyEle, tagName);
+			if (ele != null) {
+				if (ele.getTextContent() != null)
+					return ele.getTextContent().trim();
 			}
 		}
 		return null;
@@ -184,24 +180,6 @@ public class AuditLogUtil {
 	 */
 	public static Document createDocument(String xml) throws Exception {
 		return DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(new StringReader(xml)));
-	}
-	
-	/**
-	 * Gets the property tag with a name attribute matching the specified value
-	 * 
-	 * @param rootElement {@link Element} object
-	 * @param attributeValue
-	 * @return the matching property {@link Element} object
-	 * @throws Exception
-	 */
-	private static Element getPropertyTagByNameAttribute(Element rootElement, String attributeValue) throws Exception {
-		NodeList nodeList = rootElement.getElementsByTagName(AuditLogUtil.NODE_PROPERTY);
-		for (int i = 0; i < nodeList.getLength(); i++) {
-			Element tag = (Element) nodeList.item(i);
-			if (OpenmrsUtil.nullSafeEquals(tag.getAttribute(AuditLogUtil.ATTRIBUTE_NAME), attributeValue))
-				return tag;
-		}
-		return null;
 	}
 	
 	/**

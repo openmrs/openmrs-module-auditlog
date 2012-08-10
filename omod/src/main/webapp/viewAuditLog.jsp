@@ -48,7 +48,8 @@
 	</thead>
 	<tbody>
 	<c:forEach items="${auditLogs}" var="auditLog">
-		<tr class="${moduleId}_${auditLog.action}">
+		<tr class="${moduleId}_${auditLog.action}"
+		   <c:if test="${auditLog.action == 'UPDATED'}">onclick="javascript:alert('This was updated')"</c:if>>
    			<td>${auditLog.className}</td>
    			<td>${auditLog.objectUuid}</td>
    			<td>${auditLog.user.personName}</td>

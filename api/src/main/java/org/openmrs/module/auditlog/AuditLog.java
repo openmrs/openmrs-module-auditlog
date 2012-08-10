@@ -15,8 +15,17 @@ package org.openmrs.module.auditlog;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.openmrs.User;
+import org.openmrs.module.auditlog.util.AuditLogUtil;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 /**
  * Encapsulates data for a single audit log entry
@@ -24,6 +33,8 @@ import org.openmrs.User;
 public final class AuditLog implements Serializable {
 	
 	private static final long serialVersionUID = 1L;
+	
+	private static final Log log = LogFactory.getLog(AuditLog.class);
 	
 	private Integer auditLogId;
 	
@@ -41,6 +52,8 @@ public final class AuditLog implements Serializable {
 	private Date dateCreated;
 	
 	private String uuid;
+	
+	private transient Map<String, String[]> changes;
 	
 	/**
 	 * Xml for new and old values in case of edited fields
@@ -184,17 +197,52 @@ public final class AuditLog implements Serializable {
 	}
 	
 	/**
-	 * @return the newAndPreviousValuesXml
-	 */
-	public String getChangesXml() {
-		return changesXml;
-	}
-	
-	/**
 	 * @param newAndPreviousValuesXml the newAndPreviousValuesXml to set
 	 */
 	public void setChangesXml(String newAndPreviousValuesXml) {
 		this.changesXml = newAndPreviousValuesXml;
+	}
+	
+	/**
+	 * Returns a map of changes where the key if the property name and the value is a String array
+	 * of length 2 with the new value at index 0 and the previous value at index 1
+	 * 
+	 * @return
+	 */
+	public Map<String, String[]> getChanges() {
+		if (StringUtils.isNotBlank(changesXml) && changes == null)
+			changes = convertChangesXmlToMap(changesXml);
+		return changes;
+	}
+	
+	/**
+	 * Takes the changes xml and converts it to a map where the key if the property name and the
+	 * value is a String array of length 2 with the new value at index 0 and the previous value at
+	 * index 1
+	 * 
+	 * @param changesXml the xml to convert
+	 * @return the properties names mapped to their new and previous values
+	 */
+	private static Map<String, String[]> convertChangesXmlToMap(String changesXml) {
+		Map<String, String[]> map = new HashMap<String, String[]>();
+		Document doc;
+		try {
+			doc = AuditLogUtil.createDocument(changesXml);
+			Element changesElement = doc.getDocumentElement();
+			if (changesElement != null) {
+				NodeList propertyElements = changesElement.getElementsByTagName(AuditLogUtil.NODE_PROPERTY);
+				for (int i = 0; i < propertyElements.getLength(); i++) {
+					Element propertyEle = (Element) propertyElements.item(i);
+					String newValue = AuditLogUtil.getPreviousOrNewPropertyValue(propertyEle, true);
+					String previousValue = AuditLogUtil.getPreviousOrNewPropertyValue(propertyEle, false);
+					map.put(propertyEle.getAttribute(AuditLogUtil.ATTRIBUTE_NAME), new String[] { newValue, previousValue });
+				}
+			}
+		}
+		catch (Exception e) {
+			log.error("Failed parse changes xml", e);
+		}
+		return map;
 	}
 	
 	/**

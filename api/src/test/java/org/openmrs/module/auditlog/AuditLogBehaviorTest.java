@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Assert;
@@ -132,24 +133,15 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		//Should have created entries for the changes properties and their old values
 		Assert.assertEquals(Action.UPDATED, auditLog.getAction());
 		//Check that there 3 property tag entries
-		String changesXml = auditLog.getChangesXml();
-		Document doc = AuditLogUtil.createDocument(changesXml);
-		Assert.assertFalse(StringUtils.isBlank(changesXml));
-		Element changesElement = doc.getDocumentElement();
-		Assert.assertEquals(3, getCountOfPropertyTags(changesElement));
-		Assert.assertEquals(oldConceptClassId.toString(),
-		    AuditLogUtil.getPreviousOrNewPropertyValue(changesElement, "conceptClass", AuditLogUtil.NODE_PREVIOUS));
-		Assert.assertEquals(oldDatatypeId.toString(),
-		    AuditLogUtil.getPreviousOrNewPropertyValue(changesElement, "datatype", AuditLogUtil.NODE_PREVIOUS));
-		Assert.assertEquals(oldVersion,
-		    AuditLogUtil.getPreviousOrNewPropertyValue(changesElement, "version", AuditLogUtil.NODE_PREVIOUS));
+		Map<String, String[]> changes = auditLog.getChanges();
+		Assert.assertEquals(3, changes.size());
+		Assert.assertEquals(oldConceptClassId.toString(), changes.get("conceptClass")[1]);
+		Assert.assertEquals(oldDatatypeId.toString(), changes.get("datatype")[1]);
+		Assert.assertEquals(oldVersion, changes.get("version")[1]);
 		
-		Assert.assertEquals(cc.getConceptClassId().toString(),
-		    AuditLogUtil.getPreviousOrNewPropertyValue(changesElement, "conceptClass", AuditLogUtil.NODE_NEW));
-		Assert.assertEquals(dt.getConceptDatatypeId().toString(),
-		    AuditLogUtil.getPreviousOrNewPropertyValue(changesElement, "datatype", AuditLogUtil.NODE_NEW));
-		Assert.assertEquals(newVersion,
-		    AuditLogUtil.getPreviousOrNewPropertyValue(changesElement, "version", AuditLogUtil.NODE_NEW));
+		Assert.assertEquals(cc.getConceptClassId().toString(), changes.get("conceptClass")[0]);
+		Assert.assertEquals(dt.getConceptDatatypeId().toString(), changes.get("datatype")[0]);
+		Assert.assertEquals(newVersion, changes.get("version")[0]);
 	}
 	
 	@Test
