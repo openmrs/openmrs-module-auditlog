@@ -229,25 +229,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	}
 	
 	/**
-	 * @see org.hibernate.EmptyInterceptor#onCollectionRecreate(java.lang.Object,
-	 *      java.io.Serializable)
-	 */
-	@Override
-	public void onCollectionRecreate(Object collection, Serializable key) throws CallbackException {
-		//if (collection != null && !((AbstractPersistentCollection) collection).empty())
-		//	System.err.println("\nAdded new collection:" + ((AbstractPersistentCollection) collection).getRole());
-	}
-	
-	/**
-	 * @see org.hibernate.EmptyInterceptor#onCollectionRemove(java.lang.Object,
-	 *      java.io.Serializable)
-	 */
-	@Override
-	public void onCollectionRemove(Object collection, Serializable key) throws CallbackException {
-		//System.err.println("\nRemoved collection:" + ((AbstractPersistentCollection) collection).getRole());
-	}
-	
-	/**
 	 * @see org.hibernate.EmptyInterceptor#onCollectionUpdate(java.lang.Object,
 	 *      java.io.Serializable)
 	 */
