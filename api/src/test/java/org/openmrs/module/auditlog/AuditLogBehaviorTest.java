@@ -37,6 +37,7 @@ import org.openmrs.ConceptNumeric;
 import org.openmrs.EncounterType;
 import org.openmrs.GlobalProperty;
 import org.openmrs.Location;
+import org.openmrs.OpenmrsObject;
 import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ConceptService;
@@ -50,9 +51,6 @@ import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.module.auditlog.util.AuditLogUtilTest;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.test.annotation.NotTransactional;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 @SuppressWarnings("deprecation")
 public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
@@ -369,7 +367,6 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 			Assert.assertFalse(AuditLogUtil.getMonitoredClassNames().contains(Concept.class.getName()));
 		}
 		finally {
-			
 			//reset
 			monitoredClasses.add(Concept.class.getName());
 			gp.setPropertyValue(StringUtils.join(monitoredClasses, ","));
@@ -378,17 +375,48 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(AuditLogUtil.getMonitoredClassNames().contains(Concept.class.getName()));
 	}
 	
-	/**
-	 * Gets the count of property tags in the specified {@link Document}
-	 * 
-	 * @param doc
-	 * @return the count
-	 * @throws Exception
-	 */
-	private int getCountOfPropertyTags(Element rootElement) throws Exception {
-		NodeList nodeList = rootElement.getElementsByTagName(AuditLogUtil.NODE_PROPERTY);
-		if (nodeList != null)
-			return nodeList.getLength();
-		return 0;
+	@Test
+	@NotTransactional
+	public void shouldMonitorAnyOpenmrsObjectWhenStrateyIsSetToAll() throws Exception {
+		Assert.assertFalse(AuditLogUtil.getMonitoredClassNames().contains(Location.class.getName()));
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.AUDITLOG_GP_MONITORING_STRATEGY);
+		String originalGpValue = gp.getPropertyValue();
+		try {
+			gp.setPropertyValue(MonitoringStrategy.ALL.toString());
+			as.saveGlobalProperty(gp);
+			Location location = new Location();
+			location.setName("new location");
+			Context.getLocationService().saveLocation(location);
+			List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
+			clazzes.add(Location.class);//exclude Global Property logs
+			Assert.assertEquals(1, auditLogService.getAuditLogs(clazzes, null, null, null, null, null).size());
+		}
+		finally {
+			//reset
+			gp.setPropertyValue(originalGpValue);
+			as.saveGlobalProperty(gp);
+		}
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldNotMonitorAnyObjectWhenStrateyIsSetToNone() throws Exception {
+		Assert.assertTrue(AuditLogUtil.getMonitoredClassNames().contains(EncounterType.class.getName()));
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.AUDITLOG_GP_MONITORING_STRATEGY);
+		String originalGpValue = gp.getPropertyValue();
+		try {
+			gp.setPropertyValue(MonitoringStrategy.NONE.toString());
+			as.saveGlobalProperty(gp);
+			EncounterType encounterType = encounterService.getEncounterType(6);
+			encounterService.purgeEncounterType(encounterType);
+			Assert.assertEquals(0, auditLogService.getAuditLogs(null, null, null, null, null, null).size());
+		}
+		finally {
+			//reset
+			gp.setPropertyValue(originalGpValue);
+			as.saveGlobalProperty(gp);
+		}
 	}
 }

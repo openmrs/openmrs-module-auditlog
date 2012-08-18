@@ -30,7 +30,7 @@ public interface AuditLogDAO {
 	/**
 	 * @see AuditLogService#getAuditLogs(List, List, Date, Date, Integer, Integer)
 	 */
-	public List<AuditLog> getAuditLogs(List<Class<OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
+	public List<AuditLog> getAuditLogs(List<Class<? extends OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
 	                                   Date endDate, Integer start, Integer length);
 	
 	/**

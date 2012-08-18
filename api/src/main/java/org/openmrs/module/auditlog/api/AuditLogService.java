@@ -41,9 +41,10 @@ public interface AuditLogService extends OpenmrsService {
 	 *            <code>null<code>)
 	 * @return a list of matching {@link AuditLog}s
 	 * @should return all audit logs in the database if all args are null
-	 * @should match on the specified audit log action
+	 * @should match on the specified audit log actions
+	 * @should match on the specified classes
 	 */
-	public List<AuditLog> getAuditLogs(List<Class<OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
+	public List<AuditLog> getAuditLogs(List<Class<? extends OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
 	                                   Date endDate, Integer start, Integer length);
 	
 	/**

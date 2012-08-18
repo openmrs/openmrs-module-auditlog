@@ -23,6 +23,9 @@ public final class AuditLogConstants {
 	//Custom value to represent a null value
 	//public static final String AUDITLOG_UNDEFINED_VALUE = "AUDITLOG_UNDEFINED_VALUE";
 	
+	//Specifies the monitoring strategy in use
+	public static final String AUDITLOG_GP_MONITORING_STRATEGY = MODULE_ID + ".monitoringStrategy";
+	
 	//Classes names for the objects to monitor
 	public static final String AUDITLOG_GP_MONITORED_CLASSES = MODULE_ID + ".monitoredClasses";
 }

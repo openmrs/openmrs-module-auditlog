@@ -20,6 +20,9 @@ import junit.framework.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.openmrs.Concept;
+import org.openmrs.ConceptName;
+import org.openmrs.OpenmrsObject;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
@@ -43,8 +46,8 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	 * @see {@link AuditLogService#getAuditLogs(Class<*>,List<Action>,Date,Date,Integer,Integer)}
 	 */
 	@Test
-	@Verifies(value = "should match on the specified audit log action", method = "getAuditLogs(Class<*>,List<Action>,Date,Date,Integer,Integer)")
-	public void getAuditLogs_shouldMatchOnTheSpecifiedAuditLogAction() throws Exception {
+	@Verifies(value = "should match on the specified audit log actions", method = "getAuditLogs(Class<*>,List<Action>,Date,Date,Integer,Integer)")
+	public void getAuditLogs_shouldMatchOnTheSpecifiedAuditLogActions() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		List<Action> actions = new ArrayList<Action>();
 		actions.add(Action.CREATED);//get only inserts
@@ -70,5 +73,20 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	public void getAuditLogs_shouldReturnAllAuditLogsInTheDatabaseIfAllArgsAreNull() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		Assert.assertEquals(4, service.getAuditLogs(null, null, null, null, null, null).size());
+	}
+	
+	/**
+	 * @see {@link AuditLogService#getAuditLogs(List<QClass<OpenmrsObject>>,List<Action>,Date,Date,
+	 *      Integer,Integer)}
+	 */
+	@Test
+	@Verifies(value = "should match on the specified classes", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
+	public void getAuditLogs_shouldMatchOnTheSpecifiedClasses() throws Exception {
+		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
+		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
+		clazzes.add(Concept.class);
+		Assert.assertEquals(3, service.getAuditLogs(clazzes, null, null, null, null, null).size());
+		clazzes.add(ConceptName.class);
+		Assert.assertEquals(4, service.getAuditLogs(clazzes, null, null, null, null, null).size());
 	}
 }

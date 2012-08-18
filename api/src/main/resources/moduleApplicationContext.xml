@@ -58,5 +58,14 @@
 	<bean id="auditLogDAO" class="${project.parent.groupId}.${project.parent.artifactId}.api.db.hibernate.HibernateAuditLogDAO">
 		<property name="sessionFactory" ref="sessionFactory" />
 	</bean>
+	
+	<!-- Module global property listeners -->
+	<bean id="${project.parent.artifactId}EventListeners" parent="openmrsEventListeners">
+	    <property name="globalPropertyListeners">
+	        <list value-type="org.openmrs.api.GlobalPropertyListener">
+	            <bean class="org.openmrs.module.auditlog.util.AuditLogUtil" />
+	        </list>
+	    </property>
+	</bean>
  
 </beans>

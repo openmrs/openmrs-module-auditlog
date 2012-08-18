@@ -7,7 +7,7 @@
 	<name>${project.parent.name}</name>
 	<version>${project.parent.version}</version>
 	<package>${project.parent.groupId}.${project.parent.artifactId}</package>
-	<author>wyclif</author>
+	<author>Wyclif</author>
 	<description>
 		${project.parent.description}
 	</description>
@@ -31,6 +31,15 @@
 		<property>${project.parent.artifactId}.monitoredClasses</property>
 		<defaultValue></defaultValue>
 		<description>Specifies the class names of objects for which to maintain an audit log</description>
+	</globalProperty>
+	
+	<globalProperty>
+		<property>${project.parent.artifactId}.monitoringStrategy</property>
+		<defaultValue>NONE_EXCEPT</defaultValue>
+		<description>
+			Specifies the monitoring strategy to be used by the audit log module, allowed values are: 
+			ALL, ALL_EXCEPT, NONE, NONE_EXCEPT
+		</description>
 	</globalProperty>
 	
 	<!-- Maps hibernate file's, if present -->

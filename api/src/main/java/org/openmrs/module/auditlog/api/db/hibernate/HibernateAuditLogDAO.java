@@ -13,9 +13,11 @@
  */
 package org.openmrs.module.auditlog.api.db.hibernate;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.hibernate.Criteria;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Order;
@@ -46,9 +48,16 @@ public class HibernateAuditLogDAO implements AuditLogDAO {
 	@SuppressWarnings("unchecked")
 	@Override
 	@Transactional(readOnly = true)
-	public List<AuditLog> getAuditLogs(List<Class<OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
+	public List<AuditLog> getAuditLogs(List<Class<? extends OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
 	                                   Date endDate, Integer start, Integer length) {
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(AuditLog.class);
+		if (CollectionUtils.isNotEmpty(clazzes)) {
+			List<String> classNames = new ArrayList<String>();
+			for (Class<? extends OpenmrsObject> clazz : clazzes) {
+				classNames.add(clazz.getName());
+			}
+			criteria.add(Restrictions.in("className", classNames));
+		}
 		if (actions != null)
 			criteria.add(Restrictions.in("action", actions));
 		

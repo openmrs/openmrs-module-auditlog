@@ -50,7 +50,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 *      java.util.Date, java.lang.Integer, java.lang.Integer)
 	 */
 	@Override
-	public List<AuditLog> getAuditLogs(List<Class<OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
+	public List<AuditLog> getAuditLogs(List<Class<? extends OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
 	                                   Date endDate, Integer start, Integer length) {
 		return dao.getAuditLogs(clazzes, actions, startDate, endDate, start, length);
 	}

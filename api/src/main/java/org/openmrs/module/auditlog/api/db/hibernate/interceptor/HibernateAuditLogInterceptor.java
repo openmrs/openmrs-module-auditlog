@@ -28,12 +28,12 @@ import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.type.StringType;
 import org.hibernate.type.TextType;
 import org.hibernate.type.Type;
-import org.openmrs.GlobalProperty;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.User;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
+import org.openmrs.module.auditlog.MonitoringStrategy;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
@@ -103,7 +103,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	 */
 	@Override
 	public boolean onSave(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
-		invalidateMonitoredClassnameCachedfNecessary(entity);
 		if (isMonitored(entity)) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			if (log.isDebugEnabled())
@@ -127,7 +126,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	public boolean onFlushDirty(Object entity, Serializable id, Object[] currentState, Object[] previousState,
 	                            String[] propertyNames, Type[] types) {
 		
-		invalidateMonitoredClassnameCachedfNecessary(entity);
 		if (isMonitored(entity) && propertyNames != null) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			Map<String, Object[]> propertyChangesMap = null;
@@ -214,7 +212,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	 */
 	@Override
 	public void onDelete(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
-		invalidateMonitoredClassnameCachedfNecessary(entity);
 		if (isMonitored(entity)) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			if (log.isDebugEnabled())
@@ -247,12 +244,12 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				removedItems.addAll(CollectionUtils.subtract(previousMap.values(), currentColl));
 				
 				if (addedItems.size() > 0) {
-					System.out.println("Added:" + addedItems);
+					//System.out.println("Added:" + addedItems);
 					//TODO Generate xml
 					
 				}
 				if (removedItems.size() > 0) {
-					System.out.println("Removed:" + removedItems);
+					//System.out.println("Removed:" + removedItems);
 					//TODO Generate xml
 					
 				}
@@ -361,7 +358,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	 * @return true if the object is a monitored one otherwise false
 	 */
 	private boolean isMonitored(Object obj) {
-		if (!AuditLogUtil.areMonitoredClassnamesCached()) {
+		if (!AuditLogUtil.areMonitoredClassnamesCached() || !AuditLogUtil.isMonitoringStrategyCached()) {
 			SessionFactory sessionFactory = ((SessionFactory) applicationContext.getBean("sessionFactory"));
 			Session session = sessionFactory.getCurrentSession();
 			FlushMode originalFlushMode = session.getFlushMode();
@@ -386,21 +383,12 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	 * @return true if it is monitored otherwise false
 	 */
 	private boolean isMonitoredInternal(Class<?> clazz) {
-		return OpenmrsObject.class.isAssignableFrom(clazz)
-		        && OpenmrsUtil.collectionContains(AuditLogUtil.getMonitoredClassNames(), clazz.getName());
-	}
-	
-	/**
-	 * Sends a signal to invalidate the monitored class names cache when the
-	 * {@link AuditLogConstants#AUDITLOG_GP_MONITORED_CLASSES} global property gets edited, created
-	 * or deleted
-	 * 
-	 * @param entity the created/edited/updated object
-	 */
-	private void invalidateMonitoredClassnameCachedfNecessary(Object entity) {
-		if (GlobalProperty.class.isAssignableFrom(entity.getClass())) {
-			if (AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES.equals(((GlobalProperty) entity).getProperty()))
-				AuditLogUtil.invalidateMonitoredClassNamesCache();
-		}
+		if (!OpenmrsObject.class.isAssignableFrom(clazz) || AuditLogUtil.getMonitoringStrategy() == null
+		        || AuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.NONE)
+			return false;
+		if (AuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.ALL)
+			return true;
+		
+		return OpenmrsUtil.collectionContains(AuditLogUtil.getMonitoredClassNames(), clazz.getName());
 	}
 }

@@ -27,7 +27,9 @@ import org.apache.commons.logging.LogFactory;
 import org.openmrs.GlobalProperty;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.api.AdministrationService;
+import org.openmrs.api.GlobalPropertyListener;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.auditlog.MonitoringStrategy;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -36,7 +38,7 @@ import org.xml.sax.InputSource;
 /**
  * Contains static utility methods
  */
-public class AuditLogUtil {
+public class AuditLogUtil implements GlobalPropertyListener {
 	
 	private static final Log log = LogFactory.getLog(AuditLogUtil.class);
 	
@@ -51,6 +53,32 @@ public class AuditLogUtil {
 	public static final String ATTRIBUTE_NAME = "name";
 	
 	private static Set<String> monitoredClassnamesCache;
+	
+	private static MonitoringStrategy monitoringStrategyCache;
+	
+	/**
+	 * @return the monitoringStrategy
+	 */
+	public static MonitoringStrategy getMonitoringStrategy() {
+		if (monitoringStrategyCache == null) {
+			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
+			    AuditLogConstants.AUDITLOG_GP_MONITORING_STRATEGY);
+			if (gp != null) {
+				if (StringUtils.isNotBlank(gp.getPropertyValue())) {
+					String value = gp.getPropertyValue();
+					monitoringStrategyCache = MonitoringStrategy.valueOf(value);
+				}
+			}
+		}
+		if (monitoringStrategyCache == null)
+			monitoringStrategyCache = MonitoringStrategy.NONE;
+		
+		return monitoringStrategyCache;
+	}
+	
+	public static boolean isMonitoringStrategyCached() {
+		return monitoringStrategyCache != null;
+	}
 	
 	public static boolean areMonitoredClassnamesCached() {
 		return monitoredClassnamesCache != null;
@@ -102,15 +130,6 @@ public class AuditLogUtil {
 		}
 		
 		return monitoredClassnamesCache;
-	}
-	
-	/**
-	 * Drops the monitored class names cache so that it gets rebuilt, typicallly this si supposed to
-	 * be called when the {@link GlobalProperty}
-	 * {@link AuditLogConstants#AUDITLOG_GP_MONITORED_CLASSES} gets edited
-	 */
-	public static void invalidateMonitoredClassNamesCache() {
-		monitoredClassnamesCache = null;
 	}
 	
 	/**
@@ -237,5 +256,27 @@ public class AuditLogUtil {
 			//cached above but the GP value didn't get updated in the DB
 			monitoredClassnamesCache = null;
 		}
+	}
+	
+	@Override
+	public void globalPropertyChanged(GlobalProperty gp) {
+		if (AuditLogConstants.AUDITLOG_GP_MONITORING_STRATEGY.equals(gp.getProperty()))
+			monitoringStrategyCache = null;
+		else
+			monitoredClassnamesCache = null;
+	}
+	
+	@Override
+	public void globalPropertyDeleted(String gp) {
+		if (AuditLogConstants.AUDITLOG_GP_MONITORING_STRATEGY.equals(gp))
+			monitoringStrategyCache = null;
+		else
+			monitoredClassnamesCache = null;
+	}
+	
+	@Override
+	public boolean supportsPropertyName(String gpName) {
+		return AuditLogConstants.AUDITLOG_GP_MONITORING_STRATEGY.equals(gpName)
+		        || AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES.equals(gpName);
 	}
 }
