@@ -2,4 +2,5 @@
 <dataset>
 	<global_property property="${project.parent.artifactId}.monitoringStrategy" property_value="NONE_EXCEPT" uuid="abc05786-9019-11e1-aaa4-00248140a5eb" />
 	<global_property property="${project.parent.artifactId}.monitoredClasses" property_value="org.openmrs.Concept,org.openmrs.ConceptName, org.openmrs.EncounterType,org.openmrs.PatientIdentifierType" uuid="bbc05786-9019-11e1-aaa4-00248140a5eb" />
+	<global_property property="${project.parent.artifactId}.unMonitoredClasses" property_value="org.openmrs.EncounterType" uuid="cbc05786-9019-11e1-aaa4-00248140a5eb" />
 </dataset>

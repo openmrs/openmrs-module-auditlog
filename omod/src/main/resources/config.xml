@@ -30,7 +30,19 @@
 	<globalProperty>
 		<property>${project.parent.artifactId}.monitoredClasses</property>
 		<defaultValue></defaultValue>
-		<description>Specifies the class names of objects for which to maintain an audit log</description>
+		<description>
+			Specifies the class names of objects for which to maintain an audit log, this property is only used when the
+			monitoring strategy is set to NONE_EXCEPT
+		</description>
+	</globalProperty>
+	
+	<globalProperty>
+		<property>${project.parent.artifactId}.unMonitoredClasses</property>
+		<defaultValue></defaultValue>
+		<description>
+			Specifies the class names of objects for which not to maintain an audit log, this property is only used when the
+			monitoring strategy is set to ALL_EXCEPT
+		</description>
 	</globalProperty>
 	
 	<globalProperty>

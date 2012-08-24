@@ -55,7 +55,7 @@ import org.springframework.test.annotation.NotTransactional;
 @SuppressWarnings("deprecation")
 public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	
-	private static final String MODULE_TEST_DATA_MONITORED_OBJS = "moduleTestData.xml";
+	private static final String MODULE_TEST_DATA = "moduleTestData.xml";
 	
 	private ConceptService conceptService;
 	
@@ -65,7 +65,9 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	
 	@Before
 	public void before() throws Exception {
-		executeDataSet(MODULE_TEST_DATA_MONITORED_OBJS);
+		executeDataSet(MODULE_TEST_DATA);
+		//Sanity test to ensure the default strategy
+		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, AuditLogUtil.getMonitoringStrategy());
 		conceptService = Context.getConceptService();
 		encounterService = Context.getEncounterService();
 		auditLogService = Context.getService(AuditLogService.class);
@@ -383,7 +385,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.AUDITLOG_GP_MONITORING_STRATEGY);
 		String originalGpValue = gp.getPropertyValue();
 		try {
-			gp.setPropertyValue(MonitoringStrategy.ALL.toString());
+			gp.setPropertyValue(MonitoringStrategy.ALL.name());
 			as.saveGlobalProperty(gp);
 			Location location = new Location();
 			location.setName("new location");
@@ -407,7 +409,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.AUDITLOG_GP_MONITORING_STRATEGY);
 		String originalGpValue = gp.getPropertyValue();
 		try {
-			gp.setPropertyValue(MonitoringStrategy.NONE.toString());
+			gp.setPropertyValue(MonitoringStrategy.NONE.name());
 			as.saveGlobalProperty(gp);
 			EncounterType encounterType = encounterService.getEncounterType(6);
 			encounterService.purgeEncounterType(encounterType);

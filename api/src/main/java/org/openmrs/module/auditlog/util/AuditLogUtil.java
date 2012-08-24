@@ -56,6 +56,8 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	
 	private static MonitoringStrategy monitoringStrategyCache;
 	
+	private static Set<String> unMonitoredClassnamesCache;
+	
 	/**
 	 * @return the monitoringStrategy
 	 */
@@ -76,12 +78,25 @@ public class AuditLogUtil implements GlobalPropertyListener {
 		return monitoringStrategyCache;
 	}
 	
+	/**
+	 * @return
+	 */
 	public static boolean isMonitoringStrategyCached() {
 		return monitoringStrategyCache != null;
 	}
 	
+	/**
+	 * @return
+	 */
 	public static boolean areMonitoredClassnamesCached() {
 		return monitoredClassnamesCache != null;
+	}
+	
+	/**
+	 * @return
+	 */
+	public static boolean areUnMonitoredClassnamesCached() {
+		return unMonitoredClassnamesCache != null;
 	}
 	
 	/**
@@ -90,10 +105,16 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	 * 
 	 * @param clazzes the classes to monitor
 	 * @param subclassesToInclude list of subclasses to mark as monitored objects
-	 * @should add the class names to the monitored objects global property
+	 * @should update the monitored class names global property if the strategy is none_except
+	 * @should not update any global property if the strategy is all
+	 * @should not update any global property if the strategy is none
+	 * @should update the un monitored class names global property if the strategy is all_except
 	 */
 	public static void startMonitoring(Set<Class<? extends OpenmrsObject>> clazzes) {
-		updateMonitoredClassesGP(clazzes, true);
+		if (getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT
+		        || getMonitoringStrategy() == MonitoringStrategy.ALL_EXCEPT) {
+			updateGlobalProperty(clazzes, true);
+		}
 	}
 	
 	/**
@@ -101,20 +122,24 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	 * {@link GlobalProperty} {@link AuditLogConstants#AUDITLOG_GP_MONITORED_CLASSES}
 	 * 
 	 * @param clazzes the class to stop monitoring
-	 * @should remove the class names from the monitored objects global property
+	 * @should update the monitored class names global property if the strategy is none_except
+	 * @should not update any global property if the strategy is all
+	 * @should not update any global property if the strategy is none
+	 * @should update the un monitored class names global property if the strategy is all_except
 	 */
 	public static void stopMonitoring(Set<Class<? extends OpenmrsObject>> clazzes) {
-		updateMonitoredClassesGP(clazzes, false);
+		if (getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT
+		        || getMonitoringStrategy() == MonitoringStrategy.ALL_EXCEPT) {
+			updateGlobalProperty(clazzes, false);
+		}
 	}
 	
 	/**
-	 * Convenience method that checks if the class with the specified fully qualified name is
-	 * monitored
+	 * Convenience method that returns a set of monitored class names as specified by the
+	 * {@link GlobalProperty} {@link AuditLogConstants#AUDITLOG_GP_MONITORED_CLASSES}
 	 * 
-	 * @param classname the class name to check against
-	 * @return true if the class with the specified fully qualified name is monitored otherwise
-	 *         false
-	 * @should return a list of monitored class names
+	 * @return a set of monitored class names
+	 * @should return a set of monitored class names
 	 */
 	public static Set<String> getMonitoredClassNames() {
 		if (monitoredClassnamesCache == null) {
@@ -130,6 +155,29 @@ public class AuditLogUtil implements GlobalPropertyListener {
 		}
 		
 		return monitoredClassnamesCache;
+	}
+	
+	/**
+	 * Convenience method that returns a set of un monitored class names as specified by the
+	 * {@link GlobalProperty} {@link AuditLogConstants#AUDITLOG_GP_UN_MONITORED_CLASSES}
+	 * 
+	 * @return a set of monitored class names
+	 * @should return a set of un monitored class names
+	 */
+	public static Set<String> getUnMonitoredClassNames() {
+		if (unMonitoredClassnamesCache == null) {
+			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
+			    AuditLogConstants.AUDITLOG_GP_UN_MONITORED_CLASSES);
+			unMonitoredClassnamesCache = new HashSet<String>();
+			if (gp != null && StringUtils.isNotBlank(gp.getPropertyValue())) {
+				String[] classnameArray = StringUtils.split(gp.getPropertyValue(), ",");
+				for (String classname : classnameArray) {
+					unMonitoredClassnamesCache.add(classname.trim());
+				}
+			}
+		}
+		
+		return unMonitoredClassnamesCache;
 	}
 	
 	/**
@@ -224,59 +272,96 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	 * @param clazzes the classes to add or remove
 	 * @param startMonitoring specifies if the the classes are getting added to removed
 	 */
-	private static void updateMonitoredClassesGP(Set<Class<? extends OpenmrsObject>> clazzes, boolean startMonitoring) {
+	private static void updateGlobalProperty(Set<Class<? extends OpenmrsObject>> clazzes, boolean startMonitoring) {
+		boolean isNoneExceptStrategy = getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT;
 		AdministrationService as = Context.getAdministrationService();
-		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES);
+		String gpName = isNoneExceptStrategy ? AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES
+		        : AuditLogConstants.AUDITLOG_GP_UN_MONITORED_CLASSES;
+		GlobalProperty gp = as.getGlobalPropertyObject(gpName);
 		if (gp == null) {
-			if (!startMonitoring) {
-				//should of course be null since the GP is blank too
-				monitoredClassnamesCache = null;
-				return;
-			}
-			gp = new GlobalProperty(AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES, null,
-			        "Specifies the class names of objects for which to maintain an audit log");
+			String description = (isNoneExceptStrategy) ? "Specifies the class names of objects for which to maintain an audit log, this property is only used when the monitoring strategy is set to NONE_EXCEPT"
+			        : "Specifies the class names of objects for which not to maintain an audit log, this property is only used when the	monitoring strategy is set to ALL_EXCEPT";
+			gp = new GlobalProperty(gpName, null, description);
 		}
 		
-		if (monitoredClassnamesCache == null)
+		if (isNoneExceptStrategy && monitoredClassnamesCache == null)
 			getMonitoredClassNames();//should effectively load the set
+		else if (!isNoneExceptStrategy && unMonitoredClassnamesCache == null)
+			getUnMonitoredClassNames();//should effectively load the set
 			
-		for (Class<? extends OpenmrsObject> clazz : clazzes) {
-			if (startMonitoring)
-				monitoredClassnamesCache.add(clazz.getName());
-			else
-				monitoredClassnamesCache.remove(clazz.getName());
+		if (isNoneExceptStrategy) {
+			for (Class<? extends OpenmrsObject> clazz : clazzes) {
+				if (startMonitoring)
+					monitoredClassnamesCache.add(clazz.getName());
+				else
+					monitoredClassnamesCache.remove(clazz.getName());
+			}
+			
+			gp.setPropertyValue(StringUtils.join(monitoredClassnamesCache, ","));
+		} else {
+			for (Class<? extends OpenmrsObject> clazz : clazzes) {
+				if (startMonitoring)
+					unMonitoredClassnamesCache.remove(clazz.getName());
+				else
+					unMonitoredClassnamesCache.add(clazz.getName());
+			}
+			
+			gp.setPropertyValue(StringUtils.join(unMonitoredClassnamesCache, ","));
 		}
 		
-		gp.setPropertyValue(StringUtils.join(monitoredClassnamesCache, ","));
 		try {
 			as.saveGlobalProperty(gp);
 		}
 		catch (Exception e) {
 			//The cache needs to be rebuilt since we already updated the 
 			//cached above but the GP value didn't get updated in the DB
-			monitoredClassnamesCache = null;
+			if (isNoneExceptStrategy)
+				monitoredClassnamesCache = null;
+			else
+				unMonitoredClassnamesCache = null;
 		}
 	}
 	
+	/**
+	 * @see org.openmrs.api.GlobalPropertyListener#globalPropertyChanged(org.openmrs.GlobalProperty)
+	 */
 	@Override
 	public void globalPropertyChanged(GlobalProperty gp) {
-		if (AuditLogConstants.AUDITLOG_GP_MONITORING_STRATEGY.equals(gp.getProperty()))
-			monitoringStrategyCache = null;
-		else
+		if (AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES.equals(gp))
 			monitoredClassnamesCache = null;
+		else if (AuditLogConstants.AUDITLOG_GP_UN_MONITORED_CLASSES.equals(gp))
+			unMonitoredClassnamesCache = null;
+		else {
+			//we need to invalidate all caches when the strategy is changed
+			monitoringStrategyCache = null;
+			monitoredClassnamesCache = null;
+			unMonitoredClassnamesCache = null;
+		}
 	}
 	
+	/**
+	 * @see org.openmrs.api.GlobalPropertyListener#globalPropertyDeleted(java.lang.String)
+	 */
 	@Override
 	public void globalPropertyDeleted(String gp) {
-		if (AuditLogConstants.AUDITLOG_GP_MONITORING_STRATEGY.equals(gp))
-			monitoringStrategyCache = null;
-		else
+		if (AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES.equals(gp))
 			monitoredClassnamesCache = null;
+		else if (AuditLogConstants.AUDITLOG_GP_UN_MONITORED_CLASSES.equals(gp))
+			unMonitoredClassnamesCache = null;
+		else {
+			monitoringStrategyCache = null;
+			monitoredClassnamesCache = null;
+			unMonitoredClassnamesCache = null;
+		}
 	}
 	
+	/**
+	 * @see org.openmrs.api.GlobalPropertyListener#supportsPropertyName(java.lang.String)
+	 */
 	@Override
 	public boolean supportsPropertyName(String gpName) {
 		return AuditLogConstants.AUDITLOG_GP_MONITORING_STRATEGY.equals(gpName)
-		        || AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES.equals(gpName);
+		        || AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES.equals(gpName)
+		        || AuditLogConstants.AUDITLOG_GP_UN_MONITORED_CLASSES.equals(gpName);
 	}
 }
