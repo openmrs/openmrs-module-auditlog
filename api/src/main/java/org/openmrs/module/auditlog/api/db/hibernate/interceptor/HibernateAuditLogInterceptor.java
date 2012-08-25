@@ -131,7 +131,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 			Map<String, Object[]> propertyChangesMap = null;
 			SessionFactory sessionFactory = ((SessionFactory) applicationContext.getBean("sessionFactory"));
 			for (int i = 0; i < propertyNames.length; i++) {
-				//we need ignore dateChanged and changedBy fields since they saved along with the auditlog
+				//we need to ignore dateChanged and changedBy fields in any case they
+				//are actually part of the Auditlog in form of user and dateCreated
 				//TODO Should we take care of personDateChanged and personDateChangedBy
 				if ("dateChanged".equals(propertyNames[i]) || "changedBy".equals(propertyNames[i]))
 					continue;
@@ -386,9 +387,14 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 		if (!OpenmrsObject.class.isAssignableFrom(clazz) || AuditLogUtil.getMonitoringStrategy() == null
 		        || AuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.NONE)
 			return false;
+		
 		if (AuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.ALL)
 			return true;
 		
-		return OpenmrsUtil.collectionContains(AuditLogUtil.getMonitoredClassNames(), clazz.getName());
+		if (AuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT)
+			return OpenmrsUtil.collectionContains(AuditLogUtil.getMonitoredClassNames(), clazz.getName());
+		
+		//Strategy is ALL_EXCEPT
+		return !OpenmrsUtil.collectionContains(AuditLogUtil.getUnMonitoredClassNames(), clazz.getName());
 	}
 }

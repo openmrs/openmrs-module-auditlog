@@ -50,6 +50,7 @@ import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.module.auditlog.util.AuditLogUtilTest;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
+import org.openmrs.util.OpenmrsUtil;
 import org.springframework.test.annotation.NotTransactional;
 
 @SuppressWarnings("deprecation")
@@ -73,7 +74,16 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		auditLogService = Context.getService(AuditLogService.class);
 		
 		//No log entries should be existing
-		Assert.assertTrue(auditLogService.getAuditLogs(null, null, null, null, null, null).isEmpty());
+		Assert.assertTrue(getAllLogs().isEmpty());
+	}
+	
+	/**
+	 * Utility method to get all logs
+	 * 
+	 * @return a list of {@link AuditLog}s
+	 */
+	private List<AuditLog> getAllLogs() {
+		return auditLogService.getAuditLogs(null, null, null, null, null, null);
 	}
 	
 	@Test
@@ -86,7 +96,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		concept.setDatatype(conceptService.getConceptDatatype(4));
 		concept.setConceptClass(conceptService.getConceptClass(4));
 		conceptService.saveConcept(concept);
-		List<AuditLog> logs = auditLogService.getAuditLogs(null, null, null, null, null, null);
+		List<AuditLog> logs = getAllLogs();
 		Assert.assertNotNull(concept.getConceptId());
 		//Should have created an entry for the concept and concept name
 		Assert.assertEquals(2, logs.size());
@@ -100,7 +110,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	public void shouldCreateAnAuditLogEntryWhenAnObjectIsDeleted() throws Exception {
 		EncounterType encounterType = encounterService.getEncounterType(6);
 		encounterService.purgeEncounterType(encounterType);
-		List<AuditLog> logs = auditLogService.getAuditLogs(null, null, null, null, null, null);
+		List<AuditLog> logs = getAllLogs();
 		//Should have created a log entry for deleted Encounter type
 		Assert.assertEquals(1, logs.size());
 		Assert.assertEquals(Action.DELETED, logs.get(0).getAction());
@@ -125,7 +135,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		concept.setVersion(newVersion);
 		conceptService.saveConcept(concept);
 		
-		List<AuditLog> logs = auditLogService.getAuditLogs(null, null, null, null, null, null);
+		List<AuditLog> logs = getAllLogs();
 		//Should have created a log entry for edited concept
 		Assert.assertEquals(1, logs.size());
 		AuditLog auditLog = logs.get(0);
@@ -149,7 +159,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	public void shouldCreateNoLogEntryIfNoChangesAreMadeToAnExistingObject() throws Exception {
 		EncounterType encounterType = encounterService.getEncounterType(2);
 		encounterService.saveEncounterType(encounterType);
-		Assert.assertTrue(auditLogService.getAuditLogs(null, null, null, null, null, null).isEmpty());
+		Assert.assertTrue(getAllLogs().isEmpty());
 	}
 	
 	@Test
@@ -162,10 +172,11 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		concept.setDateChanged(new Date());
 		concept.setChangedBy(Context.getAuthenticatedUser());
 		conceptService.saveConcept(concept);
-		Assert.assertTrue(auditLogService.getAuditLogs(null, null, null, null, null, null).isEmpty());
+		Assert.assertTrue(getAllLogs().isEmpty());
 	}
 	
 	@Test
+	@NotTransactional
 	public void shouldHandleInsertsOrUpdatesOrDeletesInEachTransactionIndependently() throws InterruptedException {
 		final int N = 50;
 		final Set<Thread> threads = new LinkedHashSet<Thread>();
@@ -213,7 +224,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 			thread.join();
 		}
 		
-		Assert.assertEquals(N, auditLogService.getAuditLogs(null, null, null, null, null, null).size());
+		Assert.assertEquals(N, getAllLogs().size());
 		
 		List<Action> actions = new ArrayList<Action>();
 		actions.add(Action.CREATED);//should match expected count of created log entries
@@ -229,14 +240,16 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	@Test
+	@NotTransactional
 	public void shouldNotCreateAuditLogsForUnMonitoredObjects() {
+		Assert.assertFalse(OpenmrsUtil.collectionContains(AuditLogUtil.getMonitoredClassNames(), Location.class.getName()));
 		Location location = new Location();
 		location.setName("najja");
 		location.setAddress1("test address");
 		Location savedLocation = Context.getLocationService().saveLocation(location);
 		Assert.assertNotNull(savedLocation.getLocationId());//sanity check that it was actually created
 		//Should not have created any logs
-		Assert.assertTrue(auditLogService.getAuditLogs(null, null, null, null, null, null).isEmpty());
+		Assert.assertTrue(getAllLogs().isEmpty());
 	}
 	
 	@Test
@@ -247,10 +260,10 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		idType.setFormat(null);
 		ps.savePatientIdentifierType(idType);
 		
-		int originalLogCount = auditLogService.getAuditLogs(null, null, null, null, null, null).size();
+		int originalLogCount = getAllLogs().size();
 		idType.setFormat("");
 		ps.savePatientIdentifierType(idType);
-		Assert.assertEquals(originalLogCount, auditLogService.getAuditLogs(null, null, null, null, null, null).size());
+		Assert.assertEquals(originalLogCount, getAllLogs().size());
 	}
 	
 	@Test
@@ -263,10 +276,10 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		//this will fail when required version is 1.9 since it converts blanks to null
 		Assert.assertEquals("", idType.getFormat());
 		
-		int originalLogCount = auditLogService.getAuditLogs(null, null, null, null, null, null).size();
+		int originalLogCount = getAllLogs().size();
 		idType.setFormat(null);
 		ps.savePatientIdentifierType(idType);
-		Assert.assertEquals(originalLogCount, auditLogService.getAuditLogs(null, null, null, null, null, null).size());
+		Assert.assertEquals(originalLogCount, getAllLogs().size());
 	}
 	
 	@Test
@@ -277,10 +290,10 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		idType.setFormat("test");
 		idType = ps.savePatientIdentifierType(idType);
 		
-		int originalLogCount = auditLogService.getAuditLogs(null, null, null, null, null, null).size();
+		int originalLogCount = getAllLogs().size();
 		idType.setFormat("TEST");
 		ps.savePatientIdentifierType(idType);
-		Assert.assertEquals(originalLogCount, auditLogService.getAuditLogs(null, null, null, null, null, null).size());
+		Assert.assertEquals(originalLogCount, getAllLogs().size());
 	}
 	
 	@Test
@@ -391,7 +404,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 			location.setName("new location");
 			Context.getLocationService().saveLocation(location);
 			List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
-			clazzes.add(Location.class);//exclude Global Property logs
+			clazzes.add(Location.class);//get only location logs
 			Assert.assertEquals(1, auditLogService.getAuditLogs(clazzes, null, null, null, null, null).size());
 		}
 		finally {
@@ -413,7 +426,59 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 			as.saveGlobalProperty(gp);
 			EncounterType encounterType = encounterService.getEncounterType(6);
 			encounterService.purgeEncounterType(encounterType);
-			Assert.assertEquals(0, auditLogService.getAuditLogs(null, null, null, null, null, null).size());
+			Assert.assertEquals(0, getAllLogs().size());
+		}
+		finally {
+			//reset
+			gp.setPropertyValue(originalGpValue);
+			as.saveGlobalProperty(gp);
+		}
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldNotCreateLogWhenStrateyIsSetToAllExceptAndObjectTypeIsListedAsExcluded() throws Exception {
+		//sanity check
+		Assert.assertTrue(OpenmrsUtil.collectionContains(AuditLogUtil.getUnMonitoredClassNames(),
+		    EncounterType.class.getName()));
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.AUDITLOG_GP_MONITORING_STRATEGY);
+		String originalGpValue = gp.getPropertyValue();
+		try {
+			gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
+			as.saveGlobalProperty(gp);
+			
+			EncounterType encounterType = encounterService.getEncounterType(6);
+			encounterService.purgeEncounterType(encounterType);
+			List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
+			clazzes.add(EncounterType.class);//get only encounter type logs
+			Assert.assertEquals(0, auditLogService.getAuditLogs(clazzes, null, null, null, null, null).size());
+		}
+		finally {
+			//reset
+			gp.setPropertyValue(originalGpValue);
+			as.saveGlobalProperty(gp);
+		}
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldCreateLogWhenStrateyIsSetToAllExceptAndObjectTypeIsNotListedAsIncluded() throws Exception {
+		//sanity check
+		Assert.assertFalse(OpenmrsUtil.collectionContains(AuditLogUtil.getUnMonitoredClassNames(), Location.class.getName()));
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.AUDITLOG_GP_MONITORING_STRATEGY);
+		String originalGpValue = gp.getPropertyValue();
+		try {
+			gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
+			as.saveGlobalProperty(gp);
+			
+			Location location = new Location();
+			location.setName("new location");
+			Context.getLocationService().saveLocation(location);
+			List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
+			clazzes.add(Location.class);//get only location logs
+			Assert.assertEquals(1, auditLogService.getAuditLogs(clazzes, null, null, null, null, null).size());
 		}
 		finally {
 			//reset

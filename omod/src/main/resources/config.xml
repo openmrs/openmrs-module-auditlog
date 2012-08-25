@@ -47,7 +47,7 @@
 	
 	<globalProperty>
 		<property>${project.parent.artifactId}.monitoringStrategy</property>
-		<defaultValue>NONE_EXCEPT</defaultValue>
+		<defaultValue>NONE</defaultValue>
 		<description>
 			Specifies the monitoring strategy to be used by the audit log module, allowed values are: 
 			ALL, ALL_EXCEPT, NONE, NONE_EXCEPT

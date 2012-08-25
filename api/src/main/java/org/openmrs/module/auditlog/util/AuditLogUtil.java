@@ -72,6 +72,8 @@ public class AuditLogUtil implements GlobalPropertyListener {
 				}
 			}
 		}
+		
+		//default
 		if (monitoringStrategyCache == null)
 			monitoringStrategyCache = MonitoringStrategy.NONE;
 		
