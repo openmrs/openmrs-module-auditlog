@@ -48,7 +48,6 @@ import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
-import org.openmrs.module.auditlog.util.AuditLogUtilTest;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.test.annotation.NotTransactional;
@@ -302,9 +301,8 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		Concept concept = conceptService.getConcept(5089);
 		Assert.assertTrue(concept.isNumeric());
 		try {
-			AuditLogUtil.getMonitoredClassNames();
 			//This is a ConceptNumeric, so we need to mark it as monitored
-			AuditLogUtilTest.startMonitoring(ConceptNumeric.class);
+			AuditLogUtil.startMonitoring(ConceptNumeric.class);
 			Assert.assertFalse(concept.getConceptMappings().isEmpty());
 			
 			concept.removeDescription(concept.getDescription());
@@ -315,7 +313,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 			Assert.assertEquals(1, updateLogs.size());
 		}
 		finally {
-			AuditLogUtilTest.stopMonitoring(ConceptNumeric.class);
+			AuditLogUtil.stopMonitoring(ConceptNumeric.class);
 		}
 	}
 	
@@ -326,7 +324,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(concept.isNumeric());
 		try {
 			//This is a ConceptNumeric, so we need to mark it as monitored
-			AuditLogUtilTest.startMonitoring(ConceptNumeric.class);
+			AuditLogUtil.startMonitoring(ConceptNumeric.class);
 			ConceptDescription cd1 = new ConceptDescription("desc1", Locale.ENGLISH);
 			cd1.setDateCreated(new Date());
 			cd1.setCreator(Context.getAuthenticatedUser());
@@ -338,7 +336,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 			Assert.assertEquals(1, updateLogs.size());
 		}
 		finally {
-			AuditLogUtilTest.stopMonitoring(ConceptNumeric.class);
+			AuditLogUtil.stopMonitoring(ConceptNumeric.class);
 		}
 	}
 	
@@ -451,7 +449,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 			EncounterType encounterType = encounterService.getEncounterType(6);
 			encounterService.purgeEncounterType(encounterType);
 			List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
-			clazzes.add(EncounterType.class);//get only encounter type logs
+			clazzes.add(EncounterType.class);//get only encounter type logs since there those of GPs that we have changed
 			Assert.assertEquals(0, auditLogService.getAuditLogs(clazzes, null, null, null, null, null).size());
 		}
 		finally {
@@ -477,7 +475,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 			location.setName("new location");
 			Context.getLocationService().saveLocation(location);
 			List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
-			clazzes.add(Location.class);//get only location logs
+			clazzes.add(Location.class);//get only location logs since there those of GPs that we have changed
 			Assert.assertEquals(1, auditLogService.getAuditLogs(clazzes, null, null, null, null, null).size());
 		}
 		finally {

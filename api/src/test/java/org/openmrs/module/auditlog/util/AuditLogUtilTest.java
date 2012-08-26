@@ -13,7 +13,6 @@
  */
 package org.openmrs.module.auditlog.util;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.Assert;
@@ -23,7 +22,6 @@ import org.openmrs.ConceptDescription;
 import org.openmrs.ConceptName;
 import org.openmrs.EncounterType;
 import org.openmrs.GlobalProperty;
-import org.openmrs.OpenmrsObject;
 import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.context.Context;
@@ -38,28 +36,6 @@ import org.openmrs.util.OpenmrsUtil;
 public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	
 	private static final String MODULE_TEST_DATA = "moduleTestData.xml";
-	
-	/**
-	 * Convenience method that marks a given object type as monitored
-	 * 
-	 * @param clazzes
-	 */
-	public static void startMonitoring(Class<? extends OpenmrsObject> clazz) {
-		Set<Class<? extends OpenmrsObject>> monitoredClasses = new HashSet<Class<? extends OpenmrsObject>>();
-		monitoredClasses.add(clazz);
-		AuditLogUtil.startMonitoring(monitoredClasses);
-	}
-	
-	/**
-	 * Convenience method that marks a given object type as un monitored
-	 * 
-	 * @param clazzes
-	 */
-	public static void stopMonitoring(Class<? extends OpenmrsObject> clazz) {
-		Set<Class<? extends OpenmrsObject>> monitoredClasses = new HashSet<Class<? extends OpenmrsObject>>();
-		monitoredClasses.add(clazz);
-		AuditLogUtil.stopMonitoring(monitoredClasses);
-	}
 	
 	/**
 	 * @see {@link AuditLogUtil#getMonitoredClassNames()}
@@ -107,7 +83,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class.getName()));
 		
 		try {
-			startMonitoring(ConceptDescription.class);
+			AuditLogUtil.startMonitoring(ConceptDescription.class);
 			
 			monitoredClasses = AuditLogUtil.getMonitoredClassNames();
 			Assert.assertEquals(++originalCount, monitoredClasses.size());
@@ -120,7 +96,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		}
 		finally {
 			//reset
-			AuditLogUtilTest.stopMonitoring(ConceptDescription.class);
+			AuditLogUtil.stopMonitoring(ConceptDescription.class);
 		}
 	}
 	
@@ -141,7 +117,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
 		as.saveGlobalProperty(gp);
 		try {
-			startMonitoring(EncounterType.class);
+			AuditLogUtil.startMonitoring(EncounterType.class);
 			
 			unMonitoredClasses = AuditLogUtil.getUnMonitoredClassNames();
 			Assert.assertEquals(--originalCount, unMonitoredClasses.size());
@@ -150,8 +126,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		}
 		finally {
 			//reset
-			AuditLogUtilTest.stopMonitoring(EncounterType.class);
-			//reset
+			AuditLogUtil.stopMonitoring(EncounterType.class);
 			gp.setPropertyValue(originalStrategy);
 			as.saveGlobalProperty(gp);
 		}
@@ -182,7 +157,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		gp.setPropertyValue(MonitoringStrategy.ALL.name());
 		as.saveGlobalProperty(gp);
 		try {
-			startMonitoring(EncounterType.class);
+			AuditLogUtil.startMonitoring(EncounterType.class);
 			
 			//Should not have changed
 			monitoredClasses = AuditLogUtil.getMonitoredClassNames();
@@ -198,6 +173,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		}
 		finally {
 			//reset
+			AuditLogUtil.stopMonitoring(EncounterType.class);
 			gp.setPropertyValue(originalStrategy);
 			as.saveGlobalProperty(gp);
 		}
@@ -228,7 +204,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		gp.setPropertyValue(MonitoringStrategy.NONE.name());
 		as.saveGlobalProperty(gp);
 		try {
-			startMonitoring(EncounterType.class);
+			AuditLogUtil.startMonitoring(EncounterType.class);
 			
 			//Should not have changed
 			monitoredClasses = AuditLogUtil.getMonitoredClassNames();
@@ -243,6 +219,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class.getName()));
 		}
 		finally {
+			AuditLogUtil.stopMonitoring(EncounterType.class);
 			gp.setPropertyValue(originalStrategy);
 			as.saveGlobalProperty(gp);
 		}
@@ -273,7 +250,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		gp.setPropertyValue(MonitoringStrategy.ALL.name());
 		as.saveGlobalProperty(gp);
 		try {
-			stopMonitoring(Concept.class);
+			AuditLogUtil.stopMonitoring(Concept.class);
 			
 			//Should not have changed
 			monitoredClasses = AuditLogUtil.getMonitoredClassNames();
@@ -289,6 +266,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		}
 		finally {
 			//reset
+			AuditLogUtil.startMonitoring(Concept.class);
 			gp.setPropertyValue(originalStrategy);
 			as.saveGlobalProperty(gp);
 		}
@@ -319,7 +297,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		gp.setPropertyValue(MonitoringStrategy.NONE.name());
 		as.saveGlobalProperty(gp);
 		try {
-			stopMonitoring(Concept.class);
+			AuditLogUtil.stopMonitoring(Concept.class);
 			
 			//Should not have changed
 			monitoredClasses = AuditLogUtil.getMonitoredClassNames();
@@ -334,6 +312,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class.getName()));
 		}
 		finally {
+			AuditLogUtil.startMonitoring(Concept.class);
 			gp.setPropertyValue(originalStrategy);
 			as.saveGlobalProperty(gp);
 		}
@@ -356,7 +335,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class.getName()));
 		
 		try {
-			stopMonitoring(Concept.class);
+			AuditLogUtil.stopMonitoring(Concept.class);
 			
 			monitoredClasses = AuditLogUtil.getMonitoredClassNames();
 			Assert.assertEquals(--originalCount, monitoredClasses.size());
@@ -368,7 +347,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		}
 		finally {
 			//reset
-			AuditLogUtilTest.startMonitoring(Concept.class);
+			AuditLogUtil.startMonitoring(Concept.class);
 		}
 	}
 	
@@ -390,7 +369,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
 		as.saveGlobalProperty(gp);
 		try {
-			stopMonitoring(Concept.class);
+			AuditLogUtil.stopMonitoring(Concept.class);
 			
 			unMonitoredClasses = AuditLogUtil.getUnMonitoredClassNames();
 			Assert.assertEquals(++originalCount, unMonitoredClasses.size());
@@ -400,7 +379,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		}
 		finally {
 			//reset
-			AuditLogUtilTest.startMonitoring(Concept.class);
+			AuditLogUtil.startMonitoring(Concept.class);
 			//reset
 			gp.setPropertyValue(originalStrategy);
 			as.saveGlobalProperty(gp);

@@ -102,6 +102,28 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	}
 	
 	/**
+	 * Convenience method that marks a given object type as monitored
+	 * 
+	 * @param clazz the type to start monitoring
+	 */
+	public static void startMonitoring(Class<? extends OpenmrsObject> clazz) {
+		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
+		classes.add(clazz);
+		startMonitoring(classes);
+	}
+	
+	/**
+	 * Convenience method that marks a given object type as un monitored
+	 * 
+	 * @param clazz the type to stop monitoring
+	 */
+	public static void stopMonitoring(Class<? extends OpenmrsObject> clazz) {
+		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
+		classes.add(clazz);
+		stopMonitoring(classes);
+	}
+	
+	/**
 	 * Marks the specified classes as monitored by adding their class names to the
 	 * {@link GlobalProperty} {@link AuditLogConstants#AUDITLOG_GP_MONITORED_CLASSES}
 	 * 
