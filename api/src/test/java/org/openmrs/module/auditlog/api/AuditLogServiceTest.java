@@ -33,6 +33,9 @@ import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.openmrs.test.Verifies;
 import org.openmrs.util.OpenmrsUtil;
 
+/**
+ * Contains tests for methods in {@link AuditLogService}
+ */
 public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	
 	private static final String MODULE_TEST_DATA = "moduleTestData.xml";

@@ -52,6 +52,9 @@ import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.test.annotation.NotTransactional;
 
+/**
+ * Contains tests for testing the core functionality of the module
+ */
 @SuppressWarnings("deprecation")
 public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	
