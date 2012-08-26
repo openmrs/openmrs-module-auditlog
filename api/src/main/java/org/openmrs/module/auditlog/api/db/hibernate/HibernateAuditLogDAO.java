@@ -58,16 +58,25 @@ public class HibernateAuditLogDAO implements AuditLogDAO {
 			}
 			criteria.add(Restrictions.in("className", classNames));
 		}
+		
 		if (actions != null)
 			criteria.add(Restrictions.in("action", actions));
 		
+		if (startDate != null)
+			criteria.add(Restrictions.ge("dateCreated", startDate));
+		
+		if (endDate != null)
+			criteria.add(Restrictions.le("dateCreated", endDate));
+		
 		if (start != null)
 			criteria.setFirstResult(start);
+		
 		if (length != null && length > 0)
 			criteria.setMaxResults(length);
 		
 		//Show the latest logs first
 		criteria.addOrder(Order.desc("dateCreated"));
+		
 		return criteria.list();
 	}
 	

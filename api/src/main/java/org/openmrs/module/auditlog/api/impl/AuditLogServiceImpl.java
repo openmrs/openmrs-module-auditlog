@@ -19,11 +19,15 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.OpenmrsObject;
+import org.openmrs.api.APIException;
+import org.openmrs.api.context.Context;
 import org.openmrs.api.impl.BaseOpenmrsService;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
+import org.openmrs.module.auditlog.util.AuditLogConstants;
+import org.openmrs.util.OpenmrsUtil;
 
 public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogService {
 	
@@ -52,6 +56,10 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	@Override
 	public List<AuditLog> getAuditLogs(List<Class<? extends OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
 	                                   Date endDate, Integer start, Integer length) {
+		if (OpenmrsUtil.compareWithNullAsEarliest(startDate, new Date()) > 0)
+			throw new APIException(Context.getMessageSourceService().getMessage(
+			    AuditLogConstants.MODULE_ID + ".exception.startDateInFuture"));
+		
 		return dao.getAuditLogs(clazzes, actions, startDate, endDate, start, length);
 	}
 	

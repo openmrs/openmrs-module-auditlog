@@ -43,6 +43,12 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should return all audit logs in the database if all args are null
 	 * @should match on the specified audit log actions
 	 * @should match on the specified classes
+	 * @should return logs created on or after the specified startDate
+	 * @should return logs created on or before the specified endDate
+	 * @should return logs created within the specified start and end dates
+	 * @should reject a start date that is in the future
+	 * @should ignore end date it it is in the future
+	 * @should sort the logs by date of creation starting with the latest
 	 */
 	public List<AuditLog> getAuditLogs(List<Class<? extends OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
 	                                   Date endDate, Integer start, Integer length);
