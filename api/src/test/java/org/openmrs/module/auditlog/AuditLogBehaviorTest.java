@@ -69,7 +69,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@Before
 	public void before() throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
-		//Sanity test to ensure the default strategy
+		//Sanity test to ensure the strategy is none except
 		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, AuditLogUtil.getMonitoringStrategy());
 		conceptService = Context.getConceptService();
 		encounterService = Context.getEncounterService();
