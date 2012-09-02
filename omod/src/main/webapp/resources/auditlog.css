@@ -17,3 +17,15 @@ div#auditlog_filter, div#auditlog_length{
 div#auditlog_info, div#auditlog_paginate{
 	padding-top: 10px;
 }
+
+.auditlog_align_text_center{
+	text-align: center;
+}
+
+.auditlog_align_text_left{
+	text-align: left;
+}
+
+.auditlog_table_header{
+	background-color: #CCCCCC;
+}

@@ -64,7 +64,9 @@ public final class AuditLog implements Serializable {
 	 * 				<previous>.....</previous>
 	 * 				<new>....</new>
 	 * 			</property>
-	 * 		.....
+	 * 
+	 * 			..... more properties
+	 * 
 	 * 		</changes>
 	 * </pre>
 	 */
