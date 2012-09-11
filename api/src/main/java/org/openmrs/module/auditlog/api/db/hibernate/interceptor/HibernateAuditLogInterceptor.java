@@ -145,7 +145,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				        .getPropertyType();
 				if (!OpenmrsUtil.nullSafeEquals(currentValue, previousValue) && !Reflect.isCollection(propertyType)) {
 					//For string properties, ignore changes from null to blank and vice versa
-					//TODO This should user configurable via a module GP
+					//TODO This should be user configurable via a module GP
 					if (StringType.class.getName().equals(types[i].getClass().getName())
 					        || TextType.class.getName().equals(types[i].getClass().getName())) {
 						String currentStateString = null;
@@ -169,7 +169,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					Object flattenedCurrentValue = null;
 					
 					if (BeanUtils.isSimpleValueType(propertyType)) {
-						//TODO take care of Dates, Enums, Class, Locale
+						//TODO take care of proper serialization of Dates, Enums, Class, Locale
 						flattenedPreviousValue = previousValue;
 						flattenedCurrentValue = currentValue;
 					} else {

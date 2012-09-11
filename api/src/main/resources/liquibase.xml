@@ -9,7 +9,7 @@
         See http://www.liquibase.org/manual/home#available_database_refactorings
         for a list of supported elements and attributes
     -->
- 	<changeSet id="auditlog-20120418-2051" author="wyclif">
+ 	<changeSet id="auditlog-20120418-2052" author="wyclif">
  		<preConditions onFail="MARK_RAN">
 			<not><tableExists tableName="auditlog_audit_log" /></not>
 		</preConditions>
@@ -24,7 +24,7 @@
 			<column name="user" type="int"><constraints nullable="false"/></column>
 			<column name="changes_xml" type="mediumtext"></column>
 			<column name="date_created" type="DATETIME"><constraints nullable="false"/></column>
-			<column name="uuid" type="varchar(38)"><constraints nullable="false"/></column>
+			<column name="uuid" type="varchar(38)"><constraints nullable="false" unique="true"/></column>
 		</createTable>
 		<addForeignKeyConstraint constraintName="authenticated_user" 
 		 	baseTableName="auditlog_audit_log" baseColumnNames="user"   

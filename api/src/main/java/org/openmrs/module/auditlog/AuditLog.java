@@ -30,7 +30,7 @@ import org.w3c.dom.NodeList;
 /**
  * Encapsulates data for a single audit log entry
  */
-public final class AuditLog implements Serializable {
+public class AuditLog implements Serializable {
 	
 	private static final long serialVersionUID = 1L;
 	
@@ -242,7 +242,7 @@ public final class AuditLog implements Serializable {
 			}
 		}
 		catch (Exception e) {
-			log.error("Failed parse changes xml", e);
+			log.error("Failed to parse changes xml", e);
 		}
 		return map;
 	}

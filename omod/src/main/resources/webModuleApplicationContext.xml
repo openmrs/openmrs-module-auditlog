@@ -21,12 +21,5 @@
   		    http://www.springframework.org/schema/util/spring-util-3.0.xsd">
 
 	<!-- Add here beans related to the web context -->
-
-	 
-	<!-- Annotation based controllers -->
-	<bean class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping"/>
-	
-	<context:component-scan base-package="org.openmrs.module.${project.parent.artifactId}.web.controller" />
- 
 		
 </beans>
