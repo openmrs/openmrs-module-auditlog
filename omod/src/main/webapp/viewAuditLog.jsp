@@ -10,7 +10,7 @@
 <openmrs:htmlInclude file="/scripts/jquery/dataTables/js/jquery.dataTables.min.js"/>
 
 <script type="text/javascript">
-	var auditLogChangesMap = new Object();
+	var auditLogDetailsMap = new Object();
 	
 	$j(document).ready(function() {
 		$j('#${moduleId}').dataTable({
@@ -38,7 +38,7 @@
 		$j("#${moduleId}-changes-dialog").dialog({
 			autoOpen: false,
 			width:'900',
-			height:'350',
+			height:'450',
 			modal: true,
 			beforeClose: function(event, ui){
 				//remove all rows from previous displays except the header row
@@ -47,15 +47,21 @@
 		});
 	});
 	
-	function ${moduleId}_showChanges(auditLogUuid){
-		text = "";
-		auditLogChanges = auditLogChangesMap[auditLogUuid];
-		changesTemp = $j.each(auditLogChanges, function(index){
-			currentChange = auditLogChanges[index];
-			$j("#${moduleId}-changes-table tr:last").after("<tr><td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange.propertyName+"</td>"+
-			"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange.newValue+"</td>"+
-			"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange.previousValue+"</td></tr>");
-		});
+	function ${moduleId}_showDetails(auditLogUuid){
+		auditLogDetails = auditLogDetailsMap[auditLogUuid];
+		$j("#${moduleId}-changes-objectUuid").html(auditLogDetails.uuid);
+		if(auditLogDetails.changes){
+			auditLogChanges = auditLogDetails.changes;
+			$j.each(auditLogChanges, function(index){
+				currentChange = auditLogChanges[index];
+				$j("#${moduleId}-changes-table tr:last").after("<tr><td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange.propertyName+"</td>"+
+				"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange.newValue+"</td>"+
+				"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange.previousValue+"</td></tr>");
+			});
+			$j("${moduleId}-changes-table").show();
+		}else{
+			$j("${moduleId}-changes-table").hide();
+		}
 		
 		$j("#${moduleId}-changes-dialog").dialog('open');
 	}
@@ -69,35 +75,44 @@
 	<thead>
 		<tr>
 			<th class="ui-state-default">Item (<spring:message code="${moduleId}.numberOfChanges" />)</th>
-			<th class="ui-state-default">Uuid</th>
-			<th class="ui-state-default">User</th>
+			<th class="ui-state-default">User [username]</th>
 			<th class="ui-state-default">Date Of Occurence</th>
 		</tr>
 	</thead>
 	<tbody>
-	<c:forEach items="${auditLogs}" var="auditLog">
-		<c:if test="${auditLog.action == 'UPDATED' && fn:length(auditLog.changes) > 0}">		
+	<c:forEach items="${auditLogs}" var="auditLog">		
 		<script type="text/javascript">
-		var changes${auditLog.auditLogId} = new Array();
-		var change;
-		<c:forEach items="${auditLog.changes}" var="entry">
-			change = new Object();
-			change.propertyName = "${entry.key}";
-			change.newValue = "${entry.value[0]}";
-			change.previousValue = "${entry.value[1]}";
-			changes${auditLog.auditLogId}.push(change);
-		</c:forEach>
-		auditLogChangesMap['${auditLog.uuid}'] = changes${auditLog.auditLogId};
-		</script>
+		auditlogDetails = new Object();
+		auditlogDetails.uuid = '${auditLog.objectUuid}';
+		<c:if test="${auditLog.action == 'UPDATED' && fn:length(auditLog.changes) > 0}">
+			var changes = new Array();
+			<c:forEach items="${auditLog.changes}" var="entry">
+				change = new Object();
+				change.propertyName = "${entry.key}";
+				change.newValue = "${entry.value[0]}";
+				change.previousValue = "${entry.value[1]}";
+				changes.push(change);
+			</c:forEach>
+			auditlogDetails.changes = changes;
 		</c:if>
-		<tr class="${moduleId}_${auditLog.action}"
-		   <c:if test="${auditLog.action == 'UPDATED' && fn:length(auditLog.changes) > 0}">onclick="${moduleId}_showChanges('${auditLog.uuid}')"</c:if>>
+		auditLogDetailsMap['${auditLog.uuid}'] = auditlogDetails;
+		</script>
+		<tr class="${moduleId}_${auditLog.action}" onclick="${moduleId}_showDetails('${auditLog.uuid}')">
    			<td>
    				${auditLog.className} 
    				<c:if test="${auditLog.action == 'UPDATED' && fn:length(auditLog.changes) > 0}"> (${fn:length(auditLog.changes)})</c:if>
    			</td>
-   			<td>${auditLog.objectUuid}</td>
-   			<td>${auditLog.user.personName}</td>
+   			<td>
+   				<c:choose>
+   					<%-- If this is a scheduled task, something done by daemon thread or at start up --%>
+   					<c:when test="${auditLog.user == null || auditLog.user.uuid == 'A4F30A1B-5EB9-11DF-A648-37A07F9C90FB'}">
+   						<spring:message code="${moduleId}.systemChange" />
+   					</c:when>
+   					<c:otherwise>
+   						${auditLog.user.personName} <c:if test="${fn:trim(auditLog.user.username) != ''}">[${auditLog.user.username}]</c:if>
+   					</c:otherwise>
+   				</c:choose>
+   			</td>
    			<td><openmrs:formatDate date="${auditLog.dateCreated}" type="long" /></td>
 		</tr>
 	</c:forEach>
@@ -105,16 +120,38 @@
 </table>
 </div>
 
-<div id="${moduleId}-changes-dialog" title="<spring:message code="${moduleId}.changes" />" 
-	style="b;">
-	<table id="${moduleId}-changes-table" width="100%" cellpadding="3" cellspacing="0" border="1" bordercolor="#DDDDDD">
-		<thead>
-			<tr>
-				<th class="${moduleId}_table_header ${moduleId}_align_text_center" width="26%"><spring:message code="${moduleId}.propertyName" /></th>
-				<th class="${moduleId}_table_header ${moduleId}_align_text_center" width="37%"><spring:message code="${moduleId}.newValue" /></th>
-				<th class="${moduleId}_table_header ${moduleId}_align_text_center" width="37%"><spring:message code="${moduleId}.previousValue" /></th>
-			</tr>
-		<thead>
+<div id="${moduleId}-changes-dialog" class="${moduleId}_align_text_left" title="<spring:message code="${moduleId}.logDetails" />">
+	<br />
+	<table width="100%" cellpadding="0" cellspacing="5">
+		<tr>
+			<th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.uuid" /></th>
+			<td id="${moduleId}-changes-objectUuid" width="100%"></td>
+		</tr>
+		<tr>
+			<th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.summary" /></th>
+			<td id="${moduleId}-changes-summary"></td>
+		</tr>
+		<tr><td colspan="2">&nbsp;</td></tr>
+		<tr><td valign="top" colspan="2" class="${moduleId}_align_text_center"><b><spring:message code="${moduleId}.changes" />:</b></td></tr><tr>
+		<tr>
+			<td valign="top" colspan="2" class="${moduleId}_align_text_left">
+				<table id="${moduleId}-changes-table" width="100%" cellpadding="3" cellspacing="0" border="1" bordercolor="#ADACAC">
+					<thead>
+						<tr>
+							<th class="${moduleId}_table_header ${moduleId}_align_text_center" width="26%">
+								<spring:message code="${moduleId}.propertyName" />
+							</th>
+							<th class="${moduleId}_table_header ${moduleId}_align_text_center" width="37%">
+								<spring:message code="${moduleId}.newValue" />
+							</th>
+							<th class="${moduleId}_table_header ${moduleId}_align_text_center" width="37%">
+								<spring:message code="${moduleId}.previousValue" />
+							</th>
+						</tr>
+					<thead>
+				</table>
+			</td>
+		</tr>
 	</table>
 </div>
 
