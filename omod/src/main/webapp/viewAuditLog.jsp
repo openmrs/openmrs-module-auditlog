@@ -50,7 +50,7 @@
 	function ${moduleId}_showDetails(auditLogUuid){
 		auditLogDetails = auditLogDetailsMap[auditLogUuid];
 		$j("#${moduleId}-changes-objectUuid").html(auditLogDetails.uuid);
-		if(auditLogDetails.changes != undefined){
+		if(auditLogDetails.changes){
 			auditLogChanges = auditLogDetails.changes;
 			$j.each(auditLogChanges, function(index){
 				currentChange = auditLogChanges[index];
@@ -58,9 +58,9 @@
 				"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange.newValue+"</td>"+
 				"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange.previousValue+"</td></tr>");
 			});
-			$j("${moduleId}-changes-table").show();
+			$j("#${moduleId}-details .${moduleId}-changes-element").show();
 		}else{
-			$j("${moduleId}-changes-table").hide();
+			$j("#${moduleId}-details .${moduleId}-changes-element").hide();
 		}
 		
 		$j("#${moduleId}-changes-dialog").dialog('open');
@@ -122,7 +122,7 @@
 
 <div id="${moduleId}-changes-dialog" class="${moduleId}_align_text_left" title="<spring:message code="${moduleId}.logDetails" />">
 	<br />
-	<table width="100%" cellpadding="0" cellspacing="5">
+	<table id="${moduleId}-details" width="100%" cellpadding="0" cellspacing="5">
 		<tr>
 			<th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.uuid" /></th>
 			<td id="${moduleId}-changes-objectUuid" width="100%"></td>
@@ -131,9 +131,9 @@
 			<th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.summary" /></th>
 			<td id="${moduleId}-changes-summary"></td>
 		</tr>
-		<tr><td colspan="2">&nbsp;</td></tr>
-		<tr><td valign="top" colspan="2" class="${moduleId}_align_text_center"><b><spring:message code="${moduleId}.changes" />:</b></td></tr><tr>
-		<tr>
+		<tr class="${moduleId}-changes-element"><td colspan="2">&nbsp;</td></tr>
+		<tr class="${moduleId}-changes-element"><td valign="top" colspan="2" class="${moduleId}_align_text_center"><b><spring:message code="${moduleId}.changes" />:</b></td></tr><tr>
+		<tr class="${moduleId}-changes-element">
 			<td valign="top" colspan="2" class="${moduleId}_align_text_left">
 				<table id="${moduleId}-changes-table" width="100%" cellpadding="3" cellspacing="0" border="1" bordercolor="#ADACAC">
 					<thead>
