@@ -128,9 +128,9 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		ConceptDatatype dt = conceptService.getConceptDatatype(3);
 		String oldVersion = concept.getVersion();
 		String newVersion = "1.11";
-		Assert.assertNotSame(cc, concept.getConceptClass());
-		Assert.assertNotSame(dt, concept.getDatatype());
-		Assert.assertNotSame(newVersion, oldVersion);
+		Assert.assertFalse(cc.equals(concept.getConceptClass()));
+		Assert.assertFalse(dt.equals(concept.getDatatype()));
+		Assert.assertFalse(newVersion.equalsIgnoreCase(oldVersion));
 		
 		concept.setConceptClass(cc);
 		concept.setDatatype(dt);
