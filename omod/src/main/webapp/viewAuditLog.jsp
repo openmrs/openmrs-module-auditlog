@@ -50,7 +50,7 @@
 	function ${moduleId}_showDetails(auditLogUuid){
 		auditLogDetails = auditLogDetailsMap[auditLogUuid];
 		$j("#${moduleId}-changes-objectUuid").html(auditLogDetails.uuid);
-		if(auditLogDetails.changes){
+		if(auditLogDetails.changes != undefined){
 			auditLogChanges = auditLogDetails.changes;
 			$j.each(auditLogChanges, function(index){
 				currentChange = auditLogChanges[index];
@@ -85,7 +85,7 @@
 		auditlogDetails = new Object();
 		auditlogDetails.uuid = '${auditLog.objectUuid}';
 		<c:if test="${auditLog.action == 'UPDATED' && fn:length(auditLog.changes) > 0}">
-			var changes = new Array();
+			changes = new Array();
 			<c:forEach items="${auditLog.changes}" var="entry">
 				change = new Object();
 				change.propertyName = "${entry.key}";

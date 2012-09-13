@@ -29,3 +29,7 @@ div#auditlog_info, div#auditlog_paginate{
 .auditlog_table_header{
 	background-color: #CCCCCC;
 }
+
+table#auditlog tr:hover{
+    background-color: #97B9F7; cursor: pointer; color: #FFFFFF; font-weight: bold;
+}
