@@ -13,17 +13,14 @@
  */
 package org.openmrs.module.auditlog.web.dwr;
 
-import java.util.Map;
-
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
+import org.openmrs.module.auditlog.util.AuditLogConstants;
 
 public class AuditLogListItem {
 	
-	protected Log log = LogFactory.getLog(getClass());
+	private static final String DAEMON_USER_UUID = "A4F30A1B-5EB9-11DF-A648-37A07F9C90FB";
 	
 	private Integer auditLogId;
 	
@@ -39,26 +36,32 @@ public class AuditLogListItem {
 	
 	private String dateCreatedString;
 	
-	private Map<String, String[]> changesMap;
-	
 	/**
 	 * Convenience constructor that created an {@link AuditLogListItem} from an {@link AuditLog}
 	 */
 	public AuditLogListItem(AuditLog auditLog) {
 		auditLogId = auditLog.getAuditLogId();
 		classname = auditLog.getClassName();
-		simpleClassname = classname.substring(classname.indexOf(".") + 1);
+		if (classname.indexOf(".") > -1)
+			simpleClassname = classname.substring(classname.indexOf(".") + 1);
 		//If it is a nested class, use the simple name of the nested class
 		if (simpleClassname.indexOf("$") > -1)
 			simpleClassname = simpleClassname.substring(simpleClassname.indexOf("$") + 1);
 		objectUuid = auditLog.getObjectUuid();
 		action = auditLog.getAction().toString();
-		if (auditLog.getUser() != null && auditLog.getUser().getPersonName() != null)
-			userDetails = auditLog.getUser().getPersonName().getFullName();
-		if (auditLog.getUser() != null && StringUtils.isNotBlank(auditLog.getUser().getUsername()))
-			userDetails = userDetails + "(" + auditLog.getUser().getUsername() + ")";
+		if (auditLog.getUser() == null) {
+			if (auditLog.getUser().getUuid().equals(DAEMON_USER_UUID)) {
+				userDetails = Context.getMessageSourceService().getMessage(AuditLogConstants.MODULE_ID + ".systemChange");
+			} else {
+				if (auditLog.getUser().getPersonName() != null) {
+					userDetails = auditLog.getUser().getPersonName().getFullName();
+				}
+				if (StringUtils.isNotBlank(auditLog.getUser().getUsername()))
+					userDetails = userDetails + "[" + auditLog.getUser().getUsername() + "]";
+			}
+		}
+		
 		dateCreatedString = Context.getDateFormat().format(auditLog.getDateCreated());
-		changesMap = auditLog.getChanges();
 	}
 	
 	/**
@@ -158,19 +161,4 @@ public class AuditLogListItem {
 	public void setDateCreatedString(String dateCreatedString) {
 		this.dateCreatedString = dateCreatedString;
 	}
-	
-	/**
-	 * @return the changesMap
-	 */
-	public Map<String, String[]> getChangesMap() {
-		return changesMap;
-	}
-	
-	/**
-	 * @param changesMap the changesMap to set
-	 */
-	public void setChangesMap(Map<String, String[]> changesMap) {
-		this.changesMap = changesMap;
-	}
-	
 }

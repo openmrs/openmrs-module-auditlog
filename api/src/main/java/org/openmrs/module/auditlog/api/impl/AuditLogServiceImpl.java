@@ -16,8 +16,7 @@ package org.openmrs.module.auditlog.api.impl;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.commons.lang.StringUtils;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.api.APIException;
 import org.openmrs.api.context.Context;
@@ -31,7 +30,7 @@ import org.openmrs.util.OpenmrsUtil;
 
 public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogService {
 	
-	private static final Log log = LogFactory.getLog(AuditLogServiceImpl.class);
+	//private static final Log log = LogFactory.getLog(AuditLogServiceImpl.class);
 	
 	private AuditLogDAO dao;
 	
@@ -64,10 +63,23 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.AuditLogService#get(java.lang.Class, java.lang.Integer)
+	 * @see org.openmrs.module.auditlog.AuditLogService#getObjectById(java.lang.Class,
+	 *      java.lang.Integer)
 	 */
 	@Override
-	public <T> T get(Class<T> clazz, Integer objectId) {
-		return dao.get(clazz, objectId);
+	public <T> T getObjectById(Class<T> clazz, Integer id) {
+		return dao.getObjectById(clazz, id);
+	}
+	
+	/**
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#getObjectByUuid(java.lang.Class,
+	 *      java.lang.String)
+	 */
+	@Override
+	public <T> T getObjectByUuid(Class<T> clazz, String uuid) {
+		if (StringUtils.isBlank(uuid))
+			return null;
+		
+		return dao.getObjectByUuid(clazz, uuid);
 	}
 }

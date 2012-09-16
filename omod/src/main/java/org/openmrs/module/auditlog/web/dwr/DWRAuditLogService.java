@@ -13,13 +13,16 @@
  */
 package org.openmrs.module.auditlog.web.dwr;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.openmrs.Concept;
+import org.openmrs.GlobalProperty;
+import org.openmrs.Obs;
+import org.openmrs.OpenmrsMetadata;
 import org.openmrs.OpenmrsObject;
+import org.openmrs.Patient;
+import org.openmrs.Person;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
@@ -30,47 +33,75 @@ import org.openmrs.module.auditlog.api.AuditLogService;
  */
 public class DWRAuditLogService {
 	
-	//private static final Log log = LogFactory.getLog(DWRAuditLogService.class);
-	
-	public AuditLogListItem getAuditLogDetails(Integer auditLogId) {
-		return null;
-	}
+	private final Log log = LogFactory.getLog(getClass());
 	
 	/**
-	 * Fetches the audit log entries matching the specified arguments
+	 * Gets the {@link AuditLogDetails} for the auditlog with the specified uuid
 	 * 
-	 * @param classnames the classnames to match against e.g for objects of type {@link Concept}
-	 * @param actions the list of {@link Action}s to match against
-	 * @param startDate the creation date of the log entries to return should be after or equal to
-	 *            this date
-	 * @param endDate the creation date of the log entries to return should be before or equal to
-	 *            this date
-	 * @param start index to start with (defaults to 0 if <code>null<code>)
-	 * @param length number of results to return (default to return all matching results if
-	 *            <code>null<code>)
-	 * @return a list of {@link AuditLogListItem}s
-	 * @throws Exception
+	 * @param auditLogUuid
+	 * @return
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public List<AuditLogListItem> getAuditLogs(List<String> classnames, List<Action> actions, Date startDate, Date endDate,
-	                                           Integer start, Integer length) throws Exception {
-		List<Class<? extends OpenmrsObject>> clazzes = null;
-		if (CollectionUtils.isNotEmpty(classnames)) {
-			clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
-			for (String cn : classnames) {
-				Class cls = Context.loadClass(cn);
-				clazzes.add(cls);
+	@SuppressWarnings("unchecked")
+	public AuditLogDetails getAuditLogDetails(String auditLogUuid) {
+		if (StringUtils.isNotBlank(auditLogUuid)) {
+			AuditLogService as = Context.getService(AuditLogService.class);
+			AuditLog auditLog = as.getObjectByUuid(AuditLog.class, auditLogUuid);
+			if (auditLog != null) {
+				String displayString = "";
+				boolean objectExists = false;
+				Integer objectId = null;
+				if (!auditLog.getAction().equals(Action.DELETED)) {
+					Class<? extends OpenmrsObject> clazz;
+					try {
+						clazz = (Class<? extends OpenmrsObject>) Context.loadClass(auditLog.getClassName());
+						OpenmrsObject obj = as.getObjectByUuid(clazz, auditLog.getObjectUuid());
+						if (obj != null) {
+							objectExists = true;
+							//some objects don't support this method e.g GlobalPropeties
+							if (!GlobalProperty.class.isAssignableFrom(obj.getClass())) {
+								try {
+									objectId = obj.getId();
+								}
+								catch (Exception e) {
+									log.error("Error:", e);
+								}
+								if (OpenmrsMetadata.class.isAssignableFrom(obj.getClass())) {
+									OpenmrsMetadata metadataObj = (OpenmrsMetadata) obj;
+									if (StringUtils.isNotBlank(metadataObj.getName()))
+										displayString += metadataObj.getName();
+									if (StringUtils.isNotBlank(metadataObj.getDescription()))
+										displayString += "[" + metadataObj.getDescription() + "]";
+								} else if (Concept.class.isAssignableFrom(obj.getClass())) {
+									Concept concept = (Concept) obj;
+									displayString += ((concept.getName() != null) ? concept.getName().getName() : "");
+								} else if (Person.class.isAssignableFrom(obj.getClass())) {
+									Person person = (Patient) obj;
+									displayString += ((person.getPersonName() != null) ? person.getPersonName()
+									        .getFullName() : "");
+								} else if (Obs.class.isAssignableFrom(obj.getClass())) {
+									Obs obs = (Obs) obj;
+									if (obs.getConcept() != null) {
+										if (obs.getConcept().getName() != null)
+											displayString += obs.getConcept().getName().getName();
+									}
+									
+									displayString += obs.getValueAsString(Context.getLocale());
+								}
+							} else {
+								displayString += ((GlobalProperty) obj).getProperty();
+							}
+							
+							if (StringUtils.isBlank(displayString))
+								displayString += obj.toString();
+						}
+					}
+					catch (ClassNotFoundException e) {
+						log.error("Cannot log class:" + auditLog.getClassName());
+					}
+				}
+				return new AuditLogDetails(displayString, objectId, objectExists, auditLog.getChanges());
 			}
 		}
-		
-		List<AuditLog> auditlogs = Context.getService(AuditLogService.class).getAuditLogs(clazzes, actions, startDate,
-		    endDate, start, length);
-		
-		List<AuditLogListItem> results = new ArrayList<AuditLogListItem>();
-		for (AuditLog auditLog : auditlogs) {
-			results.add(new AuditLogListItem(auditLog));
-		}
-		
-		return results;
+		return null;
 	}
 }

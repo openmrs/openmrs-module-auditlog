@@ -14,7 +14,6 @@
 	<updateURL>https://dev.openmrs.org/modules/download/${project.parent.artifactId}/update.rdf</updateURL>
 	<require_version>${openMRSVersion}</require_version>
 	<!-- / Module Properties -->
-
 	
 	<!-- Module Activator -->
 	<activator>${project.parent.groupId}.${project.parent.artifactId}.AuditLogActivator</activator>
@@ -25,6 +24,24 @@
 		<point>org.openmrs.admin.list</point>
 		<class>${project.parent.groupId}.${project.parent.artifactId}.extension.html.AdminList</class>
 	</extension>
+	
+	<!-- DWR -->
+	<dwr>
+		<allow>
+			<convert converter="bean" match="org.openmrs.module.auditlog.web.dwr.AuditLogDetails"/>
+			<create creator="new" javascript="DWRAuditLogService">
+				<param name="class" value="org.openmrs.module.auditlog.web.dwr.DWRAuditLogService" />
+				<include method="getAuditLogDetails"/>
+			</create>
+		</allow>	
+		<signatures>
+			<![CDATA[
+				import org.openmrs.module.auditlog.web.dwr.DWRAuditLogService;
+				
+				DWRAuditLogService.getAuditLogDetails(String auditLogUuid);
+			]]>
+		</signatures>
+	</dwr>
 	
 	<!-- Global properties -->
 	<globalProperty>

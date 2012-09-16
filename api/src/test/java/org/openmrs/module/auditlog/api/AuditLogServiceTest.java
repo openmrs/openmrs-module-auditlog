@@ -24,11 +24,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.openmrs.Concept;
 import org.openmrs.ConceptName;
+import org.openmrs.GlobalProperty;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.api.APIException;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
+import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.openmrs.test.Verifies;
 import org.openmrs.util.OpenmrsUtil;
@@ -55,9 +57,9 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	 */
 	@Test
 	@Verifies(value = "should get the saved object matching the specified arguments", method = "get(Class<T>,Integer)")
-	public void get_shouldGetTheSavedObjectMatchingTheSpecifiedArguments() throws Exception {
+	public void getObjectById_shouldGetTheSavedObjectMatchingTheSpecifiedArguments() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
-		Assert.assertEquals("4f7d57f0-9077-11e1-aaa4-00248140a5eb", service.get(AuditLog.class, 1).getUuid());
+		Assert.assertEquals("4f7d57f0-9077-11e1-aaa4-00248140a5eb", service.getObjectById(AuditLog.class, 1).getUuid());
 	}
 	
 	/**
@@ -200,5 +202,18 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		for (AuditLog auditLog : auditLogs) {
 			Assert.assertTrue(OpenmrsUtil.compare(currMaxDate, auditLog.getDateCreated()) >= 0);
 		}
+	}
+	
+	/**
+	 * @see {@link AuditLogService#getObjectByUuid(Class<T>,String)}
+	 */
+	@Test
+	@Verifies(value = "should get the saved object matching the specified arguments", method = "getObjectByUuid(Class<T>,String)")
+	public void getObjectByUuid_shouldGetTheSavedObjectMatchingTheSpecifiedArguments() throws Exception {
+		Assert.assertNull(service.getObjectByUuid(GlobalProperty.class, "Unknown uuid"));
+		GlobalProperty gp = service.getObjectByUuid(GlobalProperty.class, "abc05786-9019-11e1-aaa4-00248140a5eb");
+		Assert.assertNotNull(gp);
+		Assert.assertEquals(AuditLogConstants.AUDITLOG_GP_MONITORING_STRATEGY, gp.getProperty());
+		
 	}
 }

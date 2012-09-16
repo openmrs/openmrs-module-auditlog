@@ -56,9 +56,18 @@ public interface AuditLogService extends OpenmrsService {
 	/**
 	 * Fetches a saved object with the specified objectId
 	 * 
-	 * @param objectId the id to match against
+	 * @param id the id to match against
 	 * @return the matching saved object
 	 * @should get the saved object matching the specified arguments
 	 */
-	public <T> T get(Class<T> clazz, Integer objectId);
+	public <T> T getObjectById(Class<T> clazz, Integer id);
+	
+	/**
+	 * Fetches a saved object with the specified uuid
+	 * 
+	 * @param uuid the uuid to match against
+	 * @return the matching saved object
+	 * @should get the saved object matching the specified arguments
+	 */
+	public <T> T getObjectByUuid(Class<T> clazz, String uuid);
 }

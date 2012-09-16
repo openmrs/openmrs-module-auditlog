@@ -8,6 +8,7 @@
 
 <openmrs:htmlInclude file="/scripts/jquery/dataTables/css/dataTables_jui.css"/>
 <openmrs:htmlInclude file="/scripts/jquery/dataTables/js/jquery.dataTables.min.js"/>
+<openmrs:htmlInclude file="/dwr/interface/DWRAuditLogService.js"/>
 
 <script type="text/javascript">
 	var auditLogDetailsMap = new Object();
@@ -48,6 +49,16 @@
 	});
 	
 	function ${moduleId}_showDetails(auditLogUuid){
+		DWRAuditLogService.getAuditLogDetails(auditLogUuid, function(details){
+			if(details){
+				if(details.objectExists == true)
+					$j("#${moduleId}-changes-summary").html(details.displayString);
+				else
+					$j("#${moduleId}-changes-summary").html("<span style='color:red'><spring:message code="${moduleId}.objectDoesnotExist" /></span>");
+				if(details.objectId)
+					$j("#${moduleId}-changes-objectId").html(details.objectId);
+			}
+		});
 		auditLogDetails = auditLogDetailsMap[auditLogUuid];
 		$j("#${moduleId}-changes-objectUuid").html(auditLogDetails.uuid);
 		if(auditLogDetails.changes){
@@ -128,11 +139,15 @@
 			<td id="${moduleId}-changes-objectUuid" width="100%"></td>
 		</tr>
 		<tr>
+			<th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.id" /></th>
+			<td id="${moduleId}-changes-objectId" width="100%"></td>
+		</tr>
+		<tr>
 			<th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.summary" /></th>
 			<td id="${moduleId}-changes-summary"></td>
 		</tr>
 		<tr class="${moduleId}-changes-element"><td colspan="2">&nbsp;</td></tr>
-		<tr class="${moduleId}-changes-element"><td valign="top" colspan="2" class="${moduleId}_align_text_center"><b><spring:message code="${moduleId}.changes" />:</b></td></tr><tr>
+		<tr class="${moduleId}-changes-element"><td valign="top" colspan="2" class="${moduleId}_align_text_center"><b><spring:message code="${moduleId}.changes" /></b></td></tr><tr>
 		<tr class="${moduleId}-changes-element">
 			<td valign="top" colspan="2" class="${moduleId}_align_text_left">
 				<table id="${moduleId}-changes-table" width="100%" cellpadding="3" cellspacing="0" border="1" bordercolor="#ADACAC">

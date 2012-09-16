@@ -100,12 +100,25 @@ public class HibernateAuditLogDAO implements AuditLogDAO {
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.db.AuditLogDAO#get(java.lang.Class, java.lang.Integer)
+	 * @see org.openmrs.module.auditlog.db.AuditLogDAO#getObjectById(java.lang.Class,
+	 *      java.lang.Integer)
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	@Transactional(readOnly = true)
-	public <T> T get(Class<T> clazz, Integer objectId) {
-		return (T) sessionFactory.getCurrentSession().get(clazz, objectId);
+	public <T> T getObjectById(Class<T> clazz, Integer id) {
+		return (T) sessionFactory.getCurrentSession().get(clazz, id);
+	}
+	
+	/**
+	 * @see org.openmrs.module.auditlog.api.db.AuditLogDAO#getObjectByUuid(java.lang.Class,
+	 *      java.lang.String)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T getObjectByUuid(Class<T> clazz, String uuid) {
+		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(clazz);
+		criteria.add(Restrictions.eq("uuid", uuid));
+		return (T) criteria.uniqueResult();
 	}
 }

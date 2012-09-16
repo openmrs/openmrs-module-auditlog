@@ -47,7 +47,12 @@ public interface AuditLogDAO {
 	public void delete(Object object);
 	
 	/**
-	 * @see AuditLogService#get(Class, Integer)
+	 * @see AuditLogService#getObjectById(Class, Integer)
 	 */
-	public <T> T get(Class<T> clazz, Integer objectId);
+	public <T> T getObjectById(Class<T> clazz, Integer id);
+	
+	/**
+	 * @see AuditLogService#getObjectByUuid(Class, String)
+	 */
+	public <T> T getObjectByUuid(Class<T> clazz, String uuid);
 }
