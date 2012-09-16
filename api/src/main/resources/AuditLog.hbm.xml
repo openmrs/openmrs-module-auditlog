@@ -29,7 +29,7 @@
 		
 		<property name="dateCreated" type="java.util.Date" column="date_created" length="19" not-null="true" update="false" />
 		
-		<many-to-one name="user" class="org.openmrs.User" column="user" not-null="true" />
+		<many-to-one name="user" class="org.openmrs.User" column="user" />
 		
 		<property name="uuid" type="string" length="38" unique="true" not-null="true" update="false" />
 		
