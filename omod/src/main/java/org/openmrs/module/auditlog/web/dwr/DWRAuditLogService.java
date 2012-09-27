@@ -57,7 +57,7 @@ public class DWRAuditLogService {
 						OpenmrsObject obj = as.getObjectByUuid(clazz, auditLog.getObjectUuid());
 						if (obj != null) {
 							objectExists = true;
-							//some objects don't support this method e.g GlobalPropeties
+							//some objects don't support this method e.g GlobalProperties
 							if (!GlobalProperty.class.isAssignableFrom(obj.getClass())) {
 								try {
 									objectId = obj.getId();

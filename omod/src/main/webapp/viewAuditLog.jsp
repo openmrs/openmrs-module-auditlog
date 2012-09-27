@@ -42,8 +42,13 @@
 			height:'450',
 			modal: true,
 			beforeClose: function(event, ui){
+				//reset
+				$j("#${moduleId}-changes-objectId").html("");
+				$j("#${moduleId}-changes-summary").html("");
+				$j("#${moduleId}-changes-objectUuid").html("");
 				//remove all rows from previous displays except the header row
 				$j("#${moduleId}-changes-table tr:gt(0)").remove();
+				$j("#${moduleId}-details .${moduleId}-changes-element").hide();
 			}
 		});
 	});
@@ -70,8 +75,6 @@
 				"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange.previousValue+"</td></tr>");
 			});
 			$j("#${moduleId}-details .${moduleId}-changes-element").show();
-		}else{
-			$j("#${moduleId}-details .${moduleId}-changes-element").hide();
 		}
 		
 		$j("#${moduleId}-changes-dialog").dialog('open');
@@ -117,7 +120,7 @@
    				<c:choose>
    					<%-- If this is a scheduled task, something done by daemon thread or at start up --%>
    					<c:when test="${auditLog.user == null || auditLog.user.uuid == 'A4F30A1B-5EB9-11DF-A648-37A07F9C90FB'}">
-   						<spring:message code="${moduleId}.systemChange" />
+   						<spring:message code="${moduleId}.systemAction" />
    					</c:when>
    					<c:otherwise>
    						${auditLog.user.personName} <c:if test="${fn:trim(auditLog.user.username) != ''}">[${auditLog.user.username}]</c:if>

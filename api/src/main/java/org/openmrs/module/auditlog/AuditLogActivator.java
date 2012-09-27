@@ -25,24 +25,6 @@ public class AuditLogActivator extends BaseModuleActivator {
 	private static final Log log = LogFactory.getLog(AuditLogActivator.class);
 	
 	/**
-	 * @see org.openmrs.module.BaseModuleActivator#started()
-	 */
-	@Override
-	public void started() {
-		if (log.isInfoEnabled())
-			log.info("Started Audit Log Module...");
-	}
-	
-	/**
-	 * @see org.openmrs.module.BaseModuleActivator#stopped()
-	 */
-	@Override
-	public void stopped() {
-		if (log.isInfoEnabled())
-			log.info("Stopped Audit Log Module...");
-	}
-	
-	/**
 	 * @see org.openmrs.module.BaseModuleActivator#willStart()
 	 */
 	@Override
@@ -52,11 +34,29 @@ public class AuditLogActivator extends BaseModuleActivator {
 	}
 	
 	/**
+	 * @see org.openmrs.module.BaseModuleActivator#started()
+	 */
+	@Override
+	public void started() {
+		if (log.isInfoEnabled())
+			log.info("Started Audit Log Module...");
+	}
+	
+	/**
 	 * @see org.openmrs.module.BaseModuleActivator#willStop()
 	 */
 	@Override
 	public void willStop() {
 		if (log.isDebugEnabled())
 			log.debug("Stopping Audit Log Module...");
+	}
+	
+	/**
+	 * @see org.openmrs.module.BaseModuleActivator#stopped()
+	 */
+	@Override
+	public void stopped() {
+		if (log.isInfoEnabled())
+			log.info("Stopped Audit Log Module...");
 	}
 }

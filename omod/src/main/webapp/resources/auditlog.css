@@ -33,3 +33,7 @@ div#auditlog_info, div#auditlog_paginate{
 table#auditlog tr:hover{
     background-color: #97B9F7; cursor: pointer; color: #FFFFFF; font-weight: bold;
 }
+
+.auditlog-changes-element{
+	display: none;
+}

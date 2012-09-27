@@ -1,10 +1,12 @@
 package org.openmrs.module.auditlog.api.db.hibernate.interceptor;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -64,8 +66,11 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	
 	private ThreadLocal<HashSet<OpenmrsObject>> deletes = new ThreadLocal<HashSet<OpenmrsObject>>();
 	
-	//Mapping between object uuid to the map of its changed property names and their older values, the first item in the array is the old value while the the second is the new value
+	//Mapping between object uuids and maps of its changed property names and their older values, the first item in the array is the old value while the the second is the new value
 	private ThreadLocal<Map<String, Map<String, Object[]>>> objectChangesMap = new ThreadLocal<Map<String, Map<String, Object[]>>>();
+	
+	//Mapping between entities and lists of their Collections in the current session
+	private ThreadLocal<Map<Object, List<Collection<?>>>> entityCollectionsMap = new ThreadLocal<Map<Object, List<Collection<?>>>>();
 	
 	//we will need to disable the interceptor when saving the auditlog to avoid going in circles
 	private ThreadLocal<Boolean> disableInterceptor = new ThreadLocal<Boolean>();
@@ -98,6 +103,18 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	}
 	
 	/**
+	 * @see org.hibernate.EmptyInterceptor#afterTransactionBegin(org.hibernate.Transaction)
+	 */
+	@Override
+	public void afterTransactionBegin(Transaction tx) {
+		inserts.set(new HashSet<OpenmrsObject>());
+		updates.set(new HashSet<OpenmrsObject>());
+		deletes.set(new HashSet<OpenmrsObject>());
+		objectChangesMap.set(new HashMap<String, Map<String, Object[]>>());
+		entityCollectionsMap.set(new HashMap<Object, List<Collection<?>>>());
+	}
+	
+	/**
 	 * @see org.hibernate.EmptyInterceptor#onSave(java.lang.Object, java.io.Serializable,
 	 *      java.lang.Object[], java.lang.String[], org.hibernate.type.Type[])
 	 */
@@ -106,11 +123,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 		if (isMonitored(entity)) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			if (log.isDebugEnabled())
-				log.debug("Creating log entry for CREATED object with uuid:" + openmrsObject.getUuid() + " of type:"
+				log.debug("Creating log entry for created object with uuid:" + openmrsObject.getUuid() + " of type:"
 				        + entity.getClass().getName());
-			
-			if (inserts.get() == null)
-				inserts.set(new HashSet<OpenmrsObject>());
 			
 			inserts.get().add(openmrsObject);
 		}
@@ -168,13 +182,13 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					Object flattenedPreviousValue = null;
 					Object flattenedCurrentValue = null;
 					
-					if (BeanUtils.isSimpleValueType(propertyType)) {
+					if (!types[i].isEntityType() && !types[i].isCollectionType()) {
 						//TODO take care of proper serialization of Dates, Enums, Class, Locale
 						flattenedPreviousValue = previousValue;
 						flattenedCurrentValue = currentValue;
-					} else {
-						//this is a compound property, store the primary key value
-						//TODO take care of composite primary keys
+					} else if (!types[i].isCollectionType()) {
+						//this is an association, store the primary key value
+						//TODO take care of other types, composite primary keys etc
 						
 						//value = PropertyUtils.getProperty(previousValue, metadata.getIdentifierPropertyName());
 						if (previousValue != null)
@@ -189,16 +203,10 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 			
 			if (MapUtils.isNotEmpty(propertyChangesMap)) {
 				if (log.isDebugEnabled())
-					log.debug("Creating log entry for EDITED object with uuid:" + openmrsObject.getUuid() + " of type:"
+					log.debug("Creating log entry for updated object with uuid:" + openmrsObject.getUuid() + " of type:"
 					        + entity.getClass().getName());
 				
-				if (updates.get() == null)
-					updates.set(new HashSet<OpenmrsObject>());
-				
 				updates.get().add(openmrsObject);
-				
-				if (objectChangesMap.get() == null)
-					objectChangesMap.set(new HashMap<String, Map<String, Object[]>>());
 				
 				objectChangesMap.get().put(openmrsObject.getUuid(), propertyChangesMap);
 			}
@@ -216,11 +224,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 		if (isMonitored(entity)) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			if (log.isDebugEnabled())
-				log.debug("Creating log entry for DELETED object with uuid:" + openmrsObject.getUuid() + " of type:"
+				log.debug("Creating log entry for deleted object with uuid:" + openmrsObject.getUuid() + " of type:"
 				        + entity.getClass().getName());
-			
-			if (deletes.get() == null)
-				deletes.set(new HashSet<OpenmrsObject>());
 			
 			deletes.get().add(openmrsObject);
 		}
@@ -255,9 +260,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					
 				}
 				
-				if (updates.get() == null)
-					updates.set(new HashSet<OpenmrsObject>());
-				
 				updates.get().add((OpenmrsObject) owningObject);
 			}
 		} else if (collection != null) {
@@ -272,52 +274,113 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	}
 	
 	/**
+	 * This is a hacky way to find all loaded classes in this session with collections
+	 * 
+	 * @see org.hibernate.EmptyInterceptor#findDirty(java.lang.Object, java.io.Serializable,
+	 *      java.lang.Object[], java.lang.Object[], java.lang.String[], org.hibernate.type.Type[])
+	 */
+	@Override
+	public int[] findDirty(Object entity, Serializable id, Object[] currentState, Object[] previousState,
+	                       String[] propertyNames, Type[] types) {
+		
+		if (entityCollectionsMap.get().get(entity) == null) {
+			//This is the first time we are trying to find collection elements for this object
+			if (log.isDebugEnabled())
+				log.debug("Finding collections for object:" + entity.getClass() + " #" + id);
+			
+			for (int i = 0; i < propertyNames.length; i++) {
+				if (types[i].isCollectionType()) {
+					Object coll = currentState[i];
+					if (coll != null && Collection.class.isAssignableFrom(coll.getClass())) {
+						Collection<?> collection = (Collection<?>) coll;
+						if (!collection.isEmpty()) {
+							if (entityCollectionsMap.get().get(entity) == null) {
+								entityCollectionsMap.get().put(entity, new ArrayList<Collection<?>>());
+							}
+							
+							entityCollectionsMap.get().get(entity).add(collection);
+						}
+					} else {
+						//TODO handle maps too because hibernate treats maps to be of CollectionType
+					}
+				}
+			}
+		}
+		
+		return super.findDirty(entity, id, currentState, previousState, propertyNames, types);
+	}
+	
+	/**
 	 * @see org.hibernate.EmptyInterceptor#afterTransactionCompletion(org.hibernate.Transaction)
 	 */
 	@Override
 	public void afterTransactionCompletion(Transaction tx) {
-		Date date = new Date();
+		//TODO This should typically happen in a separate thread for performance purposes
 		try {
 			if (disableInterceptor.get() == null && tx.wasCommitted()) {
-				if (inserts.get() == null && updates.get() == null && deletes.get() == null)
+				if (inserts.get().isEmpty() && updates.get().isEmpty() && deletes.get().isEmpty())
 					return;
 				
 				try {
 					User user = Context.getAuthenticatedUser();
+					Date date = new Date();
 					//TODO handle daemon or un authenticated operations
 					
-					if (inserts.get() != null) {
-						for (OpenmrsObject insert : inserts.get()) {
-							AuditLog auditLog = new AuditLog(insert.getClass().getName(), insert.getUuid(), Action.CREATED,
-							        user, date);
-							auditLog.setUuid(UUID.randomUUID().toString());
-							getAuditLogDao().save(auditLog);
-						}
+					for (OpenmrsObject insert : inserts.get()) {
+						AuditLog auditLog = new AuditLog(insert.getClass().getName(), insert.getUuid(), Action.CREATED,
+						        user, date);
+						auditLog.setUuid(UUID.randomUUID().toString());
+						getAuditLogDao().save(auditLog);
 					}
 					
-					if (updates.get() != null) {
-						for (OpenmrsObject update : updates.get()) {
-							AuditLog auditLog = new AuditLog(update.getClass().getName(), update.getUuid(), Action.UPDATED,
-							        user, date);
-							auditLog.setUuid(UUID.randomUUID().toString());
-							if (objectChangesMap.get() != null) {
-								Map<String, Object[]> propertyValuesMap = objectChangesMap.get().get(update.getUuid());
-								if (propertyValuesMap != null) {
-									auditLog.setChangesXml(AuditLogUtil.generateChangesXml(propertyValuesMap));
+					for (OpenmrsObject delete : deletes.get()) {
+						AuditLog auditLog = new AuditLog(delete.getClass().getName(), delete.getUuid(), Action.DELETED,
+						        user, date);
+						auditLog.setUuid(UUID.randomUUID().toString());
+						getAuditLogDao().save(auditLog);
+					}
+					
+					//If we have any entities in the session that have child collections and there were some updates, 
+					//check all collection items to find dirty ones so that we can mark the the owners as dirty too
+					//I.e if a ConceptName/Mapping/Description was edited, mark the the Concept as dirty too
+					if (CollectionUtils.isNotEmpty(updates.get())) {
+						for (Map.Entry<Object, List<Collection<?>>> entry : entityCollectionsMap.get().entrySet()) {
+							for (Collection<?> coll : entry.getValue()) {
+								for (Object obj : coll) {
+									//If a collection item was updated and no other update had been made on the owner
+									if (updates.get().contains(obj)) {
+										if (updates.get().contains(entry.getKey())) {
+											if (log.isDebugEnabled())
+												log.debug("There is already an  auditlog for:" + entry.getKey().getClass()
+												        + " - " + entry.getKey().toString());
+											
+											//TODO otherwise associate the update log for the collection item to that of the owner
+										} else {
+											OpenmrsObject o = (OpenmrsObject) entry.getKey();
+											if (log.isDebugEnabled())
+												log.debug("Creating log entry for edited object with uuid:" + o.getUuid()
+												        + " of type:" + o.getClass().getName()
+												        + " due to an update for a item in a child collection");
+											updates.get().add(o);
+										}
+									}
 								}
 							}
-							
-							getAuditLogDao().save(auditLog);
 						}
 					}
 					
-					if (deletes.get() != null) {
-						for (OpenmrsObject delete : deletes.get()) {
-							AuditLog auditLog = new AuditLog(delete.getClass().getName(), delete.getUuid(), Action.DELETED,
-							        user, date);
-							auditLog.setUuid(UUID.randomUUID().toString());
-							getAuditLogDao().save(auditLog);
+					for (OpenmrsObject update : updates.get()) {
+						AuditLog auditLog = new AuditLog(update.getClass().getName(), update.getUuid(), Action.UPDATED,
+						        user, date);
+						auditLog.setUuid(UUID.randomUUID().toString());
+						if (objectChangesMap.get() != null) {
+							Map<String, Object[]> propertyValuesMap = objectChangesMap.get().get(update.getUuid());
+							if (propertyValuesMap != null) {
+								auditLog.setChangesXml(AuditLogUtil.generateChangesXml(propertyValuesMap));
+							}
 						}
+						
+						getAuditLogDao().save(auditLog);
 					}
 					
 					//Ensures we don't step through the interceptor methods again when saving the auditLog
@@ -335,16 +398,13 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 		}
 		finally {
 			//cleanup
-			if (inserts.get() != null)
-				inserts.remove();
-			if (updates.get() != null)
-				updates.remove();
-			if (deletes.get() != null)
-				deletes.remove();
+			inserts.remove();
+			updates.remove();
+			deletes.remove();
+			objectChangesMap.remove();
+			entityCollectionsMap.remove();
 			if (disableInterceptor.get() != null)
 				disableInterceptor.remove();
-			if (objectChangesMap.get() != null)
-				objectChangesMap.remove();
 		}
 	}
 	

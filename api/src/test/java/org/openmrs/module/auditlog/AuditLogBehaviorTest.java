@@ -306,7 +306,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		try {
 			//This is a ConceptNumeric, so we need to mark it as monitored
 			AuditLogUtil.startMonitoring(ConceptNumeric.class);
-			Assert.assertFalse(concept.getConceptMappings().isEmpty());
+			Assert.assertFalse(concept.getDescriptions().isEmpty());
 			
 			concept.removeDescription(concept.getDescription());
 			conceptService.saveConcept(concept);
@@ -314,6 +314,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 			List<AuditLog> updateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.UPDATED), null,
 			    null, null, null);
 			Assert.assertEquals(1, updateLogs.size());
+			Assert.assertEquals(updateLogs.get(0).getObjectUuid(), concept.getUuid());
 		}
 		finally {
 			AuditLogUtil.stopMonitoring(ConceptNumeric.class);
@@ -337,9 +338,34 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 			List<AuditLog> updateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.UPDATED), null,
 			    null, null, null);
 			Assert.assertEquals(1, updateLogs.size());
+			Assert.assertEquals(updateLogs.get(0).getObjectUuid(), concept.getUuid());
 		}
 		finally {
 			AuditLogUtil.stopMonitoring(ConceptNumeric.class);
+		}
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldCreateAnAuditLogForTheParentObjectWhenAnElementInAChildCollectionIsUpdated() throws Exception {
+		Concept concept = conceptService.getConcept(7);
+		int originalDescriptionCount = concept.getDescriptions().size();
+		Assert.assertTrue(originalDescriptionCount > 0);
+		try {
+			AuditLogUtil.startMonitoring(ConceptDescription.class);
+			concept.getDescription().setDescription("another descr");
+			concept = conceptService.saveConcept(concept);
+			Assert.assertEquals(originalDescriptionCount, concept.getDescriptions().size());
+			
+			List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
+			clazzes.add(Concept.class);//get only location logs since there those of GPs that we have changed
+			List<AuditLog> updateLogs = auditLogService.getAuditLogs(clazzes, Collections.singletonList(Action.UPDATED),
+			    null, null, null, null);
+			Assert.assertEquals(1, updateLogs.size());
+			Assert.assertEquals(updateLogs.get(0).getObjectUuid(), concept.getUuid());
+		}
+		finally {
+			AuditLogUtil.stopMonitoring(ConceptDescription.class);
 		}
 	}
 	

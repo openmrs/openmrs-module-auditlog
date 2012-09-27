@@ -351,9 +351,9 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	 */
 	@Override
 	public void globalPropertyChanged(GlobalProperty gp) {
-		if (AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES.equals(gp))
+		if (AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES.equals(gp.getProperty()))
 			monitoredClassnamesCache = null;
-		else if (AuditLogConstants.AUDITLOG_GP_UN_MONITORED_CLASSES.equals(gp))
+		else if (AuditLogConstants.AUDITLOG_GP_UN_MONITORED_CLASSES.equals(gp.getProperty()))
 			unMonitoredClassnamesCache = null;
 		else {
 			//we need to invalidate all caches when the strategy is changed
@@ -367,10 +367,10 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	 * @see org.openmrs.api.GlobalPropertyListener#globalPropertyDeleted(java.lang.String)
 	 */
 	@Override
-	public void globalPropertyDeleted(String gp) {
-		if (AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES.equals(gp))
+	public void globalPropertyDeleted(String gpName) {
+		if (AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES.equals(gpName))
 			monitoredClassnamesCache = null;
-		else if (AuditLogConstants.AUDITLOG_GP_UN_MONITORED_CLASSES.equals(gp))
+		else if (AuditLogConstants.AUDITLOG_GP_UN_MONITORED_CLASSES.equals(gpName))
 			unMonitoredClassnamesCache = null;
 		else {
 			monitoringStrategyCache = null;
