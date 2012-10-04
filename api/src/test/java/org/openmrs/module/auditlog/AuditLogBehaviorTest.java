@@ -122,8 +122,8 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@NotTransactional
 	public void shouldCreateAnAuditLogEntryWhenAnObjectIsEdited() throws Exception {
 		Concept concept = conceptService.getConcept(3);
-		Integer oldConceptClassId = concept.getConceptClass().getConceptClassId();
-		Integer oldDatatypeId = concept.getDatatype().getConceptDatatypeId();
+		String oldConceptClassUuid = concept.getConceptClass().getUuid();
+		String oldDatatypeUuid = concept.getDatatype().getUuid();
 		ConceptClass cc = conceptService.getConceptClass(2);
 		ConceptDatatype dt = conceptService.getConceptDatatype(3);
 		String oldVersion = concept.getVersion();
@@ -147,12 +147,12 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		//Check that there 3 property tag entries
 		Map<String, String[]> changes = auditLog.getChanges();
 		Assert.assertEquals(3, changes.size());
-		Assert.assertEquals(oldConceptClassId.toString(), changes.get("conceptClass")[1]);
-		Assert.assertEquals(oldDatatypeId.toString(), changes.get("datatype")[1]);
+		Assert.assertEquals(AuditLogConstants.UUID_LABEL + oldConceptClassUuid, changes.get("conceptClass")[1]);
+		Assert.assertEquals(AuditLogConstants.UUID_LABEL + oldDatatypeUuid, changes.get("datatype")[1]);
 		Assert.assertEquals(oldVersion, changes.get("version")[1]);
 		
-		Assert.assertEquals(cc.getConceptClassId().toString(), changes.get("conceptClass")[0]);
-		Assert.assertEquals(dt.getConceptDatatypeId().toString(), changes.get("datatype")[0]);
+		Assert.assertEquals(AuditLogConstants.UUID_LABEL + cc.getUuid(), changes.get("conceptClass")[0]);
+		Assert.assertEquals(AuditLogConstants.UUID_LABEL + dt.getUuid(), changes.get("datatype")[0]);
 		Assert.assertEquals(newVersion, changes.get("version")[0]);
 	}
 	

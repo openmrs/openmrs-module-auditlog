@@ -178,23 +178,40 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					if (propertyChangesMap == null)
 						propertyChangesMap = new HashMap<String, Object[]>();
 					
-					ClassMetadata metadata = sessionFactory.getClassMetadata(propertyType);
-					Object flattenedPreviousValue = null;
-					Object flattenedCurrentValue = null;
+					String flattenedPreviousValue = "";
+					String flattenedCurrentValue = "";
 					
-					if (!types[i].isEntityType() && !types[i].isCollectionType()) {
+					if (BeanUtils.isSimpleValueType(propertyType)) {
 						//TODO take care of proper serialization of Dates, Enums, Class, Locale
-						flattenedPreviousValue = previousValue;
-						flattenedCurrentValue = currentValue;
-					} else if (!types[i].isCollectionType()) {
+						flattenedPreviousValue = previousValue.toString();
+						flattenedCurrentValue = currentValue.toString();
+					} else if (types[i].isAssociationType() && !types[i].isCollectionType()) {
 						//this is an association, store the primary key value
+						if (OpenmrsObject.class.isAssignableFrom(previousValue.getClass())) {
+							if (previousValue != null) {
+								flattenedPreviousValue = AuditLogConstants.UUID_LABEL
+								        + ((OpenmrsObject) previousValue).getUuid();
+							}
+							if (currentValue != null) {
+								flattenedCurrentValue = AuditLogConstants.UUID_LABEL
+								        + ((OpenmrsObject) currentValue).getUuid();
+							}
+						} else {
+							ClassMetadata metadata = sessionFactory.getClassMetadata(propertyType);
+							if (previousValue != null && metadata.getIdentifier(previousValue, EntityMode.POJO) != null) {
+								flattenedPreviousValue = AuditLogConstants.ID_LABEL
+								        + metadata.getIdentifier(previousValue, EntityMode.POJO).toString();
+							}
+							if (currentValue != null && metadata.getIdentifier(currentValue, EntityMode.POJO) != null) {
+								flattenedCurrentValue = AuditLogConstants.ID_LABEL
+								        + metadata.getIdentifier(currentValue, EntityMode.POJO).toString();
+							}
+						}
+					} else if (types[i].isComponentType()) {
+						//TODO Handle component types properly if necessary
+					} else if (!types[i].isCollectionType()) {
 						//TODO take care of other types, composite primary keys etc
-						
-						//value = PropertyUtils.getProperty(previousValue, metadata.getIdentifierPropertyName());
-						if (previousValue != null)
-							flattenedPreviousValue = metadata.getIdentifier(previousValue, EntityMode.POJO);
-						if (currentValue != null)
-							flattenedCurrentValue = metadata.getIdentifier(currentValue, EntityMode.POJO);
+						log.info("Audit log module doesn't currently store changes in items of type:" + types[i]);
 					}
 					
 					propertyChangesMap.put(propertyNames[i], new Object[] { flattenedPreviousValue, flattenedCurrentValue });

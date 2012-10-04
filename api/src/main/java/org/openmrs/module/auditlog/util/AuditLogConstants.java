@@ -23,6 +23,10 @@ public final class AuditLogConstants {
 	//Custom value to represent a null value
 	//public static final String AUDITLOG_UNDEFINED_VALUE = "AUDITLOG_UNDEFINED_VALUE";
 	
+	public static final String UUID_LABEL = "uuid:";
+	
+	public static final String ID_LABEL = "id:";
+	
 	//Specifies the monitoring strategy in use
 	public static final String AUDITLOG_GP_MONITORING_STRATEGY = MODULE_ID + ".monitoringStrategy";
 	
