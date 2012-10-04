@@ -213,7 +213,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		Assert.assertNull(service.getObjectByUuid(GlobalProperty.class, "Unknown uuid"));
 		GlobalProperty gp = service.getObjectByUuid(GlobalProperty.class, "abc05786-9019-11e1-aaa4-00248140a5eb");
 		Assert.assertNotNull(gp);
-		Assert.assertEquals(AuditLogConstants.AUDITLOG_GP_MONITORING_STRATEGY, gp.getProperty());
+		Assert.assertEquals(AuditLogConstants.GP_MONITORING_STRATEGY, gp.getProperty());
 		
 	}
 }

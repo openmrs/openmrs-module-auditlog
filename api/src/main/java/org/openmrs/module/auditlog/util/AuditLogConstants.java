@@ -28,11 +28,11 @@ public final class AuditLogConstants {
 	public static final String ID_LABEL = "id:";
 	
 	//Specifies the monitoring strategy in use
-	public static final String AUDITLOG_GP_MONITORING_STRATEGY = MODULE_ID + ".monitoringStrategy";
+	public static final String GP_MONITORING_STRATEGY = MODULE_ID + ".monitoringStrategy";
 	
 	//Classes names for the objects to monitor when the Monitoring strategy is set to NONE_EXCEPT
-	public static final String AUDITLOG_GP_MONITORED_CLASSES = MODULE_ID + ".monitoredClasses";
+	public static final String GP_MONITORED_CLASSES = MODULE_ID + ".monitoredClasses";
 	
 	//Classes names for the objects not to monitor when the Monitoring strategy is set to ALL_EXCEPT
-	public static final String AUDITLOG_GP_UN_MONITORED_CLASSES = MODULE_ID + ".unMonitoredClasses";
+	public static final String GP_UN_MONITORED_CLASSES = MODULE_ID + ".unMonitoredClasses";
 }

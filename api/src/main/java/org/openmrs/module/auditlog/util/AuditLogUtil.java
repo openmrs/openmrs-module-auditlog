@@ -64,7 +64,7 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	public static MonitoringStrategy getMonitoringStrategy() {
 		if (monitoringStrategyCache == null) {
 			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
-			    AuditLogConstants.AUDITLOG_GP_MONITORING_STRATEGY);
+			    AuditLogConstants.GP_MONITORING_STRATEGY);
 			if (gp != null) {
 				if (StringUtils.isNotBlank(gp.getPropertyValue())) {
 					String value = gp.getPropertyValue();
@@ -125,7 +125,7 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	
 	/**
 	 * Marks the specified classes as monitored by adding their class names to the
-	 * {@link GlobalProperty} {@link AuditLogConstants#AUDITLOG_GP_MONITORED_CLASSES}
+	 * {@link GlobalProperty} {@link AuditLogConstants#GP_MONITORED_CLASSES}
 	 * 
 	 * @param clazzes the classes to monitor
 	 * @param subclassesToInclude list of subclasses to mark as monitored objects
@@ -143,7 +143,7 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	
 	/**
 	 * Marks the specified classes as not monitored by removing their class names from the
-	 * {@link GlobalProperty} {@link AuditLogConstants#AUDITLOG_GP_MONITORED_CLASSES}
+	 * {@link GlobalProperty} {@link AuditLogConstants#GP_MONITORED_CLASSES}
 	 * 
 	 * @param clazzes the class to stop monitoring
 	 * @should update the monitored class names global property if the strategy is none_except
@@ -160,7 +160,7 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	
 	/**
 	 * Convenience method that returns a set of monitored class names as specified by the
-	 * {@link GlobalProperty} {@link AuditLogConstants#AUDITLOG_GP_MONITORED_CLASSES}
+	 * {@link GlobalProperty} {@link AuditLogConstants#GP_MONITORED_CLASSES}
 	 * 
 	 * @return a set of monitored class names
 	 * @should return a set of monitored class names
@@ -168,7 +168,7 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	public static Set<String> getMonitoredClassNames() {
 		if (monitoredClassnamesCache == null) {
 			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
-			    AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES);
+			    AuditLogConstants.GP_MONITORED_CLASSES);
 			monitoredClassnamesCache = new HashSet<String>();
 			if (gp != null && StringUtils.isNotBlank(gp.getPropertyValue())) {
 				String[] classnameArray = StringUtils.split(gp.getPropertyValue(), ",");
@@ -183,7 +183,7 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	
 	/**
 	 * Convenience method that returns a set of un monitored class names as specified by the
-	 * {@link GlobalProperty} {@link AuditLogConstants#AUDITLOG_GP_UN_MONITORED_CLASSES}
+	 * {@link GlobalProperty} {@link AuditLogConstants#GP_UN_MONITORED_CLASSES}
 	 * 
 	 * @return a set of monitored class names
 	 * @should return a set of un monitored class names
@@ -191,7 +191,7 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	public static Set<String> getUnMonitoredClassNames() {
 		if (unMonitoredClassnamesCache == null) {
 			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
-			    AuditLogConstants.AUDITLOG_GP_UN_MONITORED_CLASSES);
+			    AuditLogConstants.GP_UN_MONITORED_CLASSES);
 			unMonitoredClassnamesCache = new HashSet<String>();
 			if (gp != null && StringUtils.isNotBlank(gp.getPropertyValue())) {
 				String[] classnameArray = StringUtils.split(gp.getPropertyValue(), ",");
@@ -291,7 +291,7 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	
 	/**
 	 * Update the value of the {@link GlobalProperty}
-	 * {@link AuditLogConstants#AUDITLOG_GP_MONITORED_CLASSES} in the database
+	 * {@link AuditLogConstants#GP_MONITORED_CLASSES} in the database
 	 * 
 	 * @param clazzes the classes to add or remove
 	 * @param startMonitoring specifies if the the classes are getting added to removed
@@ -299,8 +299,8 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	private static void updateGlobalProperty(Set<Class<? extends OpenmrsObject>> clazzes, boolean startMonitoring) {
 		boolean isNoneExceptStrategy = getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT;
 		AdministrationService as = Context.getAdministrationService();
-		String gpName = isNoneExceptStrategy ? AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES
-		        : AuditLogConstants.AUDITLOG_GP_UN_MONITORED_CLASSES;
+		String gpName = isNoneExceptStrategy ? AuditLogConstants.GP_MONITORED_CLASSES
+		        : AuditLogConstants.GP_UN_MONITORED_CLASSES;
 		GlobalProperty gp = as.getGlobalPropertyObject(gpName);
 		if (gp == null) {
 			String description = (isNoneExceptStrategy) ? "Specifies the class names of objects for which to maintain an audit log, this property is only used when the monitoring strategy is set to NONE_EXCEPT"
@@ -351,9 +351,9 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	 */
 	@Override
 	public void globalPropertyChanged(GlobalProperty gp) {
-		if (AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES.equals(gp.getProperty()))
+		if (AuditLogConstants.GP_MONITORED_CLASSES.equals(gp.getProperty()))
 			monitoredClassnamesCache = null;
-		else if (AuditLogConstants.AUDITLOG_GP_UN_MONITORED_CLASSES.equals(gp.getProperty()))
+		else if (AuditLogConstants.GP_UN_MONITORED_CLASSES.equals(gp.getProperty()))
 			unMonitoredClassnamesCache = null;
 		else {
 			//we need to invalidate all caches when the strategy is changed
@@ -368,9 +368,9 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	 */
 	@Override
 	public void globalPropertyDeleted(String gpName) {
-		if (AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES.equals(gpName))
+		if (AuditLogConstants.GP_MONITORED_CLASSES.equals(gpName))
 			monitoredClassnamesCache = null;
-		else if (AuditLogConstants.AUDITLOG_GP_UN_MONITORED_CLASSES.equals(gpName))
+		else if (AuditLogConstants.GP_UN_MONITORED_CLASSES.equals(gpName))
 			unMonitoredClassnamesCache = null;
 		else {
 			monitoringStrategyCache = null;
@@ -384,8 +384,8 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	 */
 	@Override
 	public boolean supportsPropertyName(String gpName) {
-		return AuditLogConstants.AUDITLOG_GP_MONITORING_STRATEGY.equals(gpName)
-		        || AuditLogConstants.AUDITLOG_GP_MONITORED_CLASSES.equals(gpName)
-		        || AuditLogConstants.AUDITLOG_GP_UN_MONITORED_CLASSES.equals(gpName);
+		return AuditLogConstants.GP_MONITORING_STRATEGY.equals(gpName)
+		        || AuditLogConstants.GP_MONITORED_CLASSES.equals(gpName)
+		        || AuditLogConstants.GP_UN_MONITORED_CLASSES.equals(gpName);
 	}
 }

@@ -429,7 +429,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	 * Checks if specified object is monitored, it actually delegates to
 	 * {@link #isMonitoredInternal(Class)} Its role is to check if the monitored classes are not yet
 	 * cached so that it turns off hibernate auto flushing in case we have new objects without ids
-	 * when the Global Property {@link AuditLogConstants#AUDITLOG_GP_MONITORED_CLASSES} is getting
+	 * when the Global Property {@link AuditLogConstants#GP_MONITORED_CLASSES} is getting
 	 * read
 	 * 
 	 * @param obj the object the check
