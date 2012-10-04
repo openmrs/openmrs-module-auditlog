@@ -22,9 +22,9 @@
 	</organization>
 
 	<scm>
-		<connection>scm:svn:http://svn.openmrs.org/openmrs-modules/auditlog/trunk/</connection>
-		<developerConnection>scm:svn:http://svn.openmrs.org/openmrs-modules/auditlog/trunk/</developerConnection>
-		<url>http://svn.openmrs.org/openmrs-modules/auditlog/trunk/</url>
+		<connection>scm:git@github.com:openmrs/openmrs-module-auditlog.git</connection>
+		<developerConnection>scm:git@github.com:openmrs/openmrs-module-auditlog.git</developerConnection>
+		<url>scm:git@github.com:openmrs/openmrs-module-auditlog.git</url>
 	</scm>
 
 	<modules>
