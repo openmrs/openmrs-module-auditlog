@@ -77,6 +77,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	
 	private AuditLogDAO auditLogDao;
 	
+	private SessionFactory sessionFactory;
+	
 	/**
 	 * We need access to this to get the auditLogDao bean, the saveAuditLog method is not available
 	 * to in auditLogservice to ensure no other code creates log entries. We also need the
@@ -143,7 +145,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 		if (isMonitored(entity) && propertyNames != null) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			Map<String, Object[]> propertyChangesMap = null;
-			SessionFactory sessionFactory = ((SessionFactory) applicationContext.getBean("sessionFactory"));
 			for (int i = 0; i < propertyNames.length; i++) {
 				//we need to ignore dateChanged and changedBy fields in any case they
 				//are actually part of the Auditlog in form of user and dateCreated
@@ -197,7 +198,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 								        + ((OpenmrsObject) currentValue).getUuid();
 							}
 						} else {
-							ClassMetadata metadata = sessionFactory.getClassMetadata(propertyType);
+							ClassMetadata metadata = getSessionFactory().getClassMetadata(propertyType);
 							if (previousValue != null && metadata.getIdentifier(previousValue, EntityMode.POJO) != null) {
 								flattenedPreviousValue = AuditLogConstants.ID_LABEL
 								        + metadata.getIdentifier(previousValue, EntityMode.POJO).toString();
@@ -390,11 +391,9 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 						AuditLog auditLog = new AuditLog(update.getClass().getName(), update.getUuid(), Action.UPDATED,
 						        user, date);
 						auditLog.setUuid(UUID.randomUUID().toString());
-						if (objectChangesMap.get() != null) {
-							Map<String, Object[]> propertyValuesMap = objectChangesMap.get().get(update.getUuid());
-							if (propertyValuesMap != null) {
-								auditLog.setChangesXml(AuditLogUtil.generateChangesXml(propertyValuesMap));
-							}
+						Map<String, Object[]> propertyValuesMap = objectChangesMap.get().get(update.getUuid());
+						if (propertyValuesMap != null) {
+							auditLog.setChangesXml(AuditLogUtil.generateChangesXml(propertyValuesMap));
 						}
 						
 						getAuditLogDao().save(auditLog);
@@ -429,16 +428,14 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	 * Checks if specified object is monitored, it actually delegates to
 	 * {@link #isMonitoredInternal(Class)} Its role is to check if the monitored classes are not yet
 	 * cached so that it turns off hibernate auto flushing in case we have new objects without ids
-	 * when the Global Property {@link AuditLogConstants#GP_MONITORED_CLASSES} is getting
-	 * read
+	 * when the Global Property {@link AuditLogConstants#GP_MONITORED_CLASSES} is getting read
 	 * 
 	 * @param obj the object the check
 	 * @return true if the object is a monitored one otherwise false
 	 */
 	private boolean isMonitored(Object obj) {
 		if (!AuditLogUtil.areMonitoredClassnamesCached() || !AuditLogUtil.isMonitoringStrategyCached()) {
-			SessionFactory sessionFactory = ((SessionFactory) applicationContext.getBean("sessionFactory"));
-			Session session = sessionFactory.getCurrentSession();
+			Session session = getSessionFactory().getCurrentSession();
 			FlushMode originalFlushMode = session.getFlushMode();
 			session.setFlushMode(FlushMode.MANUAL);
 			try {
@@ -473,5 +470,16 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 		
 		//Strategy is ALL_EXCEPT
 		return !OpenmrsUtil.collectionContains(AuditLogUtil.getUnMonitoredClassNames(), clazz.getName());
+	}
+	
+	/**
+	 * Gets the {@link SessionFactory} object
+	 * 
+	 * @return
+	 */
+	private SessionFactory getSessionFactory() {
+		if (sessionFactory == null)
+			sessionFactory = ((SessionFactory) applicationContext.getBean("sessionFactory"));
+		return sessionFactory;
 	}
 }
