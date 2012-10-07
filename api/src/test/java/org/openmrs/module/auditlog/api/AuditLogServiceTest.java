@@ -52,6 +52,10 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		service = Context.getService(AuditLogService.class);
 	}
 	
+	private List<AuditLog> getAllAuditLogs() {
+		return service.getAuditLogs(null, null, null, null, null, null);
+	}
+	
 	/**
 	 * @see {@link AuditLogService#get(Class<T>,Integer)}
 	 */
@@ -92,7 +96,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	@Verifies(value = "should return all audit logs in the database if all args are null", method = "getAuditLogs(Class<*>,List<Action>,Date,Date,Integer,Integer)")
 	public void getAuditLogs_shouldReturnAllAuditLogsInTheDatabaseIfAllArgsAreNull() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
-		Assert.assertEquals(4, service.getAuditLogs(null, null, null, null, null, null).size());
+		Assert.assertEquals(4, getAllAuditLogs().size());
 	}
 	
 	/**
@@ -196,7 +200,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	@Verifies(value = "should sort the logs by date of creation starting with the latest", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
 	public void getAuditLogs_shouldSortTheLogsByDateOfCreationStartingWithTheLatest() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
-		List<AuditLog> auditLogs = service.getAuditLogs(null, null, null, null, null, null);
+		List<AuditLog> auditLogs = getAllAuditLogs();
 		Assert.assertFalse(auditLogs.isEmpty());
 		Date currMaxDate = auditLogs.get(0).getDateCreated();
 		for (AuditLog auditLog : auditLogs) {
@@ -215,5 +219,18 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		Assert.assertNotNull(gp);
 		Assert.assertEquals(AuditLogConstants.GP_MONITORING_STRATEGY, gp.getProperty());
 		
+	}
+	
+	/**
+	 * @see {@link AuditLogService#getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,
+	 *      Integer,Integer)}
+	 */
+	@Test
+	@Verifies(value = "should include logs for subclasses when getting logs by type", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<QAction>,Date,Date,Integer,Integer)")
+	public void getAuditLogs_shouldIncludeLogsForSubclassesWhenGettingLogsByType() throws Exception {
+		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
+		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
+		clazzes.add(OpenmrsObject.class);
+		Assert.assertEquals(4, service.getAuditLogs(clazzes, null, null, null, null, null).size());
 	}
 }

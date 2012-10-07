@@ -49,6 +49,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should reject a start date that is in the future
 	 * @should ignore end date it it is in the future
 	 * @should sort the logs by date of creation starting with the latest
+	 * @should include logs for subclasses when getting logs by type
 	 */
 	public List<AuditLog> getAuditLogs(List<Class<? extends OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
 	                                   Date endDate, Integer start, Integer length);

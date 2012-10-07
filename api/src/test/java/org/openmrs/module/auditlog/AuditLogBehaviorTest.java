@@ -33,7 +33,7 @@ import org.openmrs.ConceptClass;
 import org.openmrs.ConceptDatatype;
 import org.openmrs.ConceptDescription;
 import org.openmrs.ConceptName;
-import org.openmrs.ConceptNumeric;
+import org.openmrs.Encounter;
 import org.openmrs.EncounterType;
 import org.openmrs.GlobalProperty;
 import org.openmrs.Location;
@@ -302,47 +302,31 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@NotTransactional
 	public void shouldCreateAnAuditLogEntryWhenAnElementIsRemovedFormAChildCollection() throws Exception {
 		Concept concept = conceptService.getConcept(5089);
-		Assert.assertTrue(concept.isNumeric());
-		try {
-			//This is a ConceptNumeric, so we need to mark it as monitored
-			AuditLogUtil.startMonitoring(ConceptNumeric.class);
-			Assert.assertFalse(concept.getDescriptions().isEmpty());
-			
-			concept.removeDescription(concept.getDescription());
-			conceptService.saveConcept(concept);
-			
-			List<AuditLog> updateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.UPDATED), null,
-			    null, null, null);
-			Assert.assertEquals(1, updateLogs.size());
-			Assert.assertEquals(updateLogs.get(0).getObjectUuid(), concept.getUuid());
-		}
-		finally {
-			AuditLogUtil.stopMonitoring(ConceptNumeric.class);
-		}
+		Assert.assertFalse(concept.getDescriptions().isEmpty());
+		
+		concept.removeDescription(concept.getDescription());
+		conceptService.saveConcept(concept);
+		
+		List<AuditLog> updateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.UPDATED), null,
+		    null, null, null);
+		Assert.assertEquals(1, updateLogs.size());
+		Assert.assertEquals(updateLogs.get(0).getObjectUuid(), concept.getUuid());
 	}
 	
 	@Test
 	@NotTransactional
 	public void shouldCreateAnAuditLogEntryWhenAnElementIsAddedToAChildCollection() throws Exception {
 		Concept concept = conceptService.getConcept(5089);
-		Assert.assertTrue(concept.isNumeric());
-		try {
-			//This is a ConceptNumeric, so we need to mark it as monitored
-			AuditLogUtil.startMonitoring(ConceptNumeric.class);
-			ConceptDescription cd1 = new ConceptDescription("desc1", Locale.ENGLISH);
-			cd1.setDateCreated(new Date());
-			cd1.setCreator(Context.getAuthenticatedUser());
-			concept.addDescription(cd1);
-			conceptService.saveConcept(concept);
-			
-			List<AuditLog> updateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.UPDATED), null,
-			    null, null, null);
-			Assert.assertEquals(1, updateLogs.size());
-			Assert.assertEquals(updateLogs.get(0).getObjectUuid(), concept.getUuid());
-		}
-		finally {
-			AuditLogUtil.stopMonitoring(ConceptNumeric.class);
-		}
+		ConceptDescription cd1 = new ConceptDescription("desc1", Locale.ENGLISH);
+		cd1.setDateCreated(new Date());
+		cd1.setCreator(Context.getAuthenticatedUser());
+		concept.addDescription(cd1);
+		conceptService.saveConcept(concept);
+		
+		List<AuditLog> updateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.UPDATED), null,
+		    null, null, null);
+		Assert.assertEquals(1, updateLogs.size());
+		Assert.assertEquals(updateLogs.get(0).getObjectUuid(), concept.getUuid());
 	}
 	
 	@Test
@@ -373,24 +357,24 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@NotTransactional
 	public void shouldUpdateTheMonitoredClassCacheWhenTheMonitoredClassGlobalPropertyIsUpdatedWithAnAddition()
 	    throws Exception {
-		Assert.assertFalse(AuditLogUtil.getMonitoredClassNames().contains(ConceptNumeric.class.getName()));
+		Assert.assertFalse(AuditLogUtil.getMonitoredClassNames().contains(Encounter.class.getName()));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORED_CLASSES);
 		Set<String> monitoredClasses = new HashSet<String>();
 		try {
 			monitoredClasses.addAll(AuditLogUtil.getMonitoredClassNames());
-			monitoredClasses.add(ConceptNumeric.class.getName());
+			monitoredClasses.add(Encounter.class.getName());
 			gp.setPropertyValue(StringUtils.join(monitoredClasses, ","));
 			as.saveGlobalProperty(gp);
-			Assert.assertTrue(AuditLogUtil.getMonitoredClassNames().contains(ConceptNumeric.class.getName()));
+			Assert.assertTrue(AuditLogUtil.getMonitoredClassNames().contains(Encounter.class.getName()));
 		}
 		finally {
 			//reset
-			monitoredClasses.remove(ConceptNumeric.class.getName());
+			monitoredClasses.remove(Encounter.class.getName());
 			gp.setPropertyValue(StringUtils.join(monitoredClasses, ","));
 			as.saveGlobalProperty(gp);
 		}
-		Assert.assertFalse(AuditLogUtil.getMonitoredClassNames().contains(ConceptNumeric.class.getName()));
+		Assert.assertFalse(AuditLogUtil.getMonitoredClassNames().contains(Encounter.class.getName()));
 	}
 	
 	@Test

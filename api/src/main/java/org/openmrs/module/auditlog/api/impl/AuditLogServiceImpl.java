@@ -13,6 +13,8 @@
  */
 package org.openmrs.module.auditlog.api.impl;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -27,6 +29,9 @@ import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.util.OpenmrsUtil;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.type.filter.AssignableTypeFilter;
 
 public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogService {
 	
@@ -52,14 +57,34 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 * @see org.openmrs.module.auditlog.AuditLogService#getAuditLogs(List, List, java.util.Date,
 	 *      java.util.Date, java.lang.Integer, java.lang.Integer)
 	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public List<AuditLog> getAuditLogs(List<Class<? extends OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
 	                                   Date endDate, Integer start, Integer length) {
 		if (OpenmrsUtil.compareWithNullAsEarliest(startDate, new Date()) > 0)
 			throw new APIException(Context.getMessageSourceService().getMessage(
 			    AuditLogConstants.MODULE_ID + ".exception.startDateInFuture"));
+		List classesToMatch = null;
+		if (clazzes != null) {
+			classesToMatch = new ArrayList<Class<?>>();
+			//TODO This should happen at startup/context refresh for performance reasons
+			ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
+			for (Class c : clazzes) {
+				scanner.addIncludeFilter(new AssignableTypeFilter(c));
+				try {
+					//This assumes modules follow the 'org.openmrs' namespace
+					Collection<BeanDefinition> beans = scanner.findCandidateComponents("org.openmrs");
+					for (BeanDefinition bean : beans) {
+						classesToMatch.add(bean.getBeanClassName());
+					}
+				}
+				finally {
+					scanner.resetFilters(false);
+				}
+			}
+		}
 		
-		return dao.getAuditLogs(clazzes, actions, startDate, endDate, start, length);
+		return dao.getAuditLogs(classesToMatch, actions, startDate, endDate, start, length);
 	}
 	
 	/**

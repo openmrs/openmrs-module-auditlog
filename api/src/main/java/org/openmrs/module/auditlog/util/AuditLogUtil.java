@@ -14,6 +14,7 @@
 package org.openmrs.module.auditlog.util;
 
 import java.io.StringReader;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +31,9 @@ import org.openmrs.api.AdministrationService;
 import org.openmrs.api.GlobalPropertyListener;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.MonitoringStrategy;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -133,6 +137,7 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	 * @should not update any global property if the strategy is all
 	 * @should not update any global property if the strategy is none
 	 * @should update the un monitored class names global property if the strategy is all_except
+	 * @should mark a class and its known subclasses as monitored
 	 */
 	public static void startMonitoring(Set<Class<? extends OpenmrsObject>> clazzes) {
 		if (getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT
@@ -150,6 +155,7 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	 * @should not update any global property if the strategy is all
 	 * @should not update any global property if the strategy is none
 	 * @should update the un monitored class names global property if the strategy is all_except
+	 * @should mark a class and its known subclasses as un monitored
 	 */
 	public static void stopMonitoring(Set<Class<? extends OpenmrsObject>> clazzes) {
 		if (getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT
@@ -173,7 +179,17 @@ public class AuditLogUtil implements GlobalPropertyListener {
 			if (gp != null && StringUtils.isNotBlank(gp.getPropertyValue())) {
 				String[] classnameArray = StringUtils.split(gp.getPropertyValue(), ",");
 				for (String classname : classnameArray) {
-					monitoredClassnamesCache.add(classname.trim());
+					classname = classname.trim();
+					monitoredClassnamesCache.add(classname);
+					try {
+						Set<Class<?>> subclasses = getConcreteSubclasses(Context.loadClass(classname), null);
+						for (Class<?> subclass : subclasses) {
+							monitoredClassnamesCache.add(subclass.getName());
+						}
+					}
+					catch (ClassNotFoundException e) {
+						log.error("Failed to load class:" + classname);
+					}
 				}
 			}
 		}
@@ -196,7 +212,17 @@ public class AuditLogUtil implements GlobalPropertyListener {
 			if (gp != null && StringUtils.isNotBlank(gp.getPropertyValue())) {
 				String[] classnameArray = StringUtils.split(gp.getPropertyValue(), ",");
 				for (String classname : classnameArray) {
-					unMonitoredClassnamesCache.add(classname.trim());
+					classname = classname.trim();
+					unMonitoredClassnamesCache.add(classname);
+					try {
+						Set<Class<?>> subclasses = getConcreteSubclasses(Context.loadClass(classname), null);
+						for (Class<?> subclass : subclasses) {
+							unMonitoredClassnamesCache.add(subclass.getName());
+						}
+					}
+					catch (ClassNotFoundException e) {
+						log.error("Failed to load class:" + classname);
+					}
 				}
 			}
 		}
@@ -290,8 +316,8 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	}
 	
 	/**
-	 * Update the value of the {@link GlobalProperty}
-	 * {@link AuditLogConstants#GP_MONITORED_CLASSES} in the database
+	 * Update the value of the {@link GlobalProperty} {@link AuditLogConstants#GP_MONITORED_CLASSES}
+	 * in the database
 	 * 
 	 * @param clazzes the classes to add or remove
 	 * @param startMonitoring specifies if the the classes are getting added to removed
@@ -308,29 +334,34 @@ public class AuditLogUtil implements GlobalPropertyListener {
 			gp = new GlobalProperty(gpName, null, description);
 		}
 		
-		if (isNoneExceptStrategy && monitoredClassnamesCache == null)
-			getMonitoredClassNames();//should effectively load the set
-		else if (!isNoneExceptStrategy && unMonitoredClassnamesCache == null)
-			getUnMonitoredClassNames();//should effectively load the set
-			
 		if (isNoneExceptStrategy) {
 			for (Class<? extends OpenmrsObject> clazz : clazzes) {
 				if (startMonitoring)
-					monitoredClassnamesCache.add(clazz.getName());
-				else
-					monitoredClassnamesCache.remove(clazz.getName());
+					getMonitoredClassNames().add(clazz.getName());
+				else {
+					getMonitoredClassNames().remove(clazz.getName());
+					//remove subclasses too
+					Set<Class<?>> subclasses = getConcreteSubclasses(clazz, null);
+					for (Class<?> subclass : subclasses) {
+						getMonitoredClassNames().remove(subclass.getName());
+					}
+				}
 			}
 			
-			gp.setPropertyValue(StringUtils.join(monitoredClassnamesCache, ","));
+			gp.setPropertyValue(StringUtils.join(getMonitoredClassNames(), ","));
 		} else {
 			for (Class<? extends OpenmrsObject> clazz : clazzes) {
-				if (startMonitoring)
-					unMonitoredClassnamesCache.remove(clazz.getName());
-				else
-					unMonitoredClassnamesCache.add(clazz.getName());
+				if (startMonitoring) {
+					getUnMonitoredClassNames().remove(clazz.getName());
+					Set<Class<?>> subclasses = getConcreteSubclasses(clazz, null);
+					for (Class<?> subclass : subclasses) {
+						getUnMonitoredClassNames().remove(subclass.getName());
+					}
+				} else
+					getUnMonitoredClassNames().add(clazz.getName());
 			}
 			
-			gp.setPropertyValue(StringUtils.join(unMonitoredClassnamesCache, ","));
+			gp.setPropertyValue(StringUtils.join(getUnMonitoredClassNames(), ","));
 		}
 		
 		try {
@@ -387,5 +418,45 @@ public class AuditLogUtil implements GlobalPropertyListener {
 		return AuditLogConstants.GP_MONITORING_STRATEGY.equals(gpName)
 		        || AuditLogConstants.GP_MONITORED_CLASSES.equals(gpName)
 		        || AuditLogConstants.GP_UN_MONITORED_CLASSES.equals(gpName);
+	}
+	
+	/**
+	 * Gets a set of concrete subclasses for the specified class recursively, note that interfaces
+	 * and abstract classes are excluded
+	 * 
+	 * @param clazz
+	 * @param foundSubclasses the list of subclasses found in previous recursive calls, should be
+	 *            null for the first call
+	 * @return a set of subclasses
+	 * @should return a list of subclasses for the specified type
+	 * @should exclude interfaces and abstract classes
+	 */
+	public static Set<Class<?>> getConcreteSubclasses(Class<?> clazz, Set<Class<?>> foundSubclasses) {
+		if (foundSubclasses == null)
+			foundSubclasses = new HashSet<Class<?>>();
+		
+		if (clazz != null) {
+			ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
+			scanner.addIncludeFilter(new AssignableTypeFilter(clazz));
+			try {
+				//This assumes modules follow the 'org.openmrs' namespace
+				Collection<BeanDefinition> beans = scanner.findCandidateComponents("org.openmrs");
+				for (BeanDefinition bean : beans) {
+					if (!clazz.getName().equals(bean.getBeanClassName())) {
+						Class<?> beanClass = Context.loadClass(bean.getBeanClassName());
+						foundSubclasses.add(beanClass);
+						foundSubclasses.addAll(getConcreteSubclasses(beanClass, foundSubclasses));
+					}
+				}
+			}
+			catch (ClassNotFoundException e) {
+				log.warn("Error:" + e.getMessage());//why?
+			}
+			finally {
+				scanner.resetFilters(false);
+			}
+		}
+		
+		return foundSubclasses;
 	}
 }

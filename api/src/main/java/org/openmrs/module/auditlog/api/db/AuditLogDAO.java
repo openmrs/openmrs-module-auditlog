@@ -17,7 +17,6 @@ package org.openmrs.module.auditlog.api.db;
 import java.util.Date;
 import java.util.List;
 
-import org.openmrs.OpenmrsObject;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.api.AuditLogService;
@@ -30,8 +29,8 @@ public interface AuditLogDAO {
 	/**
 	 * @see AuditLogService#getAuditLogs(List, List, Date, Date, Integer, Integer)
 	 */
-	public List<AuditLog> getAuditLogs(List<Class<? extends OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
-	                                   Date endDate, Integer start, Integer length);
+	public List<AuditLog> getAuditLogs(List<String> classnames, List<Action> actions, Date startDate, Date endDate,
+	                                   Integer start, Integer length);
 	
 	/**
 	 * Saves the specified object to the database
