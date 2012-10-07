@@ -26,12 +26,19 @@ import org.openmrs.module.auditlog.AuditLog;
  */
 public class AuditLogDetails {
 	
-	//Typically it the name and description for metadata, or the return value
+	//Typically it is the name and description for metadata, or the return value
 	//of the toString method of the object, otherwise the id of the audited openmrs object
 	private String displayString;
 	
 	//specifies if the original monitored object still exists otherwise it was may deleted later
 	private boolean objectExists = false;
+	
+	//The uuid of the updated/deleted/created object
+	private String objectUuid;
+	
+	private String classname;
+	
+	private String action;
 	
 	//The database Id
 	private Integer objectId;
@@ -42,9 +49,13 @@ public class AuditLogDetails {
 	/**
 	 * Convenience constructor that created an {@link AuditLogDetails} from an {@link AuditLog}
 	 */
-	public AuditLogDetails(String displayString, Integer objectId, boolean objectExists, Map<String, String[]> changes) {
+	public AuditLogDetails(String displayString, String objectUuid, String classname, String action, Integer objectId,
+	    boolean objectExists, Map<String, String[]> changes) {
 		this.displayString = displayString;
 		this.objectExists = objectExists;
+		this.objectUuid = objectUuid;
+		this.classname = classname;
+		this.action = action;
 		this.objectId = objectId;
 		this.changes = changes;
 	}
@@ -75,6 +86,48 @@ public class AuditLogDetails {
 	 */
 	public void setObjectExists(boolean objectExists) {
 		this.objectExists = objectExists;
+	}
+	
+	/**
+	 * @return
+	 */
+	public String getObjectUuid() {
+		return objectUuid;
+	}
+	
+	/**
+	 * @param objectUuid the objectUuid to set
+	 */
+	public void setObjectUuid(String objectUuid) {
+		this.objectUuid = objectUuid;
+	}
+	
+	/**
+	 * @return the classname
+	 */
+	public String getClassname() {
+		return classname;
+	}
+	
+	/**
+	 * @param classname the classname to set
+	 */
+	public void setClassname(String classname) {
+		this.classname = classname;
+	}
+	
+	/**
+	 * @return the action
+	 */
+	public String getAction() {
+		return action;
+	}
+	
+	/**
+	 * @param action the action to set
+	 */
+	public void setAction(String action) {
+		this.action = action;
 	}
 	
 	/**

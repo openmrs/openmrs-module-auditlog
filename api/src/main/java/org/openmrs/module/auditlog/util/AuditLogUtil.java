@@ -13,6 +13,7 @@
  */
 package org.openmrs.module.auditlog.util;
 
+import java.beans.PropertyDescriptor;
 import java.io.StringReader;
 import java.util.Collection;
 import java.util.HashSet;
@@ -25,12 +26,19 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.openmrs.Concept;
 import org.openmrs.GlobalProperty;
+import org.openmrs.Obs;
+import org.openmrs.OpenmrsMetadata;
 import org.openmrs.OpenmrsObject;
+import org.openmrs.Patient;
+import org.openmrs.Person;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.GlobalPropertyListener;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.MonitoringStrategy;
+import org.openmrs.module.auditlog.api.AuditLogService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AssignableTypeFilter;
@@ -458,5 +466,69 @@ public class AuditLogUtil implements GlobalPropertyListener {
 		}
 		
 		return foundSubclasses;
+	}
+	
+	/**
+	 * @param as
+	 * @param owningEntityClassname
+	 * @param propertyName
+	 * @param uuidOrId
+	 * @param isUuid
+	 * @return
+	 */
+	public static String getPropertyDisplayString(AuditLogService as, String owningEntityClassname, String propertyName,
+	                                              String uuidOrId, boolean isUuid) {
+		String displayString = "";
+		try {
+			PropertyDescriptor pd = BeanUtils.getPropertyDescriptor(Context.loadClass(owningEntityClassname), propertyName);
+			Object actualObject = null;
+			if (isUuid) {
+				actualObject = as.getObjectByUuid(pd.getPropertyType(), uuidOrId);
+			} else {
+				actualObject = as.getObjectById(pd.getPropertyType(), Integer.valueOf(uuidOrId));
+			}
+			
+			if (actualObject != null) {
+				displayString = getDisplayString(actualObject, true);
+			}
+		}
+		catch (Exception e) {
+			log.warn("Error", e);
+		}
+		
+		return displayString;
+	}
+	
+	/**
+	 * @param obj
+	 * @return
+	 */
+	public static String getDisplayString(Object obj, boolean includeUuidAndId) {
+		String displayString = "";
+		if (OpenmrsMetadata.class.isAssignableFrom(obj.getClass())) {
+			OpenmrsMetadata metadataObj = (OpenmrsMetadata) obj;
+			if (StringUtils.isNotBlank(metadataObj.getName()))
+				displayString += metadataObj.getName();
+		} else if (Concept.class.isAssignableFrom(obj.getClass())) {
+			Concept concept = (Concept) obj;
+			displayString += ((concept.getName() != null) ? concept.getName().getName() : "");
+		} else if (Person.class.isAssignableFrom(obj.getClass())) {
+			Person person = (Patient) obj;
+			displayString += ((person.getPersonName() != null) ? person.getPersonName().getFullName() : "");
+		} else if (Obs.class.isAssignableFrom(obj.getClass())) {
+			Obs obs = (Obs) obj;
+			if (obs.getConcept() != null) {
+				if (obs.getConcept().getName() != null)
+					displayString += obs.getConcept().getName().getName();
+			}
+			
+			displayString += obs.getValueAsString(Context.getLocale());
+		}
+		
+		if (includeUuidAndId && OpenmrsObject.class.isAssignableFrom(obj.getClass())) {
+			OpenmrsObject openmrsObj = (OpenmrsObject) obj;
+			displayString = "[" + openmrsObj.getId() + "] " + displayString + " - " + openmrsObj.getUuid();
+		}
+		return displayString;
 	}
 }

@@ -26,6 +26,10 @@ div#auditlog_info, div#auditlog_paginate{
 	text-align: left;
 }
 
+.auditlog_align_text_right{
+	text-align: right;
+}
+
 .auditlog_table_header{
 	background-color: #CCCCCC;
 }
@@ -36,4 +40,8 @@ table#auditlog tr:hover{
 
 .auditlog-changes-element{
 	display: none;
+}
+
+.auditlog_action_image{
+	border: none;
 }

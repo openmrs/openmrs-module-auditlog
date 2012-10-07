@@ -9,7 +9,7 @@
         See http://www.liquibase.org/manual/home#available_database_refactorings
         for a list of supported elements and attributes
     -->
- 	<changeSet id="auditlog-20120418-2053" author="wyclif">
+ 	<changeSet id="auditlog-20120418-2054" author="wyclif">
  		<preConditions onFail="MARK_RAN">
 			<not><tableExists tableName="auditlog_audit_log" /></not>
 		</preConditions>

@@ -205,6 +205,16 @@ public class AuditLog implements Serializable {
 		this.changesXml = newAndPreviousValuesXml;
 	}
 	
+	public String getSimpleClassname() {
+		String section = getClassName().substring(getClassName().lastIndexOf(".") + 1);
+		String[] sections = StringUtils.splitByCharacterTypeCamelCase(section);
+		for (int i = 0; i < sections.length; i++) {
+			sections[i] = StringUtils.capitalize(sections[i]);
+		}
+		
+		return StringUtils.join(sections, " ");
+	}
+	
 	/**
 	 * Returns a map of changes where the key if the property name and the value is a String array
 	 * of length 2 with the new value at index 0 and the previous value at index 1
@@ -214,6 +224,9 @@ public class AuditLog implements Serializable {
 	public Map<String, String[]> getChanges() {
 		if (StringUtils.isNotBlank(changesXml) && changes == null)
 			changes = convertChangesXmlToMap(changesXml);
+		else if (changes == null)
+			changes = new HashMap<String, String[]>();
+		
 		return changes;
 	}
 	
@@ -274,5 +287,4 @@ public class AuditLog implements Serializable {
 			return super.hashCode();
 		return getUuid().hashCode();
 	}
-	
 }

@@ -38,7 +38,7 @@
 		//set the dialog to display update changes for each row
 		$j("#${moduleId}-changes-dialog").dialog({
 			autoOpen: false,
-			width:'900',
+			width:'1000',
 			height:'450',
 			modal: true,
 			beforeClose: function(event, ui){
@@ -54,30 +54,48 @@
 	});
 	
 	function ${moduleId}_showDetails(auditLogUuid){
-		DWRAuditLogService.getAuditLogDetails(auditLogUuid, function(details){
-			if(details){
-				if(details.objectExists == true)
-					$j("#${moduleId}-changes-summary").html(details.displayString);
-				else
-					$j("#${moduleId}-changes-summary").html("<span style='color:red'><spring:message code="${moduleId}.objectDoesnotExist" /></span>");
-				if(details.objectId)
-					$j("#${moduleId}-changes-objectId").html(details.objectId);
-			}
-		});
-		auditLogDetails = auditLogDetailsMap[auditLogUuid];
-		$j("#${moduleId}-changes-objectUuid").html(auditLogDetails.uuid);
-		if(auditLogDetails.changes){
-			auditLogChanges = auditLogDetails.changes;
-			$j.each(auditLogChanges, function(index){
-				currentChange = auditLogChanges[index];
-				$j("#${moduleId}-changes-table tr:last").after("<tr><td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange.propertyName+"</td>"+
-				"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange.newValue+"</td>"+
-				"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange.previousValue+"</td></tr>");
+		existingLogDetails = auditLogDetailsMap[auditLogUuid];
+		if(!existingLogDetails){
+			DWRAuditLogService.getAuditLogDetails(auditLogUuid, function(detailsResponse){
+				if(detailsResponse){
+					displayLogDetails(detailsResponse);
+					auditLogDetailsMap[auditLogUuid] = detailsResponse;
+				}
 			});
-			$j("#${moduleId}-details .${moduleId}-changes-element").show();
+		}else{
+			displayLogDetails(existingLogDetails);
 		}
+	}
+	
+	function displayLogDetails(logDetails){
+		if(logDetails){
+			if(logDetails.objectExists == true)
+				$j("#${moduleId}-changes-summary").html(logDetails.displayString);
+			else if(logDetails.action != 'DELETED')
+				$j("#${moduleId}-changes-summary").html("<span style='color:red'><spring:message code="${moduleId}.objectDoesnotExist" /></span>");
+			
+			if(logDetails.objectId)
+				$j("#${moduleId}-changes-objectId").html(logDetails.objectId);
+			
+			if(logDetails.objectUuid)
+				$j("#${moduleId}-changes-objectUuid").html(logDetails.objectUuid);
+			
+			if(logDetails.classname)
+				$j("#${moduleId}-changes-classname").html(logDetails.classname);
+			
+			if(logDetails.changes){
+				auditLogChanges = logDetails.changes;
+				$j.each(auditLogChanges, function(propertyName){
+					currentChange = auditLogChanges[propertyName];
+					$j("#${moduleId}-changes-table tr:last").after("<tr><td class=\"${moduleId}_align_text_left\" valign=\"top\">"+propertyName+"</td>"+
+					"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange[0]+"</td>"+
+					"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange[1]+"</td></tr>");
+				});
+				$j("#${moduleId}-details .${moduleId}-changes-element").show();
+			}
 		
-		$j("#${moduleId}-changes-dialog").dialog('open');
+			$j("#${moduleId}-changes-dialog").dialog('open');
+		}
 	}
 	
 </script>
@@ -94,26 +112,12 @@
 		</tr>
 	</thead>
 	<tbody>
-	<c:forEach items="${auditLogs}" var="auditLog">		
-		<script type="text/javascript">
-		auditlogDetails = new Object();
-		auditlogDetails.uuid = '${auditLog.objectUuid}';
-		<c:if test="${auditLog.action == 'UPDATED' && fn:length(auditLog.changes) > 0}">
-			changes = new Array();
-			<c:forEach items="${auditLog.changes}" var="entry">
-				change = new Object();
-				change.propertyName = "${entry.key}";
-				change.newValue = "${entry.value[0]}";
-				change.previousValue = "${entry.value[1]}";
-				changes.push(change);
-			</c:forEach>
-			auditlogDetails.changes = changes;
-		</c:if>
-		auditLogDetailsMap['${auditLog.uuid}'] = auditlogDetails;
-		</script>
+	<c:forEach items="${auditLogs}" var="auditLog">
 		<tr class="${moduleId}_${auditLog.action}" onclick="${moduleId}_showDetails('${auditLog.uuid}')">
    			<td>
-   				${auditLog.className} 
+   				<img class="${moduleId}_action_image" align="top" 
+   				 	src="<openmrs:contextPath />/moduleResources/${moduleId}/images/${auditLog.action}.gif" /> 
+   				${auditLog.simpleClassname}
    				<c:if test="${auditLog.action == 'UPDATED' && fn:length(auditLog.changes) > 0}"> (${fn:length(auditLog.changes)})</c:if>
    			</td>
    			<td>
@@ -138,12 +142,16 @@
 	<br />
 	<table id="${moduleId}-details" width="100%" cellpadding="0" cellspacing="5">
 		<tr>
-			<th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.uuid" /></th>
+			<th valign="top" class="${moduleId}_align_text_left" style="width:15%"><spring:message code="${moduleId}.uuid" /></th>
 			<td id="${moduleId}-changes-objectUuid" width="100%"></td>
 		</tr>
 		<tr>
 			<th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.id" /></th>
 			<td id="${moduleId}-changes-objectId" width="100%"></td>
+		</tr>
+		<tr>
+			<th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.classname" /></th>
+			<td id="${moduleId}-changes-classname" width="100%"></td>
 		</tr>
 		<tr>
 			<th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.summary" /></th>
