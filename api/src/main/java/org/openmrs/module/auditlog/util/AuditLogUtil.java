@@ -26,6 +26,12 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.SessionFactory;
+import org.hibernate.engine.SessionFactoryImplementor;
+import org.hibernate.metadata.ClassMetadata;
+import org.hibernate.type.CollectionType;
+import org.hibernate.type.OneToOneType;
+import org.hibernate.type.Type;
 import org.openmrs.Concept;
 import org.openmrs.GlobalProperty;
 import org.openmrs.Obs;
@@ -39,7 +45,10 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.MonitoringStrategy;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.w3c.dom.Document;
@@ -50,7 +59,7 @@ import org.xml.sax.InputSource;
 /**
  * Contains static utility methods
  */
-public class AuditLogUtil implements GlobalPropertyListener {
+public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextAware {
 	
 	private static final Log log = LogFactory.getLog(AuditLogUtil.class);
 	
@@ -69,6 +78,17 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	private static MonitoringStrategy monitoringStrategyCache;
 	
 	private static Set<String> unMonitoredClassnamesCache;
+	
+	private static Set<String> implicitlyMonitoredClassnamesCache;
+	
+	private static ApplicationContext applicationContext;
+	
+	private static SessionFactory sessionFactory;
+	
+	@Override
+	public void setApplicationContext(ApplicationContext appContext) throws BeansException {
+		applicationContext = appContext;
+	}
 	
 	/**
 	 * @return the monitoringStrategy
@@ -181,9 +201,9 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	 */
 	public static Set<String> getMonitoredClassNames() {
 		if (monitoredClassnamesCache == null) {
+			monitoredClassnamesCache = new HashSet<String>();
 			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
 			    AuditLogConstants.GP_MONITORED_CLASSES);
-			monitoredClassnamesCache = new HashSet<String>();
 			if (gp != null && StringUtils.isNotBlank(gp.getPropertyValue())) {
 				String[] classnameArray = StringUtils.split(gp.getPropertyValue(), ",");
 				for (String classname : classnameArray) {
@@ -214,9 +234,9 @@ public class AuditLogUtil implements GlobalPropertyListener {
 	 */
 	public static Set<String> getUnMonitoredClassNames() {
 		if (unMonitoredClassnamesCache == null) {
+			unMonitoredClassnamesCache = new HashSet<String>();
 			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
 			    AuditLogConstants.GP_UN_MONITORED_CLASSES);
-			unMonitoredClassnamesCache = new HashSet<String>();
 			if (gp != null && StringUtils.isNotBlank(gp.getPropertyValue())) {
 				String[] classnameArray = StringUtils.split(gp.getPropertyValue(), ",");
 				for (String classname : classnameArray) {
@@ -236,6 +256,46 @@ public class AuditLogUtil implements GlobalPropertyListener {
 		}
 		
 		return unMonitoredClassnamesCache;
+	}
+	
+	/**
+	 * Gets implicitly monitored classnames, this are generated as a result of their owning entity
+	 * types being marked as monitored if they are not explicitly marked as monitored, i.e if
+	 * Concept is marked as monitored, then ConceptName, ConceptDesctiption, ConceptMapping etc
+	 * implicitly get marked as monitored
+	 * 
+	 * @return a set of implicitly monitored classnames
+	 * @should return a set of implicitly monitored classnames
+	 */
+	public static Set<String> getImplicitlyMonitoredClassNames() {
+		if (implicitlyMonitoredClassnamesCache == null) {
+			implicitlyMonitoredClassnamesCache = new HashSet<String>();
+			for (String classname : getMonitoredClassNames()) {
+				try {
+					Class<?> monitoredClass = Context.loadClass(classname);
+					addAssociationTypes(monitoredClass);
+					
+					Set<Class<?>> subclasses = getConcreteSubclasses(monitoredClass, null);
+					for (Class<?> subclass : subclasses) {
+						addAssociationTypes(subclass);
+					}
+				}
+				catch (ClassNotFoundException e) {
+					log.error("Failed to load class:" + classname);
+				}
+			}
+		}
+		
+		return implicitlyMonitoredClassnamesCache;
+	}
+	
+	private static void addAssociationTypes(Class<?> clazz) {
+		for (Class<?> assocType : getAssociationTypesToMonitor(clazz, null)) {
+			//If this type is not explicitly marked as monitored
+			if (!getMonitoredClassNames().contains(assocType.getName())) {
+				implicitlyMonitoredClassnamesCache.add(assocType.getName());
+			}
+		}
 	}
 	
 	/**
@@ -382,6 +442,7 @@ public class AuditLogUtil implements GlobalPropertyListener {
 				monitoredClassnamesCache = null;
 			else
 				unMonitoredClassnamesCache = null;
+			implicitlyMonitoredClassnamesCache = null;
 		}
 	}
 	
@@ -400,6 +461,7 @@ public class AuditLogUtil implements GlobalPropertyListener {
 			monitoredClassnamesCache = null;
 			unMonitoredClassnamesCache = null;
 		}
+		implicitlyMonitoredClassnamesCache = null;
 	}
 	
 	/**
@@ -416,6 +478,7 @@ public class AuditLogUtil implements GlobalPropertyListener {
 			monitoredClassnamesCache = null;
 			unMonitoredClassnamesCache = null;
 		}
+		implicitlyMonitoredClassnamesCache = null;
 	}
 	
 	/**
@@ -530,5 +593,49 @@ public class AuditLogUtil implements GlobalPropertyListener {
 			displayString = "[" + openmrsObj.getId() + "] " + displayString + " - " + openmrsObj.getUuid();
 		}
 		return displayString;
+	}
+	
+	/**
+	 * Finds all the types for associations to monitor in as recursive way i.e if a Persistent type
+	 * is found, then we also find its collection element types and types for fields mapped as one
+	 * to one, note that this only includes sub types of {@link OpenmrsObject}
+	 * 
+	 * @param clazz
+	 * @param foundAssocTypes the found
+	 * @return a set of found class names
+	 */
+	private static Set<Class<?>> getAssociationTypesToMonitor(Class<?> clazz, Set<Class<?>> foundAssocTypes) {
+		if (foundAssocTypes == null)
+			foundAssocTypes = new HashSet<Class<?>>();
+		
+		ClassMetadata cmd = getSessionFactory().getClassMetadata(clazz);
+		if (cmd != null) {
+			for (Type type : cmd.getPropertyTypes()) {
+				//If this is a OneToOne or a collection type
+				if (type.isCollectionType() || OneToOneType.class.isAssignableFrom(type.getClass())) {
+					Class<?> assocType = type.getReturnedClass();
+					if (type.isCollectionType()) {
+						assocType = ((CollectionType) type).getElementType((SessionFactoryImplementor) getSessionFactory())
+						        .getReturnedClass();
+					}
+					if (OpenmrsObject.class.isAssignableFrom(assocType) && !foundAssocTypes.contains(assocType)) {
+						foundAssocTypes.add(assocType);
+						foundAssocTypes.addAll(getAssociationTypesToMonitor(assocType, foundAssocTypes));
+					}
+				}
+			}
+		}
+		return foundAssocTypes;
+	}
+	
+	/**
+	 * Gets the {@link SessionFactory} object
+	 * 
+	 * @return
+	 */
+	private static SessionFactory getSessionFactory() {
+		if (sessionFactory == null)
+			sessionFactory = ((SessionFactory) applicationContext.getBean("sessionFactory"));
+		return sessionFactory;
 	}
 }

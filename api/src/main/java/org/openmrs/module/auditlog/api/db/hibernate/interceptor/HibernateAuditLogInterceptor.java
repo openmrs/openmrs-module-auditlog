@@ -66,6 +66,9 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	
 	private ThreadLocal<HashSet<OpenmrsObject>> deletes = new ThreadLocal<HashSet<OpenmrsObject>>();
 	
+	//Used to stored updates for implicitly monitored objects in the session 
+	private ThreadLocal<HashSet<OpenmrsObject>> otherUpdates = new ThreadLocal<HashSet<OpenmrsObject>>();
+	
 	//Mapping between object uuids and maps of its changed property names and their older values, the first item in the array is the old value while the the second is the new value
 	private ThreadLocal<Map<String, Map<String, Object[]>>> objectChangesMap = new ThreadLocal<Map<String, Map<String, Object[]>>>();
 	
@@ -112,6 +115,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 		inserts.set(new HashSet<OpenmrsObject>());
 		updates.set(new HashSet<OpenmrsObject>());
 		deletes.set(new HashSet<OpenmrsObject>());
+		otherUpdates.set(new HashSet<OpenmrsObject>());
 		objectChangesMap.set(new HashMap<String, Map<String, Object[]>>());
 		entityCollectionsMap.set(new HashMap<Object, List<Collection<?>>>());
 	}
@@ -184,8 +188,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					
 					if (BeanUtils.isSimpleValueType(propertyType)) {
 						//TODO take care of proper serialization of Dates, Enums, Class, Locale
-						flattenedPreviousValue = previousValue.toString();
-						flattenedCurrentValue = currentValue.toString();
+						flattenedPreviousValue = (previousValue != null) ? previousValue.toString() : "";
+						flattenedCurrentValue = (currentValue != null) ? currentValue.toString() : "";
 					} else if (types[i].isAssociationType() && !types[i].isCollectionType()) {
 						//this is an association, store the primary key value
 						if (OpenmrsObject.class.isAssignableFrom(previousValue.getClass())) {
@@ -224,7 +228,10 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					log.debug("Creating log entry for updated object with uuid:" + openmrsObject.getUuid() + " of type:"
 					        + entity.getClass().getName());
 				
-				updates.get().add(openmrsObject);
+				if (AuditLogUtil.getMonitoredClassNames().contains(openmrsObject.getClass().getName()))
+					updates.get().add(openmrsObject);
+				else
+					otherUpdates.get().add(openmrsObject);
 				
 				objectChangesMap.get().put(openmrsObject.getUuid(), propertyChangesMap);
 			}
@@ -336,7 +343,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 		//TODO This should typically happen in a separate thread for performance purposes
 		try {
 			if (disableInterceptor.get() == null && tx.wasCommitted()) {
-				if (inserts.get().isEmpty() && updates.get().isEmpty() && deletes.get().isEmpty())
+				if (inserts.get().isEmpty() && updates.get().isEmpty() && deletes.get().isEmpty()
+				        && otherUpdates.get().isEmpty())
 					return;
 				
 				try {
@@ -361,13 +369,14 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					//If we have any entities in the session that have child collections and there were some updates, 
 					//check all collection items to find dirty ones so that we can mark the the owners as dirty too
 					//I.e if a ConceptName/Mapping/Description was edited, mark the the Concept as dirty too
-					if (CollectionUtils.isNotEmpty(updates.get())) {
+					if (CollectionUtils.isNotEmpty(updates.get()) || CollectionUtils.isNotEmpty(otherUpdates.get())) {
 						for (Map.Entry<Object, List<Collection<?>>> entry : entityCollectionsMap.get().entrySet()) {
 							for (Collection<?> coll : entry.getValue()) {
 								for (Object obj : coll) {
 									//If a collection item was updated and no other update had been made on the owner
-									if (updates.get().contains(obj)) {
-										if (updates.get().contains(entry.getKey())) {
+									if (updates.get().contains(obj) || otherUpdates.get().contains(obj)) {
+										if (updates.get().contains(entry.getKey())
+										        || otherUpdates.get().contains(entry.getKey())) {
 											if (log.isDebugEnabled())
 												log.debug("There is already an  auditlog for:" + entry.getKey().getClass()
 												        + " - " + entry.getKey().toString());
@@ -386,6 +395,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 							}
 						}
 					}
+					
+					updates.get().addAll(otherUpdates.get());
 					
 					for (OpenmrsObject update : updates.get()) {
 						AuditLog auditLog = new AuditLog(update.getClass().getName(), update.getUuid(), Action.UPDATED,
@@ -417,6 +428,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 			inserts.remove();
 			updates.remove();
 			deletes.remove();
+			otherUpdates.remove();
 			objectChangesMap.remove();
 			entityCollectionsMap.remove();
 			if (disableInterceptor.get() != null)
@@ -465,8 +477,10 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 		if (AuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.ALL)
 			return true;
 		
-		if (AuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT)
-			return OpenmrsUtil.collectionContains(AuditLogUtil.getMonitoredClassNames(), clazz.getName());
+		if (AuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT) {
+			return OpenmrsUtil.collectionContains(AuditLogUtil.getMonitoredClassNames(), clazz.getName())
+			        || OpenmrsUtil.collectionContains(AuditLogUtil.getImplicitlyMonitoredClassNames(), clazz.getName());
+		}
 		
 		//Strategy is ALL_EXCEPT
 		return !OpenmrsUtil.collectionContains(AuditLogUtil.getUnMonitoredClassNames(), clazz.getName());

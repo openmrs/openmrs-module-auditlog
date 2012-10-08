@@ -302,13 +302,25 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@NotTransactional
 	public void shouldCreateAnAuditLogEntryWhenAnElementIsRemovedFormAChildCollection() throws Exception {
 		Concept concept = conceptService.getConcept(5089);
+		//something with ConceptMaps having a blank uuids and now getting set, this should have been
+		//fixed in later versions
+		conceptService.saveConcept(concept);
+		List<AuditLog> existingUpdateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.UPDATED),
+		    null, null, null, null);
+		//for the two concept maps and the concept
+		//Assert.assertEquals(3, existingUpdateLogs.size());
 		Assert.assertFalse(concept.getDescriptions().isEmpty());
 		
 		concept.removeDescription(concept.getDescription());
 		conceptService.saveConcept(concept);
 		
+		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
+		clazzes.add(Concept.class);
 		List<AuditLog> updateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.UPDATED), null,
 		    null, null, null);
+		//TODO this test should check that the collection was updated
+		Assert.assertEquals(existingUpdateLogs.size() + 1, updateLogs.size());
+		updateLogs.removeAll(existingUpdateLogs);
 		Assert.assertEquals(1, updateLogs.size());
 		Assert.assertEquals(updateLogs.get(0).getObjectUuid(), concept.getUuid());
 	}
@@ -317,6 +329,15 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@NotTransactional
 	public void shouldCreateAnAuditLogEntryWhenAnElementIsAddedToAChildCollection() throws Exception {
 		Concept concept = conceptService.getConcept(5089);
+		//something with ConceptMaps having a blank uuids and now getting set, this should have been
+		//fixed in later versions
+		conceptService.saveConcept(concept);
+		List<AuditLog> existingUpdateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.UPDATED),
+		    null, null, null, null);
+		//for the two concept maps and the concept
+		//Assert.assertEquals(3, existingUpdateLogs.size());
+		Assert.assertFalse(concept.getDescriptions().isEmpty());
+		
 		ConceptDescription cd1 = new ConceptDescription("desc1", Locale.ENGLISH);
 		cd1.setDateCreated(new Date());
 		cd1.setCreator(Context.getAuthenticatedUser());
@@ -325,6 +346,8 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		
 		List<AuditLog> updateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.UPDATED), null,
 		    null, null, null);
+		Assert.assertEquals(existingUpdateLogs.size() + 1, updateLogs.size());
+		updateLogs.removeAll(existingUpdateLogs);
 		Assert.assertEquals(1, updateLogs.size());
 		Assert.assertEquals(updateLogs.get(0).getObjectUuid(), concept.getUuid());
 	}
@@ -335,22 +358,17 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		Concept concept = conceptService.getConcept(7);
 		int originalDescriptionCount = concept.getDescriptions().size();
 		Assert.assertTrue(originalDescriptionCount > 0);
-		try {
-			AuditLogUtil.startMonitoring(ConceptDescription.class);
-			concept.getDescription().setDescription("another descr");
-			concept = conceptService.saveConcept(concept);
-			Assert.assertEquals(originalDescriptionCount, concept.getDescriptions().size());
-			
-			List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
-			clazzes.add(Concept.class);//get only location logs since there those of GPs that we have changed
-			List<AuditLog> updateLogs = auditLogService.getAuditLogs(clazzes, Collections.singletonList(Action.UPDATED),
-			    null, null, null, null);
-			Assert.assertEquals(1, updateLogs.size());
-			Assert.assertEquals(updateLogs.get(0).getObjectUuid(), concept.getUuid());
-		}
-		finally {
-			AuditLogUtil.stopMonitoring(ConceptDescription.class);
-		}
+		
+		concept.getDescription().setDescription("another descr");
+		concept = conceptService.saveConcept(concept);
+		Assert.assertEquals(originalDescriptionCount, concept.getDescriptions().size());
+		
+		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
+		clazzes.add(Concept.class);//get only location logs since there those of GPs that we have changed
+		List<AuditLog> updateLogs = auditLogService.getAuditLogs(clazzes, Collections.singletonList(Action.UPDATED), null,
+		    null, null, null);
+		Assert.assertEquals(1, updateLogs.size());
+		Assert.assertEquals(updateLogs.get(0).getObjectUuid(), concept.getUuid());
 	}
 	
 	@Test
