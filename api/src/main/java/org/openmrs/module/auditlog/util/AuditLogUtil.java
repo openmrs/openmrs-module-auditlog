@@ -15,8 +15,11 @@ package org.openmrs.module.auditlog.util;
 
 import java.beans.PropertyDescriptor;
 import java.io.StringReader;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -71,7 +74,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	
 	public static final String ATTRIBUTE_NAME = "name";
 	
-	private static Set<String> monitoredClassnamesCache;
+	private static Set<Class<?>> monitoredClassnamesCache;
 	
 	private static MonitoringStrategy monitoringStrategyCache;
 	
@@ -197,20 +200,21 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	 * @return a set of monitored class names
 	 * @should return a set of monitored class names
 	 */
-	public static Set<String> getMonitoredClassNames() {
+	public static Set<Class<?>> getMonitoredClassNames() {
 		if (monitoredClassnamesCache == null) {
-			monitoredClassnamesCache = new HashSet<String>();
+			monitoredClassnamesCache = new HashSet<Class<?>>();
 			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
 			    AuditLogConstants.GP_MONITORED_CLASSES);
 			if (gp != null && StringUtils.isNotBlank(gp.getPropertyValue())) {
 				String[] classnameArray = StringUtils.split(gp.getPropertyValue(), ",");
 				for (String classname : classnameArray) {
 					classname = classname.trim();
-					monitoredClassnamesCache.add(classname);
 					try {
-						Set<Class<?>> subclasses = getPersistentConcreteSubclasses(Context.loadClass(classname), null, null);
+						Class<?> monitoredClass = Context.loadClass(classname);
+						monitoredClassnamesCache.add(monitoredClass);
+						Set<Class<?>> subclasses = getPersistentConcreteSubclasses(monitoredClass, null, null);
 						for (Class<?> subclass : subclasses) {
-							monitoredClassnamesCache.add(subclass.getName());
+							monitoredClassnamesCache.add(subclass);
 						}
 					}
 					catch (ClassNotFoundException e) {
@@ -270,18 +274,11 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 		if (implicitlyMonitoredClassnamesCache == null) {
 			implicitlyMonitoredClassnamesCache = new HashSet<String>();
 			if (getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT) {
-				for (String classname : getMonitoredClassNames()) {
-					try {
-						Class<?> monitoredClass = Context.loadClass(classname);
-						addAssociationTypes(monitoredClass);
-						
-						Set<Class<?>> subclasses = getPersistentConcreteSubclasses(monitoredClass, null, null);
-						for (Class<?> subclass : subclasses) {
-							addAssociationTypes(subclass);
-						}
-					}
-					catch (ClassNotFoundException e) {
-						log.error("Failed to load class:" + classname);
+				for (Class<?> monitoredClass : getMonitoredClassNames()) {
+					addAssociationTypes(monitoredClass);
+					Set<Class<?>> subclasses = getPersistentConcreteSubclasses(monitoredClass, null, null);
+					for (Class<?> subclass : subclasses) {
+						addAssociationTypes(subclass);
 					}
 				}
 			} else if (getMonitoringStrategy() == MonitoringStrategy.ALL_EXCEPT && getUnMonitoredClassNames().size() > 0) {
@@ -417,18 +414,18 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 		if (isNoneExceptStrategy) {
 			for (Class<? extends OpenmrsObject> clazz : clazzes) {
 				if (startMonitoring)
-					getMonitoredClassNames().add(clazz.getName());
+					getMonitoredClassNames().add(clazz);
 				else {
-					getMonitoredClassNames().remove(clazz.getName());
+					getMonitoredClassNames().remove(clazz);
 					//remove subclasses too
 					Set<Class<?>> subclasses = getPersistentConcreteSubclasses(clazz, null, null);
 					for (Class<?> subclass : subclasses) {
-						getMonitoredClassNames().remove(subclass.getName());
+						getMonitoredClassNames().remove(subclass);
 					}
 				}
 			}
 			
-			gp.setPropertyValue(StringUtils.join(getMonitoredClassNames(), ","));
+			gp.setPropertyValue(StringUtils.join(getAsListOfClassnames(getMonitoredClassNames()), ","));
 		} else {
 			for (Class<? extends OpenmrsObject> clazz : clazzes) {
 				if (startMonitoring) {
@@ -456,6 +453,20 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 				unMonitoredClassnamesCache = null;
 			implicitlyMonitoredClassnamesCache = null;
 		}
+	}
+	
+	/**
+	 * Converts a set of class objects to a list of class name strings
+	 * 
+	 * @param clazzes
+	 * @return
+	 */
+	public static List<String> getAsListOfClassnames(Set<Class<?>> clazzes) {
+		List<String> classnames = new ArrayList<String>(clazzes.size());
+		for (Class<?> clazz : clazzes) {
+			classnames.add(clazz.getName());
+		}
+		return classnames;
 	}
 	
 	/**
@@ -517,7 +528,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	 */
 	@SuppressWarnings("unchecked")
 	public static Set<Class<?>> getPersistentConcreteSubclasses(Class<?> clazz, Set<Class<?>> foundSubclasses,
-	                                                  Collection<ClassMetadata> mappedClasses) {
+	                                                            Collection<ClassMetadata> mappedClasses) {
 		if (foundSubclasses == null)
 			foundSubclasses = new HashSet<Class<?>>();
 		if (mappedClasses == null)
@@ -527,8 +538,10 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 			for (ClassMetadata cmd : mappedClasses) {
 				Class<?> possibleSubclass = cmd.getMappedClass(EntityMode.POJO);
 				if (!clazz.equals(possibleSubclass) && clazz.isAssignableFrom(possibleSubclass)) {
-					foundSubclasses.add(possibleSubclass);
-					foundSubclasses.addAll(getPersistentConcreteSubclasses(possibleSubclass, foundSubclasses, mappedClasses));
+					if (!Modifier.isAbstract(possibleSubclass.getModifiers()) && !possibleSubclass.isInterface())
+						foundSubclasses.add(possibleSubclass);
+					foundSubclasses
+					        .addAll(getPersistentConcreteSubclasses(possibleSubclass, foundSubclasses, mappedClasses));
 				}
 			}
 		}

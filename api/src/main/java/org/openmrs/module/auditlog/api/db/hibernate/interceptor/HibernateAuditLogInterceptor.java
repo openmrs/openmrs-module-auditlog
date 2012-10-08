@@ -228,7 +228,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					log.debug("Creating log entry for updated object with uuid:" + openmrsObject.getUuid() + " of type:"
 					        + entity.getClass().getName());
 				
-				if (AuditLogUtil.getMonitoredClassNames().contains(openmrsObject.getClass().getName()))
+				if (AuditLogUtil.getMonitoredClassNames().contains(openmrsObject.getClass()))
 					updates.get().add(openmrsObject);
 				else
 					otherUpdates.get().add(openmrsObject);
@@ -481,7 +481,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 			return true;
 		
 		if (AuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT) {
-			return OpenmrsUtil.collectionContains(AuditLogUtil.getMonitoredClassNames(), clazz.getName());
+			return OpenmrsUtil.collectionContains(AuditLogUtil.getMonitoredClassNames(), clazz);
 		}
 		
 		//Strategy is ALL_EXCEPT

@@ -377,48 +377,48 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@NotTransactional
 	public void shouldUpdateTheMonitoredClassCacheWhenTheMonitoredClassGlobalPropertyIsUpdatedWithAnAddition()
 	    throws Exception {
-		Assert.assertFalse(AuditLogUtil.getMonitoredClassNames().contains(Encounter.class.getName()));
+		Assert.assertFalse(AuditLogUtil.getMonitoredClassNames().contains(Encounter.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORED_CLASSES);
-		Set<String> monitoredClasses = new HashSet<String>();
+		Set<Class<?>> monitoredClasses = new HashSet<Class<?>>();
 		try {
 			monitoredClasses.addAll(AuditLogUtil.getMonitoredClassNames());
-			monitoredClasses.add(Encounter.class.getName());
-			gp.setPropertyValue(StringUtils.join(monitoredClasses, ","));
+			monitoredClasses.add(Encounter.class);
+			gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), ","));
 			as.saveGlobalProperty(gp);
-			Assert.assertTrue(AuditLogUtil.getMonitoredClassNames().contains(Encounter.class.getName()));
+			Assert.assertTrue(AuditLogUtil.getMonitoredClassNames().contains(Encounter.class));
 		}
 		finally {
 			//reset
-			monitoredClasses.remove(Encounter.class.getName());
-			gp.setPropertyValue(StringUtils.join(monitoredClasses, ","));
+			monitoredClasses.remove(Encounter.class);
+			gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), ","));
 			as.saveGlobalProperty(gp);
 		}
-		Assert.assertFalse(AuditLogUtil.getMonitoredClassNames().contains(Encounter.class.getName()));
+		Assert.assertFalse(AuditLogUtil.getMonitoredClassNames().contains(Encounter.class));
 	}
 	
 	@Test
 	@NotTransactional
 	public void shouldUpdateTheMonitoredClassCacheWhenTheMonitoredClassGlobalPropertyIsUpdatedWithARemoval()
 	    throws Exception {
-		Assert.assertTrue(AuditLogUtil.getMonitoredClassNames().contains(Concept.class.getName()));
+		Assert.assertTrue(AuditLogUtil.getMonitoredClassNames().contains(Concept.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORED_CLASSES);
-		Set<String> monitoredClasses = new HashSet<String>();
+		Set<Class<?>> monitoredClasses = new HashSet<Class<?>>();
 		try {
 			monitoredClasses.addAll(AuditLogUtil.getMonitoredClassNames());
-			monitoredClasses.remove(Concept.class.getName());
-			gp.setPropertyValue(StringUtils.join(monitoredClasses, ","));
+			monitoredClasses.remove(Concept.class);
+			gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), ","));
 			as.saveGlobalProperty(gp);
-			Assert.assertFalse(AuditLogUtil.getMonitoredClassNames().contains(Concept.class.getName()));
+			Assert.assertFalse(AuditLogUtil.getMonitoredClassNames().contains(Concept.class));
 		}
 		finally {
 			//reset
-			monitoredClasses.add(Concept.class.getName());
-			gp.setPropertyValue(StringUtils.join(monitoredClasses, ","));
+			monitoredClasses.add(Concept.class);
+			gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), ","));
 			as.saveGlobalProperty(gp);
 		}
-		Assert.assertTrue(AuditLogUtil.getMonitoredClassNames().contains(Concept.class.getName()));
+		Assert.assertTrue(AuditLogUtil.getMonitoredClassNames().contains(Concept.class));
 	}
 	
 	@Test
@@ -448,7 +448,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@Test
 	@NotTransactional
 	public void shouldNotMonitorAnyObjectWhenStrateyIsSetToNone() throws Exception {
-		Assert.assertTrue(AuditLogUtil.getMonitoredClassNames().contains(EncounterType.class.getName()));
+		Assert.assertTrue(AuditLogUtil.getMonitoredClassNames().contains(EncounterType.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
 		String originalGpValue = gp.getPropertyValue();
