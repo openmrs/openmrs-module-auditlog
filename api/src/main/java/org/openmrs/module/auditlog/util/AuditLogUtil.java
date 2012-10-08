@@ -208,7 +208,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 					classname = classname.trim();
 					monitoredClassnamesCache.add(classname);
 					try {
-						Set<Class<?>> subclasses = getConcreteSubclasses(Context.loadClass(classname), null, null);
+						Set<Class<?>> subclasses = getPersistentConcreteSubclasses(Context.loadClass(classname), null, null);
 						for (Class<?> subclass : subclasses) {
 							monitoredClassnamesCache.add(subclass.getName());
 						}
@@ -241,7 +241,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 					classname = classname.trim();
 					unMonitoredClassnamesCache.add(classname);
 					try {
-						Set<Class<?>> subclasses = getConcreteSubclasses(Context.loadClass(classname), null, null);
+						Set<Class<?>> subclasses = getPersistentConcreteSubclasses(Context.loadClass(classname), null, null);
 						for (Class<?> subclass : subclasses) {
 							unMonitoredClassnamesCache.add(subclass.getName());
 						}
@@ -275,7 +275,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 						Class<?> monitoredClass = Context.loadClass(classname);
 						addAssociationTypes(monitoredClass);
 						
-						Set<Class<?>> subclasses = getConcreteSubclasses(monitoredClass, null, null);
+						Set<Class<?>> subclasses = getPersistentConcreteSubclasses(monitoredClass, null, null);
 						for (Class<?> subclass : subclasses) {
 							addAssociationTypes(subclass);
 						}
@@ -421,7 +421,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 				else {
 					getMonitoredClassNames().remove(clazz.getName());
 					//remove subclasses too
-					Set<Class<?>> subclasses = getConcreteSubclasses(clazz, null, null);
+					Set<Class<?>> subclasses = getPersistentConcreteSubclasses(clazz, null, null);
 					for (Class<?> subclass : subclasses) {
 						getMonitoredClassNames().remove(subclass.getName());
 					}
@@ -433,7 +433,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 			for (Class<? extends OpenmrsObject> clazz : clazzes) {
 				if (startMonitoring) {
 					getUnMonitoredClassNames().remove(clazz.getName());
-					Set<Class<?>> subclasses = getConcreteSubclasses(clazz, null, null);
+					Set<Class<?>> subclasses = getPersistentConcreteSubclasses(clazz, null, null);
 					for (Class<?> subclass : subclasses) {
 						getUnMonitoredClassNames().remove(subclass.getName());
 					}
@@ -516,7 +516,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	 * @should exclude interfaces and abstract classes
 	 */
 	@SuppressWarnings("unchecked")
-	public static Set<Class<?>> getConcreteSubclasses(Class<?> clazz, Set<Class<?>> foundSubclasses,
+	public static Set<Class<?>> getPersistentConcreteSubclasses(Class<?> clazz, Set<Class<?>> foundSubclasses,
 	                                                  Collection<ClassMetadata> mappedClasses) {
 		if (foundSubclasses == null)
 			foundSubclasses = new HashSet<Class<?>>();
@@ -528,7 +528,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 				Class<?> possibleSubclass = cmd.getMappedClass(EntityMode.POJO);
 				if (!clazz.equals(possibleSubclass) && clazz.isAssignableFrom(possibleSubclass)) {
 					foundSubclasses.add(possibleSubclass);
-					foundSubclasses.addAll(getConcreteSubclasses(possibleSubclass, foundSubclasses, mappedClasses));
+					foundSubclasses.addAll(getPersistentConcreteSubclasses(possibleSubclass, foundSubclasses, mappedClasses));
 				}
 			}
 		}

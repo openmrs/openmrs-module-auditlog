@@ -67,7 +67,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 			for (Class clazz : clazzes) {
 				if (OpenmrsObject.class.isAssignableFrom(clazz)) {
 					classesToMatch.add(clazz.getName());
-					for (Class subclass : AuditLogUtil.getConcreteSubclasses(clazz, null, null)) {
+					for (Class subclass : AuditLogUtil.getPersistentConcreteSubclasses(clazz, null, null)) {
 						classesToMatch.add(subclass.getName());
 					}
 				}
