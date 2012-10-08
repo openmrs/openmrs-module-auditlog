@@ -47,11 +47,8 @@ import org.openmrs.module.auditlog.MonitoringStrategy;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
-import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -211,7 +208,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 					classname = classname.trim();
 					monitoredClassnamesCache.add(classname);
 					try {
-						Set<Class<?>> subclasses = getConcreteSubclasses(Context.loadClass(classname), null);
+						Set<Class<?>> subclasses = getConcreteSubclasses(Context.loadClass(classname), null, null);
 						for (Class<?> subclass : subclasses) {
 							monitoredClassnamesCache.add(subclass.getName());
 						}
@@ -233,7 +230,6 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	 * @return a set of monitored class names
 	 * @should return a set of un monitored class names
 	 */
-	@SuppressWarnings("unchecked")
 	public static Set<String> getUnMonitoredClassNames() {
 		if (unMonitoredClassnamesCache == null) {
 			unMonitoredClassnamesCache = new HashSet<String>();
@@ -245,7 +241,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 					classname = classname.trim();
 					unMonitoredClassnamesCache.add(classname);
 					try {
-						Set<Class<?>> subclasses = getConcreteSubclasses(Context.loadClass(classname), null);
+						Set<Class<?>> subclasses = getConcreteSubclasses(Context.loadClass(classname), null, null);
 						for (Class<?> subclass : subclasses) {
 							unMonitoredClassnamesCache.add(subclass.getName());
 						}
@@ -270,7 +266,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	 * @should return a set of implicitly monitored classnames
 	 */
 	@SuppressWarnings("unchecked")
-    public static Set<String> getImplicitlyMonitoredClassNames() {
+	public static Set<String> getImplicitlyMonitoredClassNames() {
 		if (implicitlyMonitoredClassnamesCache == null) {
 			implicitlyMonitoredClassnamesCache = new HashSet<String>();
 			if (getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT) {
@@ -279,7 +275,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 						Class<?> monitoredClass = Context.loadClass(classname);
 						addAssociationTypes(monitoredClass);
 						
-						Set<Class<?>> subclasses = getConcreteSubclasses(monitoredClass, null);
+						Set<Class<?>> subclasses = getConcreteSubclasses(monitoredClass, null, null);
 						for (Class<?> subclass : subclasses) {
 							addAssociationTypes(subclass);
 						}
@@ -295,7 +291,9 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 				//concept names otherwise it poses inconsistencies
 				Collection<ClassMetadata> allClassMetadata = getSessionFactory().getAllClassMetadata().values();
 				for (ClassMetadata classMetadata : allClassMetadata) {
-					addAssociationTypes(classMetadata.getMappedClass(EntityMode.POJO));
+					Class<?> mappedClass = classMetadata.getMappedClass(EntityMode.POJO);
+					if (OpenmrsObject.class.isAssignableFrom(mappedClass))
+						addAssociationTypes(mappedClass);
 				}
 			}
 		}
@@ -306,7 +304,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	private static void addAssociationTypes(Class<?> clazz) {
 		for (Class<?> assocType : getAssociationTypesToMonitor(clazz, null)) {
 			//If this type is not explicitly marked as monitored
-			if (!getMonitoredClassNames().contains(assocType.getName())) {
+			if (OpenmrsObject.class.isAssignableFrom(assocType) && !getMonitoredClassNames().contains(assocType.getName())) {
 				getImplicitlyMonitoredClassNames().add(assocType.getName());
 			}
 		}
@@ -423,7 +421,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 				else {
 					getMonitoredClassNames().remove(clazz.getName());
 					//remove subclasses too
-					Set<Class<?>> subclasses = getConcreteSubclasses(clazz, null);
+					Set<Class<?>> subclasses = getConcreteSubclasses(clazz, null, null);
 					for (Class<?> subclass : subclasses) {
 						getMonitoredClassNames().remove(subclass.getName());
 					}
@@ -435,7 +433,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 			for (Class<? extends OpenmrsObject> clazz : clazzes) {
 				if (startMonitoring) {
 					getUnMonitoredClassNames().remove(clazz.getName());
-					Set<Class<?>> subclasses = getConcreteSubclasses(clazz, null);
+					Set<Class<?>> subclasses = getConcreteSubclasses(clazz, null, null);
 					for (Class<?> subclass : subclasses) {
 						getUnMonitoredClassNames().remove(subclass.getName());
 					}
@@ -512,33 +510,26 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	 * @param clazz
 	 * @param foundSubclasses the list of subclasses found in previous recursive calls, should be
 	 *            null for the first call
+	 * @param mappedClasses
 	 * @return a set of subclasses
 	 * @should return a list of subclasses for the specified type
 	 * @should exclude interfaces and abstract classes
 	 */
-	public static Set<Class<?>> getConcreteSubclasses(Class<?> clazz, Set<Class<?>> foundSubclasses) {
+	@SuppressWarnings("unchecked")
+	public static Set<Class<?>> getConcreteSubclasses(Class<?> clazz, Set<Class<?>> foundSubclasses,
+	                                                  Collection<ClassMetadata> mappedClasses) {
 		if (foundSubclasses == null)
 			foundSubclasses = new HashSet<Class<?>>();
+		if (mappedClasses == null)
+			mappedClasses = getSessionFactory().getAllClassMetadata().values();
 		
 		if (clazz != null) {
-			ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
-			scanner.addIncludeFilter(new AssignableTypeFilter(clazz));
-			try {
-				//This assumes modules follow the 'org.openmrs' namespace
-				Collection<BeanDefinition> beans = scanner.findCandidateComponents("org.openmrs");
-				for (BeanDefinition bean : beans) {
-					if (!clazz.getName().equals(bean.getBeanClassName())) {
-						Class<?> beanClass = Context.loadClass(bean.getBeanClassName());
-						foundSubclasses.add(beanClass);
-						foundSubclasses.addAll(getConcreteSubclasses(beanClass, foundSubclasses));
-					}
+			for (ClassMetadata cmd : mappedClasses) {
+				Class<?> possibleSubclass = cmd.getMappedClass(EntityMode.POJO);
+				if (!clazz.equals(possibleSubclass) && clazz.isAssignableFrom(possibleSubclass)) {
+					foundSubclasses.add(possibleSubclass);
+					foundSubclasses.addAll(getConcreteSubclasses(possibleSubclass, foundSubclasses, mappedClasses));
 				}
-			}
-			catch (ClassNotFoundException e) {
-				log.warn("Error:" + e.getMessage());//why?
-			}
-			finally {
-				scanner.resetFilters(false);
 			}
 		}
 		

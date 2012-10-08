@@ -527,16 +527,25 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
-		gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
-		as.saveGlobalProperty(gp);
-		
-		AuditLogUtil.stopMonitoring(LocationTag.class);
-		Location loc = ls.getLocation(2);
-		loc.getTags().iterator().next().setDescription("new");
-		ls.saveLocation(loc);
-		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
-		clazzes.add(Location.class);
-		clazzes.add(LocationTag.class);
-		Assert.assertEquals(2, auditLogService.getAuditLogs(clazzes, null, null, null, null, null).size());
+		String originalGpValue = gp.getPropertyValue();
+		try {
+			gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
+			as.saveGlobalProperty(gp);
+			
+			AuditLogUtil.stopMonitoring(LocationTag.class);
+			Location loc = ls.getLocation(2);
+			loc.getTags().iterator().next().setDescription("new");
+			ls.saveLocation(loc);
+			List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
+			clazzes.add(Location.class);
+			clazzes.add(LocationTag.class);
+			Assert.assertEquals(2, auditLogService.getAuditLogs(clazzes, null, null, null, null, null).size());
+		}
+		finally {
+			//reset
+			AuditLogUtil.startMonitoring(LocationTag.class);
+			gp.setPropertyValue(originalGpValue);
+			as.saveGlobalProperty(gp);
+		}
 	}
 }

@@ -419,7 +419,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	@Test
 	@Verifies(value = "should return a list of subclasses for the specified type", method = "getConcreteSubclasses(Class<OpenmrsObject>)")
 	public void getConcreteSubclasses_shouldReturnAListOfSubclassesForTheSpecifiedType() throws Exception {
-		Set<Class<?>> subclasses = AuditLogUtil.getConcreteSubclasses(Concept.class, null);
+		Set<Class<?>> subclasses = AuditLogUtil.getConcreteSubclasses(Concept.class, null, null);
 		Assert.assertEquals(2, subclasses.size());
 		Assert.assertTrue(subclasses.contains(ConceptNumeric.class));
 		Assert.assertTrue(subclasses.contains(ConceptComplex.class));
@@ -432,7 +432,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	@Ignore
 	@Verifies(value = "should exclude interfaces and abstract classes", method = "getConcreteSubclasses(List<Class<OpenmrsObject>>)")
 	public void getConcreteSubclasses_shouldExcludeInterfacesAndAbstractClasses() throws Exception {
-		Set<Class<?>> subclasses = AuditLogUtil.getConcreteSubclasses(OpenmrsObject.class, null);
+		Set<Class<?>> subclasses = AuditLogUtil.getConcreteSubclasses(OpenmrsObject.class, null, null);
 		for (Class<?> clazz : subclasses) {
 			Assert.assertFalse("Found interface:" + clazz.getName() + ", interfaces should be excluded",
 			    Modifier.isInterface(clazz.getModifiers()));
