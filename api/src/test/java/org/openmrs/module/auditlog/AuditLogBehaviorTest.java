@@ -37,11 +37,13 @@ import org.openmrs.Encounter;
 import org.openmrs.EncounterType;
 import org.openmrs.GlobalProperty;
 import org.openmrs.Location;
+import org.openmrs.LocationTag;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.EncounterService;
+import org.openmrs.api.LocationService;
 import org.openmrs.api.PatientService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog.Action;
@@ -514,5 +516,27 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 			gp.setPropertyValue(originalGpValue);
 			as.saveGlobalProperty(gp);
 		}
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldCreateLogForUnMonitoredTypeIfTheOwningTypeIsMonitoredAndStrategyIsAllExcept() throws Exception {
+		executeDataSet("org/openmrs/api/include/LocationServiceTest-initialData.xml");
+		LocationService ls = Context.getLocationService();
+		Assert.assertEquals(0, auditLogService.getAuditLogs(null, null, null, null, null, null).size());
+		
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
+		gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
+		as.saveGlobalProperty(gp);
+		
+		AuditLogUtil.stopMonitoring(LocationTag.class);
+		Location loc = ls.getLocation(2);
+		loc.getTags().iterator().next().setDescription("new");
+		ls.saveLocation(loc);
+		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
+		clazzes.add(Location.class);
+		clazzes.add(LocationTag.class);
+		Assert.assertEquals(2, auditLogService.getAuditLogs(clazzes, null, null, null, null, null).size());
 	}
 }

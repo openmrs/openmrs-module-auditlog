@@ -26,6 +26,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.EntityMode;
 import org.hibernate.SessionFactory;
 import org.hibernate.engine.SessionFactoryImplementor;
 import org.hibernate.metadata.ClassMetadata;
@@ -232,6 +233,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	 * @return a set of monitored class names
 	 * @should return a set of un monitored class names
 	 */
+	@SuppressWarnings("unchecked")
 	public static Set<String> getUnMonitoredClassNames() {
 		if (unMonitoredClassnamesCache == null) {
 			unMonitoredClassnamesCache = new HashSet<String>();
@@ -260,28 +262,40 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	
 	/**
 	 * Gets implicitly monitored classnames, this are generated as a result of their owning entity
-	 * types being marked as monitored if they are not explicitly marked as monitored, i.e if
-	 * Concept is marked as monitored, then ConceptName, ConceptDesctiption, ConceptMapping etc
-	 * implicitly get marked as monitored
+	 * types being marked as monitored if they are not explicitly marked as monitored themselves,
+	 * i.e if Concept is marked as monitored, then ConceptName, ConceptDesctiption, ConceptMapping
+	 * etc implicitly get marked as monitored
 	 * 
 	 * @return a set of implicitly monitored classnames
 	 * @should return a set of implicitly monitored classnames
 	 */
-	public static Set<String> getImplicitlyMonitoredClassNames() {
+	@SuppressWarnings("unchecked")
+    public static Set<String> getImplicitlyMonitoredClassNames() {
 		if (implicitlyMonitoredClassnamesCache == null) {
 			implicitlyMonitoredClassnamesCache = new HashSet<String>();
-			for (String classname : getMonitoredClassNames()) {
-				try {
-					Class<?> monitoredClass = Context.loadClass(classname);
-					addAssociationTypes(monitoredClass);
-					
-					Set<Class<?>> subclasses = getConcreteSubclasses(monitoredClass, null);
-					for (Class<?> subclass : subclasses) {
-						addAssociationTypes(subclass);
+			if (getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT) {
+				for (String classname : getMonitoredClassNames()) {
+					try {
+						Class<?> monitoredClass = Context.loadClass(classname);
+						addAssociationTypes(monitoredClass);
+						
+						Set<Class<?>> subclasses = getConcreteSubclasses(monitoredClass, null);
+						for (Class<?> subclass : subclasses) {
+							addAssociationTypes(subclass);
+						}
+					}
+					catch (ClassNotFoundException e) {
+						log.error("Failed to load class:" + classname);
 					}
 				}
-				catch (ClassNotFoundException e) {
-					log.error("Failed to load class:" + classname);
+			} else if (getMonitoringStrategy() == MonitoringStrategy.ALL_EXCEPT && getUnMonitoredClassNames().size() > 0) {
+				//generate implicitly monitored classes so we can track them. The reason behind 
+				//this is: Say Concept is marked as monitored and strategy is set to All Except
+				//and say ConceptName is for some reason marked as un monitored we should still monitor
+				//concept names otherwise it poses inconsistencies
+				Collection<ClassMetadata> allClassMetadata = getSessionFactory().getAllClassMetadata().values();
+				for (ClassMetadata classMetadata : allClassMetadata) {
+					addAssociationTypes(classMetadata.getMappedClass(EntityMode.POJO));
 				}
 			}
 		}
@@ -293,7 +307,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 		for (Class<?> assocType : getAssociationTypesToMonitor(clazz, null)) {
 			//If this type is not explicitly marked as monitored
 			if (!getMonitoredClassNames().contains(assocType.getName())) {
-				implicitlyMonitoredClassnamesCache.add(assocType.getName());
+				getImplicitlyMonitoredClassNames().add(assocType.getName());
 			}
 		}
 	}
