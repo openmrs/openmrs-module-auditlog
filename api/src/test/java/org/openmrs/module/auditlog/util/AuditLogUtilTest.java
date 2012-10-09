@@ -64,8 +64,8 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	 * @see {@link AuditLogUtil#getMonitoredClassNames()}
 	 */
 	@Test
-	@Verifies(value = "should return a set of monitored class names", method = "getMonitoredClassNames()")
-	public void getMonitoredClassNames_shouldReturnASetOfMonitoredClassNames() throws Exception {
+	@Verifies(value = "should return a set of monitored classes", method = "getMonitoredClassNames()")
+	public void getMonitoredClassNames_shouldReturnASetOfMonitoredClasses() throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
 		Set<Class<?>> monitoredClasses = AuditLogUtil.getMonitoredClassNames();
 		Assert.assertEquals(5, monitoredClasses.size());
@@ -503,22 +503,22 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogUtil#getImplicitlyMonitoredClassNames()}
+	 * @see {@link AuditLogUtil#getImplicitlyMonitoredClasses()}
 	 */
 	@Test
-	@Verifies(value = "should return a set of implicitly monitored classnames", method = "getImplicitlyMonitoredClassNames()")
-	public void getImplicitlyMonitoredClassNames_shouldReturnASetOfImplicitlyMonitoredClassnames() throws Exception {
+	@Verifies(value = "should return a set of implicitly monitored classes", method = "getImplicitlyMonitoredClassNames()")
+	public void getImplicitlyMonitoredClasses_shouldReturnASetOfImplicitlyMonitoredClasses() throws Exception {
 		AdministrationService as = Context.getAdministrationService();
 		as.saveGlobalProperty(new GlobalProperty(AuditLogConstants.GP_MONITORING_STRATEGY, MonitoringStrategy.NONE_EXCEPT
 		        .name()));
 		AuditLogUtil.startMonitoring(Concept.class);
-		Set<String> implicitlyMonitoredClasses = AuditLogUtil.getImplicitlyMonitoredClassNames();
+		Set<Class<?>> implicitlyMonitoredClasses = AuditLogUtil.getImplicitlyMonitoredClasses();
 		Assert.assertEquals(6, implicitlyMonitoredClasses.size());
-		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptName.class.getName()));
-		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptDescription.class.getName()));
-		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptMap.class.getName()));
-		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptSet.class.getName()));
-		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptAnswer.class.getName()));
-		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptNameTag.class.getName()));
+		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptName.class));
+		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptDescription.class));
+		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptMap.class));
+		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptSet.class));
+		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptAnswer.class));
+		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptNameTag.class));
 	}
 }

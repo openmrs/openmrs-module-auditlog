@@ -481,7 +481,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 		if (AuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.ALL)
 			return true;
 		
-		if (OpenmrsUtil.collectionContains(AuditLogUtil.getImplicitlyMonitoredClassNames(), clazz.getName()))
+		if (OpenmrsUtil.collectionContains(AuditLogUtil.getImplicitlyMonitoredClasses(), clazz))
 			return true;
 		
 		if (AuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT) {

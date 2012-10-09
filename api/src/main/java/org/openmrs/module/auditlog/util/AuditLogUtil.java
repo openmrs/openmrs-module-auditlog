@@ -80,7 +80,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	
 	private static Set<String> unMonitoredClassnamesCache;
 	
-	private static Set<String> implicitlyMonitoredClassnamesCache;
+	private static Set<Class<?>> implicitlyMonitoredClassnamesCache;
 	
 	private static ApplicationContext applicationContext;
 	
@@ -194,11 +194,11 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	}
 	
 	/**
-	 * Convenience method that returns a set of monitored class names as specified by the
+	 * Convenience method that returns a set of monitored classes as specified by the
 	 * {@link GlobalProperty} {@link AuditLogConstants#GP_MONITORED_CLASSES}
 	 * 
-	 * @return a set of monitored class names
-	 * @should return a set of monitored class names
+	 * @return a set of monitored classes
+	 * @should return a set of monitored classes
 	 */
 	public static Set<Class<?>> getMonitoredClassNames() {
 		if (monitoredClassnamesCache == null) {
@@ -261,18 +261,18 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	}
 	
 	/**
-	 * Gets implicitly monitored classnames, this are generated as a result of their owning entity
+	 * Gets implicitly monitored classes, this are generated as a result of their owning entity
 	 * types being marked as monitored if they are not explicitly marked as monitored themselves,
 	 * i.e if Concept is marked as monitored, then ConceptName, ConceptDesctiption, ConceptMapping
 	 * etc implicitly get marked as monitored
 	 * 
-	 * @return a set of implicitly monitored classnames
-	 * @should return a set of implicitly monitored classnames
+	 * @return a set of implicitly monitored classes
+	 * @should return a set of implicitly monitored classes
 	 */
 	@SuppressWarnings("unchecked")
-	public static Set<String> getImplicitlyMonitoredClassNames() {
+	public static Set<Class<?>> getImplicitlyMonitoredClasses() {
 		if (implicitlyMonitoredClassnamesCache == null) {
-			implicitlyMonitoredClassnamesCache = new HashSet<String>();
+			implicitlyMonitoredClassnamesCache = new HashSet<Class<?>>();
 			if (getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT) {
 				for (Class<?> monitoredClass : getMonitoredClassNames()) {
 					addAssociationTypes(monitoredClass);
@@ -302,7 +302,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 		for (Class<?> assocType : getAssociationTypesToMonitor(clazz, null)) {
 			//If this type is not explicitly marked as monitored
 			if (OpenmrsObject.class.isAssignableFrom(assocType) && !getMonitoredClassNames().contains(assocType.getName())) {
-				getImplicitlyMonitoredClassNames().add(assocType.getName());
+				getImplicitlyMonitoredClasses().add(assocType);
 			}
 		}
 	}
