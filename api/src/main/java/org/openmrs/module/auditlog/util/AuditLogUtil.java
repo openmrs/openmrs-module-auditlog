@@ -200,7 +200,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	 * @return a set of monitored classes
 	 * @should return a set of monitored classes
 	 */
-	public static Set<Class<?>> getMonitoredClassNames() {
+	public static Set<Class<?>> getMonitoredClasses() {
 		if (monitoredClassnamesCache == null) {
 			monitoredClassnamesCache = new HashSet<Class<?>>();
 			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
@@ -274,7 +274,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 		if (implicitlyMonitoredClassnamesCache == null) {
 			implicitlyMonitoredClassnamesCache = new HashSet<Class<?>>();
 			if (getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT) {
-				for (Class<?> monitoredClass : getMonitoredClassNames()) {
+				for (Class<?> monitoredClass : getMonitoredClasses()) {
 					addAssociationTypes(monitoredClass);
 					Set<Class<?>> subclasses = getPersistentConcreteSubclasses(monitoredClass, null, null);
 					for (Class<?> subclass : subclasses) {
@@ -301,7 +301,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	private static void addAssociationTypes(Class<?> clazz) {
 		for (Class<?> assocType : getAssociationTypesToMonitor(clazz, null)) {
 			//If this type is not explicitly marked as monitored
-			if (OpenmrsObject.class.isAssignableFrom(assocType) && !getMonitoredClassNames().contains(assocType.getName())) {
+			if (OpenmrsObject.class.isAssignableFrom(assocType) && !getMonitoredClasses().contains(assocType.getName())) {
 				getImplicitlyMonitoredClasses().add(assocType);
 			}
 		}
@@ -414,18 +414,18 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 		if (isNoneExceptStrategy) {
 			for (Class<? extends OpenmrsObject> clazz : clazzes) {
 				if (startMonitoring)
-					getMonitoredClassNames().add(clazz);
+					getMonitoredClasses().add(clazz);
 				else {
-					getMonitoredClassNames().remove(clazz);
+					getMonitoredClasses().remove(clazz);
 					//remove subclasses too
 					Set<Class<?>> subclasses = getPersistentConcreteSubclasses(clazz, null, null);
 					for (Class<?> subclass : subclasses) {
-						getMonitoredClassNames().remove(subclass);
+						getMonitoredClasses().remove(subclass);
 					}
 				}
 			}
 			
-			gp.setPropertyValue(StringUtils.join(getAsListOfClassnames(getMonitoredClassNames()), ","));
+			gp.setPropertyValue(StringUtils.join(getAsListOfClassnames(getMonitoredClasses()), ","));
 		} else {
 			for (Class<? extends OpenmrsObject> clazz : clazzes) {
 				if (startMonitoring) {

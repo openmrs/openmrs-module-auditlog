@@ -78,7 +78,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 			gp.setPropertyValue(MonitoringStrategy.NONE_EXCEPT.name());
 			as.saveGlobalProperty(gp);
 		}
-		Set<Class<?>> monitoredClasses = AuditLogUtil.getMonitoredClassNames();
+		Set<Class<?>> monitoredClasses = AuditLogUtil.getMonitoredClasses();
 		if (monitoredClasses.size() != 3 || !monitoredClasses.contains(Concept.class)
 		        || !monitoredClasses.contains(EncounterType.class)
 		        || !monitoredClasses.contains(PatientIdentifierType.class)) {
@@ -271,7 +271,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@Test
 	@NotTransactional
 	public void shouldNotCreateAuditLogsForUnMonitoredObjects() {
-		Assert.assertFalse(OpenmrsUtil.collectionContains(AuditLogUtil.getMonitoredClassNames(), Location.class.getName()));
+		Assert.assertFalse(OpenmrsUtil.collectionContains(AuditLogUtil.getMonitoredClasses(), Location.class.getName()));
 		Location location = new Location();
 		location.setName("najja");
 		location.setAddress1("test address");
@@ -414,36 +414,36 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@NotTransactional
 	public void shouldUpdateTheMonitoredClassCacheWhenTheMonitoredClassGlobalPropertyIsUpdatedWithAnAddition()
 	    throws Exception {
-		Assert.assertFalse(AuditLogUtil.getMonitoredClassNames().contains(Encounter.class));
+		Assert.assertFalse(AuditLogUtil.getMonitoredClasses().contains(Encounter.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORED_CLASSES);
 		Set<Class<?>> monitoredClasses = new HashSet<Class<?>>();
-		monitoredClasses.addAll(AuditLogUtil.getMonitoredClassNames());
+		monitoredClasses.addAll(AuditLogUtil.getMonitoredClasses());
 		monitoredClasses.add(Encounter.class);
 		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), ","));
 		as.saveGlobalProperty(gp);
-		Assert.assertTrue(AuditLogUtil.getMonitoredClassNames().contains(Encounter.class));
+		Assert.assertTrue(AuditLogUtil.getMonitoredClasses().contains(Encounter.class));
 	}
 	
 	@Test
 	@NotTransactional
 	public void shouldUpdateTheMonitoredClassCacheWhenTheMonitoredClassGlobalPropertyIsUpdatedWithARemoval()
 	    throws Exception {
-		Assert.assertTrue(AuditLogUtil.getMonitoredClassNames().contains(Concept.class));
+		Assert.assertTrue(AuditLogUtil.getMonitoredClasses().contains(Concept.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORED_CLASSES);
 		Set<Class<?>> monitoredClasses = new HashSet<Class<?>>();
-		monitoredClasses.addAll(AuditLogUtil.getMonitoredClassNames());
+		monitoredClasses.addAll(AuditLogUtil.getMonitoredClasses());
 		monitoredClasses.remove(Concept.class);
 		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), ","));
 		as.saveGlobalProperty(gp);
-		Assert.assertFalse(AuditLogUtil.getMonitoredClassNames().contains(Concept.class));
+		Assert.assertFalse(AuditLogUtil.getMonitoredClasses().contains(Concept.class));
 	}
 	
 	@Test
 	@NotTransactional
 	public void shouldMonitorAnyOpenmrsObjectWhenStrateyIsSetToAll() throws Exception {
-		Assert.assertFalse(AuditLogUtil.getMonitoredClassNames().contains(Location.class.getName()));
+		Assert.assertFalse(AuditLogUtil.getMonitoredClasses().contains(Location.class.getName()));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
 		gp.setPropertyValue(MonitoringStrategy.ALL.name());
@@ -459,7 +459,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@Test
 	@NotTransactional
 	public void shouldNotMonitorAnyObjectWhenStrateyIsSetToNone() throws Exception {
-		Assert.assertTrue(AuditLogUtil.getMonitoredClassNames().contains(EncounterType.class));
+		Assert.assertTrue(AuditLogUtil.getMonitoredClasses().contains(EncounterType.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
 		gp.setPropertyValue(MonitoringStrategy.NONE.name());
