@@ -70,7 +70,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	private ThreadLocal<HashSet<OpenmrsObject>> otherUpdates = new ThreadLocal<HashSet<OpenmrsObject>>();
 	
 	//Mapping between object uuids and maps of its changed property names and their older values, the first item in the array is the old value while the the second is the new value
-	private ThreadLocal<Map<String, Map<String, Object[]>>> objectChangesMap = new ThreadLocal<Map<String, Map<String, Object[]>>>();
+	private ThreadLocal<Map<String, Map<String, String[]>>> objectChangesMap = new ThreadLocal<Map<String, Map<String, String[]>>>();
 	
 	//Mapping between entities and lists of their Collections in the current session
 	private ThreadLocal<Map<Object, List<Collection<?>>>> entityCollectionsMap = new ThreadLocal<Map<Object, List<Collection<?>>>>();
@@ -116,7 +116,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 		updates.set(new HashSet<OpenmrsObject>());
 		deletes.set(new HashSet<OpenmrsObject>());
 		otherUpdates.set(new HashSet<OpenmrsObject>());
-		objectChangesMap.set(new HashMap<String, Map<String, Object[]>>());
+		objectChangesMap.set(new HashMap<String, Map<String, String[]>>());
 		entityCollectionsMap.set(new HashMap<Object, List<Collection<?>>>());
 	}
 	
@@ -148,7 +148,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 		
 		if (isMonitored(entity) && propertyNames != null) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
-			Map<String, Object[]> propertyChangesMap = null;
+			Map<String, String[]> propertyChangesMap = null;//Map<propertyName, Object[]{currentValue, PreviousValue}>
 			for (int i = 0; i < propertyNames.length; i++) {
 				//we need to ignore dateChanged and changedBy fields in any case they
 				//are actually part of the Auditlog in form of user and dateCreated
@@ -182,7 +182,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					}
 					
 					if (propertyChangesMap == null)
-						propertyChangesMap = new HashMap<String, Object[]>();
+						propertyChangesMap = new HashMap<String, String[]>();
 					
 					String flattenedPreviousValue = "";
 					String flattenedCurrentValue = "";
@@ -220,7 +220,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 						log.info("Audit log module doesn't currently store changes in items of type:" + types[i]);
 					}
 					
-					propertyChangesMap.put(propertyNames[i], new Object[] { flattenedPreviousValue, flattenedCurrentValue });
+					propertyChangesMap.put(propertyNames[i], new String[] { flattenedCurrentValue, flattenedPreviousValue });
 				}
 			}
 			
@@ -268,24 +268,24 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 			PersistentCollection persistentColl = ((PersistentCollection) collection);
 			Object owningObject = persistentColl.getOwner();
 			if (isMonitored(owningObject)) {
-				Set<Object> addedItems = new HashSet<Object>();
 				Set<Object> removedItems = new HashSet<Object>();
 				Collection currentColl = (Collection) collection;
 				Map previousMap = (Map) persistentColl.getStoredSnapshot();
-				addedItems.addAll(CollectionUtils.subtract(currentColl, previousMap.values()));
 				removedItems.addAll(CollectionUtils.subtract(previousMap.values(), currentColl));
 				
-				if (addedItems.size() > 0) {
-					//System.out.println("Added:" + addedItems);
-					//TODO Generate xml
-					
-				}
+				Map<String, String[]> propertyChangesMap = new HashMap<String, String[]>();
+				String propertyName = persistentColl.getRole().substring(persistentColl.getRole().lastIndexOf('.') + 1);
+				propertyChangesMap.put(propertyName, new String[] { getElementUuids(currentColl),
+				        getElementUuids(previousMap.values()) });
+				if (objectChangesMap.get().get(owningObject) == null)
+					objectChangesMap.get().put(((OpenmrsObject) owningObject).getUuid(), propertyChangesMap);
+				
 				if (removedItems.size() > 0) {
-					//System.out.println("Removed:" + removedItems);
-					//TODO Generate xml
-					//TODO Create DELETED log for the removed item here because hibernate doens't call 
+					//Create DELETED log for the removed item here because hibernate doens't call 
 					//interceptor.onDelete for an element that is removed from a child collection
-					
+					for (Object object : removedItems) {
+						deletes.get().add((OpenmrsObject) object);
+					}
 				}
 				
 				updates.get().add((OpenmrsObject) owningObject);
@@ -401,12 +401,11 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					}
 					
 					updates.get().addAll(otherUpdates.get());
-					
 					for (OpenmrsObject update : updates.get()) {
 						AuditLog auditLog = new AuditLog(update.getClass().getName(), update.getUuid(), Action.UPDATED,
 						        user, date);
 						auditLog.setUuid(UUID.randomUUID().toString());
-						Map<String, Object[]> propertyValuesMap = objectChangesMap.get().get(update.getUuid());
+						Map<String, String[]> propertyValuesMap = objectChangesMap.get().get(update.getUuid());
 						if (propertyValuesMap != null) {
 							auditLog.setChangesXml(AuditLogUtil.generateChangesXml(propertyValuesMap));
 						}
@@ -477,17 +476,13 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 		if (!OpenmrsObject.class.isAssignableFrom(clazz) || AuditLogUtil.getMonitoringStrategy() == null
 		        || AuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.NONE)
 			return false;
-		
 		if (AuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.ALL)
 			return true;
-		
 		if (OpenmrsUtil.collectionContains(AuditLogUtil.getImplicitlyMonitoredClasses(), clazz))
 			return true;
-		
 		if (AuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT) {
 			return OpenmrsUtil.collectionContains(AuditLogUtil.getMonitoredClasses(), clazz);
 		}
-		
 		//Strategy is ALL_EXCEPT
 		return !OpenmrsUtil.collectionContains(AuditLogUtil.getUnMonitoredClasses(), clazz);
 	}
@@ -501,5 +496,47 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 		if (sessionFactory == null)
 			sessionFactory = ((SessionFactory) applicationContext.getBean("sessionFactory"));
 		return sessionFactory;
+	}
+	
+	/**
+	 * @param collection
+	 * @return
+	 */
+	private String getElementUuids(Collection<?> collection) {
+		String currElementUuidsOrIds = "";
+		boolean isFirst = true;
+		for (Object currItem : collection) {
+			String uuidOrId = "";
+			if (OpenmrsObject.class.isAssignableFrom(currItem.getClass())) {
+				try {
+					uuidOrId += ((OpenmrsObject) currItem).getUuid();
+				}
+				catch (Exception e) {
+					//ignore, some classes don't support getUuid
+				}
+			}
+			if (StringUtils.isBlank(uuidOrId)) {
+				ClassMetadata metadata = getSessionFactory().getClassMetadata(currItem.getClass());
+				if (metadata.getIdentifier(currItem, EntityMode.POJO) != null) {
+					uuidOrId = metadata.getIdentifier(currItem, EntityMode.POJO).toString();
+				}
+				if (StringUtils.isNotBlank(uuidOrId))
+					uuidOrId = AuditLogConstants.ID_LABEL + uuidOrId;
+			} else {
+				uuidOrId = AuditLogConstants.UUID_LABEL + uuidOrId;
+			}
+			if (StringUtils.isNotBlank(uuidOrId)) {
+				if (isFirst) {
+					currElementUuidsOrIds += uuidOrId;
+					isFirst = false;
+				} else {
+					currElementUuidsOrIds += "," + uuidOrId;
+				}
+			}
+		}
+		if (StringUtils.isBlank(currElementUuidsOrIds))
+			currElementUuidsOrIds = null;
+		
+		return currElementUuidsOrIds;
 	}
 }

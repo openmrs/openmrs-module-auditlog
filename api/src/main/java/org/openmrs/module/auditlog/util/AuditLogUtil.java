@@ -315,27 +315,27 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	 * @param propertyChangesMap mapping of edited properties to their previous and new values
 	 * @return the generated xml text
 	 */
-	public static String generateChangesXml(Map<String, Object[]> propertyChangesMap) {
+	public static String generateChangesXml(Map<String, String[]> propertyChangesMap) {
 		StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		sb.append("\n<" + NODE_CHANGES + ">");
-		for (Map.Entry<String, Object[]> entry : propertyChangesMap.entrySet()) {
-			Object previousObj = entry.getValue()[0];
-			Object newObj = entry.getValue()[1];
+		for (Map.Entry<String, String[]> entry : propertyChangesMap.entrySet()) {
+			String newValue = entry.getValue()[0];
+			String previousValue = entry.getValue()[1];
 			//we shouldn't even be here since this is not a change
-			if (previousObj == null && newObj == null)
+			if (previousValue == null && newValue == null)
 				continue;
 			
 			sb.append("\n<" + NODE_PROPERTY + " " + ATTRIBUTE_NAME + "=\"" + entry.getKey() + "\">");
 			//when deserializing, missing tags will be interpreted as NULL
-			if (previousObj != null) {
-				sb.append("\n<" + NODE_PREVIOUS + ">");
-				sb.append("\n" + StringEscapeUtils.escapeXml(previousObj.toString()));
-				sb.append("\n</" + NODE_PREVIOUS + ">");
-			}
-			if (newObj != null) {
+			if (newValue != null) {
 				sb.append("\n<" + NODE_NEW + ">");
-				sb.append("\n" + StringEscapeUtils.escapeXml(newObj.toString()));
+				sb.append("\n" + StringEscapeUtils.escapeXml(newValue));
 				sb.append("\n</" + NODE_NEW + ">");
+			}
+			if (previousValue != null) {
+				sb.append("\n<" + NODE_PREVIOUS + ">");
+				sb.append("\n" + StringEscapeUtils.escapeXml(previousValue));
+				sb.append("\n</" + NODE_PREVIOUS + ">");
 			}
 			sb.append("\n</" + NODE_PROPERTY + ">");
 		}

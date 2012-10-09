@@ -83,6 +83,11 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	@Verifies(value = "should return a set of un monitored classes", method = "getUnMonitoredClassNames()")
 	public void getUnMonitoredClasses_shouldReturnASetOfUnMonitoredClasses() throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
+		AdministrationService as = Context.getAdministrationService();
+		//In case previous tests changed the value
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_UN_MONITORED_CLASSES);
+		gp.setPropertyValue(EncounterType.class.getName());
+		as.saveGlobalProperty(gp);
 		Set<Class<?>> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
 		Assert.assertEquals(1, unMonitoredClasses.size());
 		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));

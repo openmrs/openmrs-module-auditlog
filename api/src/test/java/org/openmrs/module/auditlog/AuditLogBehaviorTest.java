@@ -334,9 +334,10 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		conceptService.saveConcept(concept);
 		List<AuditLog> existingUpdateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.UPDATED),
 		    null, null, null, null);
-		//for the two concept maps and the concept
 		int originalCount = concept.getDescriptions().size();
-		Assert.assertTrue(originalCount > 0);
+		Assert.assertTrue(originalCount == 1);
+		String previousDescriptionUuids = AuditLogConstants.UUID_LABEL + concept.getDescription().getUuid();
+		
 		concept.removeDescription(concept.getDescription());
 		conceptService.saveConcept(concept);
 		Assert.assertEquals(originalCount - 1, concept.getDescriptions().size());
@@ -348,11 +349,14 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		Assert.assertEquals(existingUpdateLogs.size() + 1, conceptLogs.size());
 		conceptLogs.removeAll(existingUpdateLogs);
 		Assert.assertEquals(1, conceptLogs.size());
-		Assert.assertEquals(conceptLogs.get(0).getObjectUuid(), concept.getUuid());
+		AuditLog al = conceptLogs.get(0);
+		Assert.assertEquals(al.getObjectUuid(), concept.getUuid());
+		Assert.assertNull(al.getChanges().get("descriptions")[0]);
+		Assert.assertEquals(al.getChanges().get("descriptions")[1], previousDescriptionUuids);
 		
-		//Hibernate doens't call interceptor.onDelete for an element that is removed from a child collection
-		//List<AuditLog> descriptionLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.DELETED), null, null, null, null);
-		//Assert.assertEquals(1, descriptionLogs.size());
+		List<AuditLog> descriptionLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.DELETED), null,
+		    null, null, null);
+		Assert.assertEquals(1, descriptionLogs.size());
 	}
 	
 	@Test
@@ -364,8 +368,9 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		conceptService.saveConcept(concept);
 		List<AuditLog> existingUpdateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.UPDATED),
 		    null, null, null, null);
-		//for the two concept maps and the concept
-		Assert.assertFalse(concept.getDescriptions().isEmpty());
+		int originalCount = concept.getDescriptions().size();
+		Assert.assertTrue(originalCount == 1);
+		String previousDescriptionUuids = AuditLogConstants.UUID_LABEL + concept.getDescription().getUuid();
 		
 		ConceptDescription cd1 = new ConceptDescription("desc1", Locale.ENGLISH);
 		cd1.setDateCreated(new Date());
@@ -378,7 +383,11 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		Assert.assertEquals(existingUpdateLogs.size() + 1, conceptLogs.size());
 		conceptLogs.removeAll(existingUpdateLogs);
 		Assert.assertEquals(1, conceptLogs.size());
-		Assert.assertEquals(conceptLogs.get(0).getObjectUuid(), concept.getUuid());
+		AuditLog al = conceptLogs.get(0);
+		Assert.assertEquals(al.getObjectUuid(), concept.getUuid());
+		Assert.assertEquals(al.getChanges().get("descriptions")[0], previousDescriptionUuids + ","
+		        + AuditLogConstants.UUID_LABEL + cd1.getUuid());
+		Assert.assertEquals(al.getChanges().get("descriptions")[1], previousDescriptionUuids);
 		
 		List<AuditLog> descriptionLogs = auditLogService.getAuditLogs(null, Collections.singletonList(Action.CREATED), null,
 		    null, null, null);
