@@ -608,7 +608,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 		
 		if (includeUuidAndId && OpenmrsObject.class.isAssignableFrom(obj.getClass())) {
 			OpenmrsObject openmrsObj = (OpenmrsObject) obj;
-			displayString = "[" + openmrsObj.getId() + "] " + displayString + " - " + openmrsObj.getUuid();
+			displayString = displayString + " - " + openmrsObj.getUuid() + " [" + openmrsObj.getId() + "]";
 		}
 		return displayString;
 	}

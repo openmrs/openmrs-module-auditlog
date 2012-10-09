@@ -162,7 +162,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				Object currentValue = (currentState != null) ? currentState[i] : null;
 				Class<?> propertyType = BeanUtils.getPropertyDescriptor(entity.getClass(), propertyNames[i])
 				        .getPropertyType();
-				if (!OpenmrsUtil.nullSafeEquals(currentValue, previousValue) && !Reflect.isCollection(propertyType)) {
+				
+				if (!Reflect.isCollection(propertyType) && !OpenmrsUtil.nullSafeEquals(currentValue, previousValue)) {
 					//For string properties, ignore changes from null to blank and vice versa
 					//TODO This should be user configurable via a module GP
 					if (StringType.class.getName().equals(types[i].getClass().getName())
@@ -192,7 +193,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 						flattenedCurrentValue = (currentValue != null) ? currentValue.toString() : "";
 					} else if (types[i].isAssociationType() && !types[i].isCollectionType()) {
 						//this is an association, store the primary key value
-						if (OpenmrsObject.class.isAssignableFrom(previousValue.getClass())) {
+						if (OpenmrsObject.class.isAssignableFrom(propertyType)) {
 							if (previousValue != null) {
 								flattenedPreviousValue = AuditLogConstants.UUID_LABEL
 								        + ((OpenmrsObject) previousValue).getUuid();
@@ -282,6 +283,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				if (removedItems.size() > 0) {
 					//System.out.println("Removed:" + removedItems);
 					//TODO Generate xml
+					//TODO Create DELETED log for the removed item here because hibernate doens't call 
+					//interceptor.onDelete for an element that is removed from a child collection
 					
 				}
 				
@@ -307,26 +310,27 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	@Override
 	public int[] findDirty(Object entity, Serializable id, Object[] currentState, Object[] previousState,
 	                       String[] propertyNames, Type[] types) {
-		
-		if (entityCollectionsMap.get().get(entity) == null) {
-			//This is the first time we are trying to find collection elements for this object
-			if (log.isDebugEnabled())
-				log.debug("Finding collections for object:" + entity.getClass() + " #" + id);
-			
-			for (int i = 0; i < propertyNames.length; i++) {
-				if (types[i].isCollectionType()) {
-					Object coll = currentState[i];
-					if (coll != null && Collection.class.isAssignableFrom(coll.getClass())) {
-						Collection<?> collection = (Collection<?>) coll;
-						if (!collection.isEmpty()) {
-							if (entityCollectionsMap.get().get(entity) == null) {
-								entityCollectionsMap.get().put(entity, new ArrayList<Collection<?>>());
+		if (isMonitored(entity)) {
+			if (entityCollectionsMap.get().get(entity) == null) {
+				//This is the first time we are trying to find collection elements for this object
+				if (log.isDebugEnabled())
+					log.debug("Finding collections for object:" + entity.getClass() + " #" + id);
+				
+				for (int i = 0; i < propertyNames.length; i++) {
+					if (types[i].isCollectionType()) {
+						Object coll = currentState[i];
+						if (coll != null && Collection.class.isAssignableFrom(coll.getClass())) {
+							Collection<?> collection = (Collection<?>) coll;
+							if (!collection.isEmpty()) {
+								if (entityCollectionsMap.get().get(entity) == null) {
+									entityCollectionsMap.get().put(entity, new ArrayList<Collection<?>>());
+								}
+								
+								entityCollectionsMap.get().get(entity).add(collection);
 							}
-							
-							entityCollectionsMap.get().get(entity).add(collection);
+						} else {
+							//TODO handle maps too because hibernate treats maps to be of CollectionType
 						}
-					} else {
-						//TODO handle maps too because hibernate treats maps to be of CollectionType
 					}
 				}
 			}

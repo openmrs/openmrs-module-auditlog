@@ -46,6 +46,20 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	
 	private static final String MODULE_TEST_DATA = "moduleTestData.xml";
 	
+	public static void setMonitoringStrategy(MonitoringStrategy strategy) throws Exception {
+		if (strategy != AuditLogUtil.getMonitoringStrategy()) {
+			AdministrationService as = Context.getAdministrationService();
+			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
+			    AuditLogConstants.GP_MONITORING_STRATEGY);
+			if (gp == null) {
+				gp = new GlobalProperty(AuditLogConstants.GP_MONITORING_STRATEGY, MonitoringStrategy.NONE_EXCEPT.name());
+			} else {
+				gp.setPropertyValue(strategy.name());
+			}
+			as.saveGlobalProperty(gp);
+		}
+	}
+	
 	/**
 	 * @see {@link AuditLogUtil#getMonitoredClassNames()}
 	 */
@@ -82,6 +96,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	public void startMonitoring_shouldUpdateTheMonitoredClassNamesGlobalPropertyIfTheStrategyIsNone_except()
 	    throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
+		setMonitoringStrategy(MonitoringStrategy.NONE_EXCEPT);
 		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, AuditLogUtil.getMonitoringStrategy());
 		
 		Set<Class<?>> monitoredClasses = AuditLogUtil.getMonitoredClassNames();
@@ -345,6 +360,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	@Verifies(value = "should update the monitored class names global property if the strategy is none_except", method = "stopMonitoring(Set<Class<OpenmrsObject>>)")
 	public void stopMonitoring_shouldUpdateTheMonitoredClassNamesGlobalPropertyIfTheStrategyIsNone_except() throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
+		setMonitoringStrategy(MonitoringStrategy.NONE_EXCEPT);
 		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, AuditLogUtil.getMonitoringStrategy());
 		
 		Set<Class<?>> monitoredClasses = AuditLogUtil.getMonitoredClassNames();
@@ -445,14 +461,13 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	@Test
 	@Verifies(value = "should mark a class and its known subclasses as monitored", method = "startMonitoring(Set<Class<OpenmrsObject>>)")
 	public void startMonitoring_shouldMarkAClassAndItsKnownSubclassesAsMonitored() throws Exception {
-		AdministrationService as = Context.getAdministrationService();
-		as.saveGlobalProperty(new GlobalProperty(AuditLogConstants.GP_MONITORING_STRATEGY, MonitoringStrategy.NONE_EXCEPT
-		        .name()));
+		setMonitoringStrategy(MonitoringStrategy.NONE_EXCEPT);
+		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, AuditLogUtil.getMonitoringStrategy());
 		
 		Set<Class<?>> monitoredClasses = AuditLogUtil.getMonitoredClassNames();
-		Assert.assertFalse(monitoredClasses.contains(Concept.class.getName()));
-		Assert.assertFalse(monitoredClasses.contains(ConceptNumeric.class.getName()));
-		Assert.assertFalse(monitoredClasses.contains(ConceptComplex.class.getName()));
+		Assert.assertFalse(monitoredClasses.contains(Concept.class));
+		Assert.assertFalse(monitoredClasses.contains(ConceptNumeric.class));
+		Assert.assertFalse(monitoredClasses.contains(ConceptComplex.class));
 		
 		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
 		classes.add(Concept.class);
@@ -470,6 +485,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	@Verifies(value = "should mark a class and its known subclasses as un monitored", method = "stopMonitoring(Set<Class<OpenmrsObject>>)")
 	public void stopMonitoring_shouldMarkAClassAndItsKnownSubclassesAsUnMonitored() throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
+		setMonitoringStrategy(MonitoringStrategy.NONE_EXCEPT);
 		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, AuditLogUtil.getMonitoringStrategy());
 		
 		AuditLogUtil.startMonitoring(Concept.class);
