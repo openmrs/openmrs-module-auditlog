@@ -228,13 +228,13 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	}
 	
 	/**
-	 * Convenience method that returns a set of un monitored class names as specified by the
+	 * Convenience method that returns a set of un monitored classes as specified by the
 	 * {@link GlobalProperty} {@link AuditLogConstants#GP_UN_MONITORED_CLASSES}
 	 * 
-	 * @return a set of monitored class names
-	 * @should return a set of un monitored class names
+	 * @return a set of monitored classes
+	 * @should return a set of un monitored classes
 	 */
-	public static Set<String> getUnMonitoredClassNames() {
+	public static Set<String> getUnMonitoredClasses() {
 		if (unMonitoredClassnamesCache == null) {
 			unMonitoredClassnamesCache = new HashSet<String>();
 			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
@@ -281,7 +281,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 						addAssociationTypes(subclass);
 					}
 				}
-			} else if (getMonitoringStrategy() == MonitoringStrategy.ALL_EXCEPT && getUnMonitoredClassNames().size() > 0) {
+			} else if (getMonitoringStrategy() == MonitoringStrategy.ALL_EXCEPT && getUnMonitoredClasses().size() > 0) {
 				//generate implicitly monitored classes so we can track them. The reason behind 
 				//this is: Say Concept is marked as monitored and strategy is set to All Except
 				//and say ConceptName is for some reason marked as un monitored we should still monitor
@@ -429,16 +429,16 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 		} else {
 			for (Class<? extends OpenmrsObject> clazz : clazzes) {
 				if (startMonitoring) {
-					getUnMonitoredClassNames().remove(clazz.getName());
+					getUnMonitoredClasses().remove(clazz.getName());
 					Set<Class<?>> subclasses = getPersistentConcreteSubclasses(clazz, null, null);
 					for (Class<?> subclass : subclasses) {
-						getUnMonitoredClassNames().remove(subclass.getName());
+						getUnMonitoredClasses().remove(subclass.getName());
 					}
 				} else
-					getUnMonitoredClassNames().add(clazz.getName());
+					getUnMonitoredClasses().add(clazz.getName());
 			}
 			
-			gp.setPropertyValue(StringUtils.join(getUnMonitoredClassNames(), ","));
+			gp.setPropertyValue(StringUtils.join(getUnMonitoredClasses(), ","));
 		}
 		
 		try {
