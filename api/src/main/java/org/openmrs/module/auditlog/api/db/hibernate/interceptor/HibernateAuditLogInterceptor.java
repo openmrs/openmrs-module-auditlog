@@ -489,7 +489,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 		}
 		
 		//Strategy is ALL_EXCEPT
-		return !OpenmrsUtil.collectionContains(AuditLogUtil.getUnMonitoredClasses(), clazz.getName());
+		return !OpenmrsUtil.collectionContains(AuditLogUtil.getUnMonitoredClasses(), clazz);
 	}
 	
 	/**

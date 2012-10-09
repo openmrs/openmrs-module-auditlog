@@ -78,7 +78,7 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	
 	private static MonitoringStrategy monitoringStrategyCache;
 	
-	private static Set<String> unMonitoredClassnamesCache;
+	private static Set<Class<?>> unMonitoredClassnamesCache;
 	
 	private static Set<Class<?>> implicitlyMonitoredClassnamesCache;
 	
@@ -234,20 +234,21 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	 * @return a set of monitored classes
 	 * @should return a set of un monitored classes
 	 */
-	public static Set<String> getUnMonitoredClasses() {
+	public static Set<Class<?>> getUnMonitoredClasses() {
 		if (unMonitoredClassnamesCache == null) {
-			unMonitoredClassnamesCache = new HashSet<String>();
+			unMonitoredClassnamesCache = new HashSet<Class<?>>();
 			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
 			    AuditLogConstants.GP_UN_MONITORED_CLASSES);
 			if (gp != null && StringUtils.isNotBlank(gp.getPropertyValue())) {
 				String[] classnameArray = StringUtils.split(gp.getPropertyValue(), ",");
 				for (String classname : classnameArray) {
 					classname = classname.trim();
-					unMonitoredClassnamesCache.add(classname);
 					try {
-						Set<Class<?>> subclasses = getPersistentConcreteSubclasses(Context.loadClass(classname), null, null);
+						Class<?> unMonitoredClass = Context.loadClass(classname);
+						unMonitoredClassnamesCache.add(unMonitoredClass);
+						Set<Class<?>> subclasses = getPersistentConcreteSubclasses(unMonitoredClass, null, null);
 						for (Class<?> subclass : subclasses) {
-							unMonitoredClassnamesCache.add(subclass.getName());
+							unMonitoredClassnamesCache.add(subclass);
 						}
 					}
 					catch (ClassNotFoundException e) {
@@ -429,16 +430,16 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 		} else {
 			for (Class<? extends OpenmrsObject> clazz : clazzes) {
 				if (startMonitoring) {
-					getUnMonitoredClasses().remove(clazz.getName());
+					getUnMonitoredClasses().remove(clazz);
 					Set<Class<?>> subclasses = getPersistentConcreteSubclasses(clazz, null, null);
 					for (Class<?> subclass : subclasses) {
-						getUnMonitoredClasses().remove(subclass.getName());
+						getUnMonitoredClasses().remove(subclass);
 					}
 				} else
-					getUnMonitoredClasses().add(clazz.getName());
+					getUnMonitoredClasses().add(clazz);
 			}
 			
-			gp.setPropertyValue(StringUtils.join(getUnMonitoredClasses(), ","));
+			gp.setPropertyValue(StringUtils.join(getAsListOfClassnames(getUnMonitoredClasses()), ","));
 		}
 		
 		try {

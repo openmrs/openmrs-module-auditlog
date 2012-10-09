@@ -83,9 +83,9 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	@Verifies(value = "should return a set of un monitored classes", method = "getUnMonitoredClassNames()")
 	public void getUnMonitoredClasses_shouldReturnASetOfUnMonitoredClasses() throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
-		Set<String> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+		Set<Class<?>> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
 		Assert.assertEquals(1, unMonitoredClasses.size());
-		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class.getName()));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 	}
 	
 	/**
@@ -135,9 +135,9 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	public void startMonitoring_shouldUpdateTheUnMonitoredClassNamesGlobalPropertyIfTheStrategyIsAll_except()
 	    throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
-		Set<String> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+		Set<Class<?>> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
 		int originalCount = unMonitoredClasses.size();
-		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class.getName()));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
 		String originalStrategy = gp.getPropertyValue();
@@ -145,11 +145,10 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		as.saveGlobalProperty(gp);
 		try {
 			AuditLogUtil.startMonitoring(EncounterType.class);
-			
 			unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
 			Assert.assertEquals(--originalCount, unMonitoredClasses.size());
 			//Should have removed it and maintained the existing ones
-			Assert.assertFalse(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class.getName()));
+			Assert.assertFalse(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		}
 		finally {
 			//reset
@@ -175,9 +174,9 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
 		
-		Set<String> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+		Set<Class<?>> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
 		int originalUnMonitoredCount = unMonitoredClasses.size();
-		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class.getName()));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
@@ -198,7 +197,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
 			
 			Assert.assertEquals(originalUnMonitoredCount, unMonitoredClasses.size());
-			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class.getName()));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		}
 		finally {
 			//reset
@@ -224,9 +223,9 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
 		
-		Set<String> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+		Set<Class<?>> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
 		int originalUnMonitoredCount = unMonitoredClasses.size();
-		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class.getName()));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
@@ -247,7 +246,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
 			
 			Assert.assertEquals(originalUnMonitoredCount, unMonitoredClasses.size());
-			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class.getName()));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		}
 		finally {
 			AuditLogUtil.stopMonitoring(EncounterType.class);
@@ -272,9 +271,9 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
 		
-		Set<String> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+		Set<Class<?>> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
 		int originalUnMonitoredCount = unMonitoredClasses.size();
-		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class.getName()));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
@@ -295,7 +294,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
 			
 			Assert.assertEquals(originalUnMonitoredCount, unMonitoredClasses.size());
-			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class.getName()));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		}
 		finally {
 			//reset
@@ -321,9 +320,9 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
 		
-		Set<String> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+		Set<Class<?>> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
 		int originalUnMonitoredCount = unMonitoredClasses.size();
-		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class.getName()));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
@@ -344,7 +343,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
 			
 			Assert.assertEquals(originalUnMonitoredCount, unMonitoredClasses.size());
-			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class.getName()));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		}
 		finally {
 			AuditLogUtil.startMonitoring(Concept.class);
@@ -397,12 +396,12 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	public void stopMonitoring_shouldUpdateTheUnMonitoredClassNamesGlobalPropertyIfTheStrategyIsAll_except()
 	    throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
-		Set<String> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+		Set<Class<?>> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
 		int originalCount = unMonitoredClasses.size();
-		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class.getName()));
-		Assert.assertFalse(OpenmrsUtil.collectionContains(unMonitoredClasses, Concept.class.getName()));
-		Assert.assertFalse(OpenmrsUtil.collectionContains(unMonitoredClasses, ConceptNumeric.class.getName()));
-		Assert.assertFalse(OpenmrsUtil.collectionContains(unMonitoredClasses, ConceptComplex.class.getName()));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
+		Assert.assertFalse(OpenmrsUtil.collectionContains(unMonitoredClasses, Concept.class));
+		Assert.assertFalse(OpenmrsUtil.collectionContains(unMonitoredClasses, ConceptNumeric.class));
+		Assert.assertFalse(OpenmrsUtil.collectionContains(unMonitoredClasses, ConceptComplex.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
 		String originalStrategy = gp.getPropertyValue();
@@ -410,14 +409,13 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		as.saveGlobalProperty(gp);
 		try {
 			AuditLogUtil.stopMonitoring(Concept.class);
-			
 			unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
 			Assert.assertEquals(originalCount += 3, unMonitoredClasses.size());
 			//Should have removed it and maintained the existing ones
-			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class.getName()));
-			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, Concept.class.getName()));
-			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, ConceptNumeric.class.getName()));
-			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, ConceptComplex.class.getName()));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, Concept.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, ConceptNumeric.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, ConceptComplex.class));
 		}
 		finally {
 			//reset

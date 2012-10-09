@@ -473,8 +473,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@NotTransactional
 	public void shouldNotCreateLogWhenStrateyIsSetToAllExceptAndObjectTypeIsListedAsExcluded() throws Exception {
 		//sanity check
-		Assert.assertTrue(OpenmrsUtil.collectionContains(AuditLogUtil.getUnMonitoredClasses(),
-		    EncounterType.class.getName()));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(AuditLogUtil.getUnMonitoredClasses(), EncounterType.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
 		gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
@@ -491,7 +490,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@NotTransactional
 	public void shouldCreateLogWhenStrateyIsSetToAllExceptAndObjectTypeIsNotListedAsIncluded() throws Exception {
 		//sanity check
-		Assert.assertFalse(OpenmrsUtil.collectionContains(AuditLogUtil.getUnMonitoredClasses(), Location.class.getName()));
+		Assert.assertFalse(OpenmrsUtil.collectionContains(AuditLogUtil.getUnMonitoredClasses(), Location.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
 		gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
