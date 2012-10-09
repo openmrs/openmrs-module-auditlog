@@ -524,4 +524,13 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptAnswer.class));
 		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptNameTag.class));
 	}
+	
+	/**
+	 * @see {@link AuditLogUtil#getCollectionElementType(Class<*>,String)}
+	 */
+	@Test
+	@Verifies(value = "should return the element class", method = "getCollectionElementType(Class<*>,String)")
+	public void getCollectionElementType_shouldReturnTheElementClass() throws Exception {
+		Assert.assertEquals(ConceptMap.class, AuditLogUtil.getCollectionElementType(ConceptComplex.class, "conceptMappings"));
+	}
 }

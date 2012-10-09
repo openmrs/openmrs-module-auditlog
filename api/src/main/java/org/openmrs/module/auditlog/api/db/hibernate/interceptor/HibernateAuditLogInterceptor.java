@@ -273,12 +273,16 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				Map previousMap = (Map) persistentColl.getStoredSnapshot();
 				removedItems.addAll(CollectionUtils.subtract(previousMap.values(), currentColl));
 				
-				Map<String, String[]> propertyChangesMap = new HashMap<String, String[]>();
 				String propertyName = persistentColl.getRole().substring(persistentColl.getRole().lastIndexOf('.') + 1);
-				propertyChangesMap.put(propertyName, new String[] { getItemUuidsOrIds(currentColl),
-				        getItemUuidsOrIds(previousMap.values()) });
-				if (objectChangesMap.get().get(owningObject) == null)
-					objectChangesMap.get().put(((OpenmrsObject) owningObject).getUuid(), propertyChangesMap);
+				String ownerUuid = ((OpenmrsObject) owningObject).getUuid();
+				if (objectChangesMap.get().get(ownerUuid) == null) {
+					objectChangesMap.get().put(ownerUuid, new HashMap<String, String[]>());
+				}
+				objectChangesMap
+				        .get()
+				        .get(ownerUuid)
+				        .put(propertyName,
+				            new String[] { getItemUuidsOrIds(currentColl), getItemUuidsOrIds(previousMap.values()) });
 				
 				if (removedItems.size() > 0) {
 					//Create DELETED log for the removed item here because hibernate doens't call 

@@ -576,6 +576,20 @@ public class AuditLogUtil implements GlobalPropertyListener, ApplicationContextA
 	}
 	
 	/**
+	 * Returns the class of the elements in the collection for the specified owning type that
+	 * matches the specified property name
+	 * 
+	 * @param owningType
+	 * @param collectionPropertyName
+	 * @should return the element class
+	 */
+	public static Class<?> getCollectionElementType(Class<?> owningType, String collectionPropertyName) {
+		ClassMetadata cmd = getSessionFactory().getClassMetadata(owningType);
+		CollectionType collectionType = (CollectionType) cmd.getPropertyType(collectionPropertyName);
+		return collectionType.getElementType((SessionFactoryImplementor) getSessionFactory()).getReturnedClass();
+	}
+	
+	/**
 	 * Gets the {@link SessionFactory} object
 	 * 
 	 * @return

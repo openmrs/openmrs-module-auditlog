@@ -14,7 +14,9 @@
 package org.openmrs.module.auditlog.web.dwr;
 
 import java.beans.PropertyDescriptor;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.ArrayUtils;
@@ -33,6 +35,8 @@ import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
+import org.openmrs.module.auditlog.util.AuditLogUtil;
+import org.openmrs.util.Reflect;
 import org.springframework.beans.BeanUtils;
 
 /**
@@ -41,6 +45,14 @@ import org.springframework.beans.BeanUtils;
 public class DWRAuditLogService {
 	
 	protected final Log log = LogFactory.getLog(getClass());
+	
+	private AuditLogService service;
+	
+	private AuditLogService getService() {
+		if (service == null)
+			service = Context.getService(AuditLogService.class);
+		return service;
+	}
 	
 	/**
 	 * Gets the {@link AuditLogDetails} for the auditlog with the specified uuid
@@ -51,8 +63,7 @@ public class DWRAuditLogService {
 	@SuppressWarnings("unchecked")
 	public AuditLogDetails getAuditLogDetails(String auditLogUuid) {
 		if (StringUtils.isNotBlank(auditLogUuid)) {
-			AuditLogService as = Context.getService(AuditLogService.class);
-			AuditLog auditLog = as.getObjectByUuid(AuditLog.class, auditLogUuid);
+			AuditLog auditLog = getService().getObjectByUuid(AuditLog.class, auditLogUuid);
 			if (auditLog != null) {
 				String displayString = "";
 				boolean objectExists = false;
@@ -62,7 +73,7 @@ public class DWRAuditLogService {
 					Class<? extends OpenmrsObject> clazz;
 					try {
 						clazz = (Class<? extends OpenmrsObject>) Context.loadClass(auditLog.getClassName());
-						OpenmrsObject obj = as.getObjectByUuid(clazz, auditLog.getObjectUuid());
+						OpenmrsObject obj = getService().getObjectByUuid(clazz, auditLog.getObjectUuid());
 						if (obj != null) {
 							objectExists = true;
 							//some objects don't support this method e.g GlobalProperties
@@ -77,9 +88,6 @@ public class DWRAuditLogService {
 							} else {
 								displayString += ((GlobalProperty) obj).getProperty();
 							}
-							
-							if (StringUtils.isBlank(displayString))
-								displayString += obj.toString();
 						}
 						
 						if (auditLog.getAction().equals(Action.UPDATED) && auditLog.getChanges().size() > 0) {
@@ -94,44 +102,22 @@ public class DWRAuditLogService {
 									if (entry.getValue().length > 0)
 										previousValue = entry.getValue()[1];
 									if (StringUtils.isNotBlank(newValue) || StringUtils.isNotBlank(previousValue)) {
-										if (StringUtils.isNotBlank(newValue)
-										        && newValue.startsWith(AuditLogConstants.UUID_LABEL)) {
-											newValueDisplay += getPropertyDisplayString(
-											    as,
-											    auditLog.getClassName(),
-											    propertyName,
-											    newValue.substring(newValue.indexOf(AuditLogConstants.UUID_LABEL)
-											            + AuditLogConstants.UUID_LABEL.length()), true);
-										} else if (StringUtils.isNotBlank(newValue)
-										        && newValue.startsWith(AuditLogConstants.ID_LABEL)) {
-											newValueDisplay += getPropertyDisplayString(
-											    as,
-											    auditLog.getClassName(),
-											    propertyName,
-											    newValue.substring(newValue.indexOf(AuditLogConstants.ID_LABEL)
-											            + AuditLogConstants.ID_LABEL.length()), false);
-										} else {
+										if (StringUtils.isBlank(newValue)
+										        || (!newValue.startsWith(AuditLogConstants.UUID_LABEL) && !newValue
+										                .startsWith(AuditLogConstants.ID_LABEL))) {
 											newValueDisplay = (newValue != null) ? newValue : "";
+										} else {
+											newValueDisplay += getPropertyDisplayString(auditLog.getClassName(),
+											    propertyName, newValue);
 										}
 										
-										if (StringUtils.isNotBlank(previousValue)
-										        && previousValue.startsWith(AuditLogConstants.UUID_LABEL)) {
-											preValueDisplay += getPropertyDisplayString(
-											    as,
-											    auditLog.getClassName(),
-											    propertyName,
-											    previousValue.substring(previousValue.indexOf(AuditLogConstants.UUID_LABEL)
-											            + AuditLogConstants.UUID_LABEL.length()), true);
-										} else if (StringUtils.isNotBlank(previousValue)
-										        && previousValue.startsWith(AuditLogConstants.ID_LABEL)) {
-											preValueDisplay += getPropertyDisplayString(
-											    as,
-											    auditLog.getClassName(),
-											    propertyName,
-											    previousValue.substring(previousValue.indexOf(AuditLogConstants.ID_LABEL)
-											            + AuditLogConstants.ID_LABEL.length()), false);
-										} else {
+										if (StringUtils.isBlank(previousValue)
+										        || (!previousValue.startsWith(AuditLogConstants.UUID_LABEL) && !newValue
+										                .startsWith(AuditLogConstants.ID_LABEL))) {
 											preValueDisplay = (previousValue != null) ? previousValue : "";
+										} else {
+											preValueDisplay += getPropertyDisplayString(auditLog.getClassName(),
+											    propertyName, previousValue);
 										}
 									}
 								}
@@ -154,27 +140,73 @@ public class DWRAuditLogService {
 	/**
 	 * Gets the display string for a property
 	 * 
-	 * @param as
 	 * @param owningEntityClassname
 	 * @param propertyName
 	 * @param uuidOrId
 	 * @param isUuid
-	 * @return
+	 * @return the display text
 	 */
-	private String getPropertyDisplayString(AuditLogService as, String owningEntityClassname, String propertyName,
-	                                        String uuidOrId, boolean isUuid) {
+	private String getPropertyDisplayString(String owningEntityClassname, String propertyName, String uuidOrId) {
 		String displayString = "";
 		try {
-			PropertyDescriptor pd = BeanUtils.getPropertyDescriptor(Context.loadClass(owningEntityClassname), propertyName);
+			Class<?> owningType = Context.loadClass(owningEntityClassname);
+			PropertyDescriptor pd = BeanUtils.getPropertyDescriptor(owningType, propertyName);
 			Object actualObject = null;
-			if (isUuid) {
-				actualObject = as.getObjectByUuid(pd.getPropertyType(), uuidOrId);
+			if (Reflect.isCollection(pd.getPropertyType())) {
+				//TODO this not to fail if the primary key was a String e.g for privileges and had a ',' in it
+				String[] uuidsOrIds = StringUtils.split(uuidOrId, ",");
+				List<Object> items = new ArrayList<Object>();
+				List<String> unmatchedUuidsOrIds = new ArrayList<String>();
+				for (String currUuidOrStr : uuidsOrIds) {
+					Object item = null;
+					currUuidOrStr = currUuidOrStr.trim();
+					Class<?> itemType = AuditLogUtil.getCollectionElementType(owningType, propertyName);
+					if (currUuidOrStr.startsWith(AuditLogConstants.UUID_LABEL)) {
+						currUuidOrStr = currUuidOrStr.substring(currUuidOrStr.indexOf(AuditLogConstants.UUID_LABEL)
+						        + AuditLogConstants.UUID_LABEL.length());
+						item = getService().getObjectByUuid(itemType, currUuidOrStr);
+					} else {
+						currUuidOrStr = currUuidOrStr.substring(currUuidOrStr.indexOf(AuditLogConstants.ID_LABEL)
+						        + AuditLogConstants.ID_LABEL.length());
+						try {
+							item = getService().getObjectById(itemType, Integer.valueOf(currUuidOrStr));
+						}
+						catch (NumberFormatException nfe) {
+							//ignore
+						}
+					}
+					
+					if (item != null)
+						items.add(item);
+					else
+						unmatchedUuidsOrIds.add(currUuidOrStr);
+				}
+				
+				StringBuilder sb = new StringBuilder("<ul class=" + AuditLogConstants.MODULE_ID + "_collection_property'>");
+				for (Object o1 : items) {
+					sb.append("<li class='" + AuditLogConstants.MODULE_ID + "_collection_item'>"
+					        + getDisplayString(o1, true) + "</li>");
+				}
+				for (String str : unmatchedUuidsOrIds) {
+					sb.append("<li class='" + AuditLogConstants.MODULE_ID + "_collection_item "
+					        + AuditLogConstants.MODULE_ID + "_collection_item_unmatched'>" + str + "</li>");
+				}
+				sb.append("</ul>");
+				displayString += sb.toString();
 			} else {
-				actualObject = as.getObjectById(pd.getPropertyType(), Integer.valueOf(uuidOrId));
-			}
-			
-			if (actualObject != null) {
-				displayString = getDisplayString(actualObject, true);
+				if (uuidOrId.startsWith(AuditLogConstants.UUID_LABEL)) {
+					uuidOrId = uuidOrId.substring(uuidOrId.indexOf(AuditLogConstants.UUID_LABEL)
+					        + AuditLogConstants.UUID_LABEL.length());
+					actualObject = getService().getObjectByUuid(pd.getPropertyType(), uuidOrId);
+				} else {
+					uuidOrId = uuidOrId.substring(uuidOrId.indexOf(AuditLogConstants.ID_LABEL)
+					        + AuditLogConstants.ID_LABEL.length());
+					actualObject = getService().getObjectById(pd.getPropertyType(), Integer.valueOf(uuidOrId));
+				}
+				
+				if (actualObject != null) {
+					displayString = getDisplayString(actualObject, true);
+				}
 			}
 		}
 		catch (Exception e) {
@@ -185,8 +217,10 @@ public class DWRAuditLogService {
 	}
 	
 	/**
+	 * Generates the display text for the specified object
+	 * 
 	 * @param obj
-	 * @return
+	 * @return the display text
 	 */
 	private String getDisplayString(Object obj, boolean includeUuidAndId) {
 		String displayString = "";
@@ -208,11 +242,16 @@ public class DWRAuditLogService {
 			}
 			
 			displayString += obs.getValueAsString(Context.getLocale());
+		} else {
+			displayString += obj.toString();
 		}
 		
 		if (includeUuidAndId && OpenmrsObject.class.isAssignableFrom(obj.getClass())) {
 			OpenmrsObject openmrsObj = (OpenmrsObject) obj;
-			displayString = displayString + " - " + openmrsObj.getUuid() + " [" + openmrsObj.getId() + "]";
+			if (StringUtils.isBlank(displayString))
+				displayString = openmrsObj.getUuid() + " [" + openmrsObj.getId() + "]";
+			else
+				displayString = displayString + " - " + openmrsObj.getUuid() + " [" + openmrsObj.getId() + "]";
 		}
 		return displayString;
 	}
