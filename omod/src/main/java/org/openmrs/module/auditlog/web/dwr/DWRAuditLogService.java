@@ -182,7 +182,7 @@ public class DWRAuditLogService {
 						unmatchedUuidsOrIds.add(currUuidOrStr);
 				}
 				
-				StringBuilder sb = new StringBuilder("<ul class=" + AuditLogConstants.MODULE_ID + "_collection_property'>");
+				StringBuilder sb = new StringBuilder("<ul class='" + AuditLogConstants.MODULE_ID + "_collection_property'>");
 				for (Object o1 : items) {
 					sb.append("<li class='" + AuditLogConstants.MODULE_ID + "_collection_item'>"
 					        + getDisplayString(o1, true) + "</li>");
