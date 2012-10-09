@@ -275,16 +275,18 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				
 				Map<String, String[]> propertyChangesMap = new HashMap<String, String[]>();
 				String propertyName = persistentColl.getRole().substring(persistentColl.getRole().lastIndexOf('.') + 1);
-				propertyChangesMap.put(propertyName, new String[] { getElementUuids(currentColl),
-				        getElementUuids(previousMap.values()) });
+				propertyChangesMap.put(propertyName, new String[] { getItemUuidsOrIds(currentColl),
+				        getItemUuidsOrIds(previousMap.values()) });
 				if (objectChangesMap.get().get(owningObject) == null)
 					objectChangesMap.get().put(((OpenmrsObject) owningObject).getUuid(), propertyChangesMap);
 				
 				if (removedItems.size() > 0) {
 					//Create DELETED log for the removed item here because hibernate doens't call 
 					//interceptor.onDelete for an element that is removed from a child collection
-					for (Object object : removedItems) {
-						deletes.get().add((OpenmrsObject) object);
+					if (OpenmrsObject.class.isAssignableFrom(removedItems.iterator().next().getClass())) {
+						for (Object object : removedItems) {
+							deletes.get().add((OpenmrsObject) object);
+						}
 					}
 				}
 				
@@ -502,7 +504,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	 * @param collection
 	 * @return
 	 */
-	private String getElementUuids(Collection<?> collection) {
+	private String getItemUuidsOrIds(Collection<?> collection) {
 		String currElementUuidsOrIds = "";
 		boolean isFirst = true;
 		for (Object currItem : collection) {
