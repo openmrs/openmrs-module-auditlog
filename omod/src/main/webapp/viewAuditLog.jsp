@@ -106,17 +106,20 @@
 <table id="${moduleId}" width="100%" cellpadding="3" cellspacing="0" align="left">
 	<thead>
 		<tr>
+			<th class="ui-state-default"></th>
 			<th class="ui-state-default">Item (<spring:message code="${moduleId}.numberOfChanges" />)</th>
-			<th class="ui-state-default">User [username]</th>
+			<th class="ui-state-default">User (username)</th>
 			<th class="ui-state-default">Date Of Occurence</th>
 		</tr>
 	</thead>
 	<tbody>
 	<c:forEach items="${auditLogs}" var="auditLog">
 		<tr class="${moduleId}_${auditLog.action}" onclick="${moduleId}_showDetails('${auditLog.uuid}')">
-   			<td>
+			<td style="width: 17px !important;" align="center">
    				<img class="${moduleId}_action_image" align="top" 
-   				 	src="<openmrs:contextPath />/moduleResources/${moduleId}/images/${auditLog.action}.gif" /> 
+   				 	src="<openmrs:contextPath />/moduleResources/${moduleId}/images/${auditLog.action}.gif" />
+			</td>
+   			<td>
    				${auditLog.simpleClassname}
    				<c:if test="${auditLog.action == 'UPDATED' && fn:length(auditLog.changes) > 0}"> (${fn:length(auditLog.changes)})</c:if>
    			</td>

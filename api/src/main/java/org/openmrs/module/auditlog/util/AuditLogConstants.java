@@ -27,6 +27,8 @@ public final class AuditLogConstants {
 	
 	public static final String ID_LABEL = "id:";
 	
+	public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+	
 	//Specifies the monitoring strategy in use
 	public static final String GP_MONITORING_STRATEGY = MODULE_ID + ".monitoringStrategy";
 	

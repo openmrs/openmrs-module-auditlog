@@ -14,7 +14,10 @@
 package org.openmrs.module.auditlog.web.dwr;
 
 import java.beans.PropertyDescriptor;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,31 +99,65 @@ public class DWRAuditLogService {
 								String propertyName = entry.getKey();
 								String newValueDisplay = "";
 								String preValueDisplay = "";
+								String newValue = null;
+								String previousValue = null;
 								if (!ArrayUtils.isEmpty(entry.getValue())) {
-									String newValue = entry.getValue()[0];
-									String previousValue = null;
+									newValue = entry.getValue()[0];
 									if (entry.getValue().length > 0)
 										previousValue = entry.getValue()[1];
 									if (StringUtils.isNotBlank(newValue) || StringUtils.isNotBlank(previousValue)) {
-										if (StringUtils.isBlank(newValue)
-										        || (!newValue.startsWith(AuditLogConstants.UUID_LABEL) && !newValue
-										                .startsWith(AuditLogConstants.ID_LABEL))) {
-											newValueDisplay = (newValue != null) ? newValue : "";
+										PropertyDescriptor pd = BeanUtils.getPropertyDescriptor(clazz, propertyName);
+										if (Date.class.isAssignableFrom(pd.getPropertyType())) {
+											if (newValue != null) {
+												try {
+													newValueDisplay += Context.getDateFormat().format(
+													    new SimpleDateFormat(AuditLogConstants.DATE_FORMAT).parse(newValue));
+												}
+												catch (ParseException e) {
+													log.warn(e.getMessage());
+													newValueDisplay = newValue;
+												}
+											}
+											if (previousValue != null) {
+												try {
+													preValueDisplay += Context.getDateFormat().format(
+													    new SimpleDateFormat(AuditLogConstants.DATE_FORMAT)
+													            .parse(previousValue));
+												}
+												catch (Exception e) {
+													log.warn(e.getMessage());
+													preValueDisplay = previousValue;
+												}
+											}
 										} else {
-											newValueDisplay += getPropertyDisplayString(auditLog.getClassName(),
-											    propertyName, newValue);
-										}
-										
-										if (StringUtils.isBlank(previousValue)
-										        || (!previousValue.startsWith(AuditLogConstants.UUID_LABEL) && !newValue
-										                .startsWith(AuditLogConstants.ID_LABEL))) {
-											preValueDisplay = (previousValue != null) ? previousValue : "";
-										} else {
-											preValueDisplay += getPropertyDisplayString(auditLog.getClassName(),
-											    propertyName, previousValue);
+											if (StringUtils.isBlank(newValue)
+											        || (!newValue.startsWith(AuditLogConstants.UUID_LABEL) && !newValue
+											                .startsWith(AuditLogConstants.ID_LABEL))) {
+												newValueDisplay = (newValue != null) ? newValue : "";
+											} else {
+												newValueDisplay += getPropertyDisplayString(clazz, propertyName, newValue);
+											}
+											
+											if (StringUtils.isBlank(previousValue)
+											        || (!previousValue.startsWith(AuditLogConstants.UUID_LABEL) && !newValue
+											                .startsWith(AuditLogConstants.ID_LABEL))) {
+												preValueDisplay = (previousValue != null) ? previousValue : "";
+											} else {
+												preValueDisplay += getPropertyDisplayString(clazz, propertyName,
+												    previousValue);
+											}
 										}
 									}
 								}
+								
+								if (StringUtils.isBlank(preValueDisplay))
+									preValueDisplay = previousValue;
+								if (preValueDisplay == null)
+									preValueDisplay = "";
+								if (StringUtils.isBlank(newValueDisplay))
+									newValueDisplay = newValue;
+								if (newValueDisplay == null)
+									newValueDisplay = "";
 								
 								propertyNameChangesMap.put(propertyName, new String[] { newValueDisplay, preValueDisplay });
 							}
@@ -140,21 +177,19 @@ public class DWRAuditLogService {
 	/**
 	 * Gets the display string for a property
 	 * 
-	 * @param owningEntityClassname
+	 * @param owningType
 	 * @param propertyName
-	 * @param uuidOrId
-	 * @param isUuid
+	 * @param propertyValue
 	 * @return the display text
 	 */
-	private String getPropertyDisplayString(String owningEntityClassname, String propertyName, String uuidOrId) {
+	private String getPropertyDisplayString(Class<?> owningType, String propertyName, String propertyValue) {
 		String displayString = "";
 		try {
-			Class<?> owningType = Context.loadClass(owningEntityClassname);
 			PropertyDescriptor pd = BeanUtils.getPropertyDescriptor(owningType, propertyName);
 			Object actualObject = null;
 			if (Reflect.isCollection(pd.getPropertyType())) {
 				//TODO this not to fail if the primary key was a String e.g for privileges and had a ',' in it
-				String[] uuidsOrIds = StringUtils.split(uuidOrId, ",");
+				String[] uuidsOrIds = StringUtils.split(propertyValue, ",");
 				List<Object> items = new ArrayList<Object>();
 				List<String> unmatchedUuidsOrIds = new ArrayList<String>();
 				for (String currUuidOrStr : uuidsOrIds) {
@@ -194,14 +229,14 @@ public class DWRAuditLogService {
 				sb.append("</ul>");
 				displayString += sb.toString();
 			} else {
-				if (uuidOrId.startsWith(AuditLogConstants.UUID_LABEL)) {
-					uuidOrId = uuidOrId.substring(uuidOrId.indexOf(AuditLogConstants.UUID_LABEL)
+				if (propertyValue.startsWith(AuditLogConstants.UUID_LABEL)) {
+					propertyValue = propertyValue.substring(propertyValue.indexOf(AuditLogConstants.UUID_LABEL)
 					        + AuditLogConstants.UUID_LABEL.length());
-					actualObject = getService().getObjectByUuid(pd.getPropertyType(), uuidOrId);
+					actualObject = getService().getObjectByUuid(pd.getPropertyType(), propertyValue);
 				} else {
-					uuidOrId = uuidOrId.substring(uuidOrId.indexOf(AuditLogConstants.ID_LABEL)
+					propertyValue = propertyValue.substring(propertyValue.indexOf(AuditLogConstants.ID_LABEL)
 					        + AuditLogConstants.ID_LABEL.length());
-					actualObject = getService().getObjectById(pd.getPropertyType(), Integer.valueOf(uuidOrId));
+					actualObject = getService().getObjectById(pd.getPropertyType(), Integer.valueOf(propertyValue));
 				}
 				
 				if (actualObject != null) {
@@ -210,7 +245,7 @@ public class DWRAuditLogService {
 			}
 		}
 		catch (Exception e) {
-			log.warn("Error", e);
+			log.warn("Error:", e);
 		}
 		
 		return displayString;

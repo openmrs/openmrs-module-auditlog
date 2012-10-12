@@ -1,6 +1,7 @@
 package org.openmrs.module.auditlog.api.db.hibernate.interceptor;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -13,6 +14,7 @@ import java.util.UUID;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -81,6 +83,10 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	private AuditLogDAO auditLogDao;
 	
 	private SessionFactory sessionFactory;
+	
+	//TODO Should we not ignore personDateChanged and personDateChangedBy?
+	private static final String[] IGNORED_PROPERTIES = new String[] { "dateChanged", "changedBy", "personDateChanged",
+	        "personDateChangedBy" };
 	
 	/**
 	 * We need access to this to get the auditLogDao bean, the saveAuditLog method is not available
@@ -152,17 +158,15 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 			for (int i = 0; i < propertyNames.length; i++) {
 				//we need to ignore dateChanged and changedBy fields in any case they
 				//are actually part of the Auditlog in form of user and dateCreated
-				//TODO Should we take care of personDateChanged and personDateChangedBy
-				if ("dateChanged".equals(propertyNames[i]) || "changedBy".equals(propertyNames[i]))
+				if (ArrayUtils.contains(IGNORED_PROPERTIES, propertyNames[i]))
 					continue;
-				
-				//TODO Ignore user defined ignored properties
 				
 				Object previousValue = (previousState != null) ? previousState[i] : null;
 				Object currentValue = (currentState != null) ? currentState[i] : null;
 				Class<?> propertyType = BeanUtils.getPropertyDescriptor(entity.getClass(), propertyNames[i])
 				        .getPropertyType();
 				
+				//TODO We need to handle time zones issues better
 				if (!Reflect.isCollection(propertyType) && !OpenmrsUtil.nullSafeEquals(currentValue, previousValue)) {
 					//For string properties, ignore changes from null to blank and vice versa
 					//TODO This should be user configurable via a module GP
@@ -188,9 +192,33 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					String flattenedCurrentValue = "";
 					
 					if (BeanUtils.isSimpleValueType(propertyType)) {
-						//TODO take care of proper serialization of Dates, Enums, Class, Locale
-						flattenedPreviousValue = (previousValue != null) ? previousValue.toString() : "";
-						flattenedCurrentValue = (currentValue != null) ? currentValue.toString() : "";
+						if (Date.class.isAssignableFrom(propertyType)) {
+							if (previousValue != null) {
+								flattenedPreviousValue = new SimpleDateFormat(AuditLogConstants.DATE_FORMAT)
+								        .format(previousValue);
+							}
+							if (currentValue != null) {
+								flattenedCurrentValue = new SimpleDateFormat(AuditLogConstants.DATE_FORMAT)
+								        .format(currentValue);
+							}
+						} else if (Enum.class.isAssignableFrom(propertyType)) {
+							//Use value.name() over value.toString() to ensure we always get back the enum 
+							//constant value and not the value returned by the implementation of value.toString()
+							if (previousValue != null)
+								flattenedPreviousValue = ((Enum<?>) previousValue).name();
+							if (currentValue != null)
+								flattenedCurrentValue = ((Enum<?>) currentValue).name();
+						} else if (Class.class.isAssignableFrom(propertyType)) {
+							if (previousValue != null)
+								flattenedPreviousValue = ((Class<?>) previousValue).getName();
+							if (currentValue != null)
+								flattenedCurrentValue = ((Class<?>) currentValue).getName();
+						} else {
+							if (previousValue != null)
+								flattenedPreviousValue = previousValue.toString();
+							if (currentValue != null)
+								flattenedCurrentValue = currentValue.toString();
+						}
 					} else if (types[i].isAssociationType() && !types[i].isCollectionType()) {
 						//this is an association, store the primary key value
 						if (OpenmrsObject.class.isAssignableFrom(propertyType)) {
