@@ -107,7 +107,7 @@
 	<thead>
 		<tr>
 			<th class="ui-state-default"></th>
-			<th class="ui-state-default">Item (<spring:message code="${moduleId}.numberOfChanges" />)</th>
+			<th class="ui-state-default">Item (<spring:message code="${moduleId}.numberOfChangedProperties" />)</th>
 			<th class="ui-state-default">User (username)</th>
 			<th class="ui-state-default">Date Of Occurence</th>
 		</tr>

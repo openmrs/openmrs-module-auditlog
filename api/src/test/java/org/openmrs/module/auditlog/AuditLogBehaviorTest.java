@@ -40,11 +40,14 @@ import org.openmrs.Location;
 import org.openmrs.LocationTag;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.PatientIdentifierType;
+import org.openmrs.Role;
+import org.openmrs.User;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.LocationService;
 import org.openmrs.api.PatientService;
+import org.openmrs.api.UserService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.api.AuditLogService;
@@ -533,5 +536,30 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		clazzes.add(Location.class);
 		clazzes.add(LocationTag.class);
 		Assert.assertEquals(2, auditLogService.getAuditLogs(clazzes, null, null, null, null, null).size());
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldNotCreateADeletedLogWhenAnItemIsRemovedFromACollectionWithAManyToManyRelationship() throws Exception {
+		AuditLogUtil.startMonitoring(User.class);
+		Assert.assertTrue(AuditLogUtil.getImplicitlyMonitoredClasses().contains(Role.class));
+		UserService us = Context.getUserService();
+		User user = us.getUser(501);
+		Role role = us.getRole("Provider");
+		Assert.assertTrue(user.getRoles().contains(role));
+		AuditLogUtil.startMonitoring(Role.class);
+		user.getRoles().remove(role);
+		us.saveUser(user, "Test");
+		Assert.assertFalse(user.getRoles().contains(role));
+		for (AuditLog auditLog : auditLogService.getAuditLogs(null, null, null, null, null, null)) {
+			System.out.println(auditLog.getClassName() + " -> " + auditLog.getAction());
+		}
+		
+		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
+		clazzes.add(User.class);
+		Assert.assertEquals(1, auditLogService.getAuditLogs(clazzes, null, null, null, null, null).size());
+		clazzes.remove(User.class);
+		clazzes.add(Role.class);
+		Assert.assertEquals(0, auditLogService.getAuditLogs(clazzes, null, null, null, null, null).size());
 	}
 }

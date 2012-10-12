@@ -314,8 +314,14 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				            new String[] { getItemUuidsOrIds(currentColl), getItemUuidsOrIds(previousMap.values()) });
 				
 				if (removedItems.size() > 0) {
-					//Create DELETED log for the removed item here because hibernate doens't call 
+					//Create DELETED log for the removed item here because hibernate doesn't call 
 					//interceptor.onDelete for an element that is removed from a child collection
+					//But we need to ignore ManyToMany relationships since they can exist on their own
+					//e.g when a privilege is removed from a role, hibernate doesn't delete it however
+					//when a person name is removed from a patient, it gets deleted from the database
+					//because it can't exist on its own
+					ClassMetadata cmd = getSessionFactory().getClassMetadata(owningObject.getClass());
+					Type collType = cmd.getPropertyType(propertyName);
 					if (OpenmrsObject.class.isAssignableFrom(removedItems.iterator().next().getClass())) {
 						for (Object object : removedItems) {
 							deletes.get().add((OpenmrsObject) object);
@@ -337,7 +343,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	}
 	
 	/**
-	 * This is a hacky way to find all loaded classes in this session with collections
+	 * This is a hacky way to find all loaded classes in this session that have collections
 	 * 
 	 * @see org.hibernate.EmptyInterceptor#findDirty(java.lang.Object, java.io.Serializable,
 	 *      java.lang.Object[], java.lang.Object[], java.lang.String[], org.hibernate.type.Type[])
@@ -414,21 +420,25 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 								for (Object obj : coll) {
 									//If a collection item was updated and no other update had been made on the owner
 									if (updates.get().contains(obj) || otherUpdates.get().contains(obj)) {
-										if (updates.get().contains(entry.getKey())
-										        || otherUpdates.get().contains(entry.getKey())) {
+										OpenmrsObject owner = (OpenmrsObject) entry.getKey();
+										if (updates.get().contains(owner) || otherUpdates.get().contains(entry.getKey())) {
 											if (log.isDebugEnabled())
-												log.debug("There is already an  auditlog for:" + entry.getKey().getClass()
-												        + " - " + entry.getKey().toString());
+												log.debug("There is already an  auditlog for:" + owner.getClass() + " - "
+												        + owner.getUuid());
 											
 											//TODO otherwise associate the update log for the collection item to that of the owner
 										} else {
-											OpenmrsObject o = (OpenmrsObject) entry.getKey();
 											if (log.isDebugEnabled())
-												log.debug("Creating log entry for edited object with uuid:" + o.getUuid()
-												        + " of type:" + o.getClass().getName()
+												log.debug("Creating log entry for edited object with uuid:"
+												        + owner.getUuid() + " of type:" + owner.getClass().getName()
 												        + " due to an update for a item in a child collection");
-											updates.get().add(o);
+											updates.get().add(owner);
 										}
+										//TODO add this collection to the list of changes properties
+										/*Map<String, String[]> propertyValuesMap = objectChangesMap.get().get(owner.getUuid());
+										if(propertyValuesMap == null)
+											propertyValuesMap = new HashMap<String, String[]>();
+											propertyValuesMap.put(arg0, arg1);*/
 									}
 								}
 							}
