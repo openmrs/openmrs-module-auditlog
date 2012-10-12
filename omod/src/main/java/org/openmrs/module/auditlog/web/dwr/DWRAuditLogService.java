@@ -130,21 +130,21 @@ public class DWRAuditLogService {
 												}
 											}
 										} else {
-											if (StringUtils.isBlank(newValue)
-											        || (!newValue.startsWith(AuditLogConstants.UUID_LABEL) && !newValue
+											if (StringUtils.isNotBlank(newValue)
+											        && (newValue.startsWith(AuditLogConstants.UUID_LABEL) || newValue
 											                .startsWith(AuditLogConstants.ID_LABEL))) {
-												newValueDisplay = (newValue != null) ? newValue : "";
-											} else {
 												newValueDisplay += getPropertyDisplayString(clazz, propertyName, newValue);
+											} else if (newValue != null) {
+												newValueDisplay = newValue;
 											}
 											
-											if (StringUtils.isBlank(previousValue)
-											        || (!previousValue.startsWith(AuditLogConstants.UUID_LABEL) && !newValue
+											if (StringUtils.isNotBlank(previousValue)
+											        && (previousValue.startsWith(AuditLogConstants.UUID_LABEL) || previousValue
 											                .startsWith(AuditLogConstants.ID_LABEL))) {
-												preValueDisplay = (previousValue != null) ? previousValue : "";
-											} else {
 												preValueDisplay += getPropertyDisplayString(clazz, propertyName,
 												    previousValue);
+											} else if (previousValue != null) {
+												preValueDisplay = previousValue;
 											}
 										}
 									}
