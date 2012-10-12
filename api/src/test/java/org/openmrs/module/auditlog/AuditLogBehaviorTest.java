@@ -550,6 +550,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		AuditLogUtil.startMonitoring(Role.class);
 		user.getRoles().remove(role);
 		us.saveUser(user, "Test");
+		Assert.assertFalse(user.getRoles().contains(role));
 		
 		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
 		clazzes.add(User.class);
