@@ -77,16 +77,17 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	//Mapping between entities and lists of their Collections in the current session
 	private ThreadLocal<Map<Object, List<Collection<?>>>> entityCollectionsMap = new ThreadLocal<Map<Object, List<Collection<?>>>>();
 	
-	//we will need to disable the interceptor when saving the auditlog to avoid going in circles
+	//we will need to disable the interceptor when saving the auditlog to avoid going in an infinite loop
 	private ThreadLocal<Boolean> disableInterceptor = new ThreadLocal<Boolean>();
 	
 	private AuditLogDAO auditLogDao;
 	
 	private SessionFactory sessionFactory;
 	
+	//Ignore these properties because they match auditLog.user and auditLog.dateCreated
 	//TODO Should we not ignore personDateChanged and personDateChangedBy?
-	private static final String[] IGNORED_PROPERTIES = new String[] { "dateChanged", "changedBy", "personDateChanged",
-	        "personDateChangedBy" };
+	private static final String[] IGNORED_PROPERTIES = new String[] { "changedBy", "dateChanged", "personDateChangedBy",
+	        "personDateChanged", "creator", "dateCreated", "voidedBy", "dateVoided", "retiredBy", "dateRetired" };
 	
 	/**
 	 * We need access to this to get the auditLogDao bean, the saveAuditLog method is not available
