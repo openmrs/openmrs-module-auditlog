@@ -63,7 +63,7 @@
 	<bean id="${project.parent.artifactId}EventListeners" parent="openmrsEventListeners">
 	    <property name="globalPropertyListeners">
 	        <list value-type="org.openmrs.api.GlobalPropertyListener">
-	            <bean class="${project.parent.groupId}.${project.parent.artifactId}.util.AuditLogUtil" />
+	            <bean class="${project.parent.groupId}.${project.parent.artifactId}.api.db.hibernate.interceptor.HibernateAuditLogUtil" />
 	        </list>
 	    </property>
 	</bean>

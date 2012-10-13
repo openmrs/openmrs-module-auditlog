@@ -11,9 +11,8 @@
  *
  * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
  */
-package org.openmrs.module.auditlog.util;
+package org.openmrs.module.auditlog.api.db.hibernate.interceptor;
 
-import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -35,19 +34,17 @@ import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.MonitoringStrategy;
+import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.openmrs.test.Verifies;
 import org.openmrs.util.OpenmrsUtil;
 
-/**
- * Contains tests for {@link AuditLogUtil} methods
- */
-public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
+public class HibernateAuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	
 	private static final String MODULE_TEST_DATA = "moduleTestData.xml";
 	
 	public static void setMonitoringStrategy(MonitoringStrategy strategy) throws Exception {
-		if (strategy != AuditLogUtil.getMonitoringStrategy()) {
+		if (strategy != HibernateAuditLogUtil.getMonitoringStrategy()) {
 			AdministrationService as = Context.getAdministrationService();
 			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
 			    AuditLogConstants.GP_MONITORING_STRATEGY);
@@ -61,13 +58,13 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogUtil#getMonitoredClasses()}
+	 * @see {@link HibernateAuditLogUtil#getMonitoredClasses()}
 	 */
 	@Test
 	@Verifies(value = "should return a set of monitored classes", method = "getMonitoredClassNames()")
 	public void getMonitoredClasses_shouldReturnASetOfMonitoredClasses() throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
-		Set<Class<?>> monitoredClasses = AuditLogUtil.getMonitoredClasses();
+		Set<Class<?>> monitoredClasses = HibernateAuditLogUtil.getMonitoredClasses();
 		Assert.assertEquals(5, monitoredClasses.size());
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
@@ -77,7 +74,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogUtil#getUnMonitoredClasses()}
+	 * @see {@link HibernateAuditLogUtil#getUnMonitoredClasses()}
 	 */
 	@Test
 	@Verifies(value = "should return a set of un monitored classes", method = "getUnMonitoredClassNames()")
@@ -88,7 +85,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_UN_MONITORED_CLASSES);
 		gp.setPropertyValue(EncounterType.class.getName());
 		as.saveGlobalProperty(gp);
-		Set<Class<?>> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+		Set<Class<?>> unMonitoredClasses = HibernateAuditLogUtil.getUnMonitoredClasses();
 		Assert.assertEquals(1, unMonitoredClasses.size());
 		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 	}
@@ -102,9 +99,9 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	    throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
 		setMonitoringStrategy(MonitoringStrategy.NONE_EXCEPT);
-		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, AuditLogUtil.getMonitoringStrategy());
+		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, HibernateAuditLogUtil.getMonitoringStrategy());
 		
-		Set<Class<?>> monitoredClasses = AuditLogUtil.getMonitoredClasses();
+		Set<Class<?>> monitoredClasses = HibernateAuditLogUtil.getMonitoredClasses();
 		int originalCount = monitoredClasses.size();
 		Assert.assertFalse(OpenmrsUtil.collectionContains(monitoredClasses, ConceptDescription.class));
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
@@ -114,9 +111,9 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
 		
 		try {
-			AuditLogUtil.startMonitoring(ConceptDescription.class);
+			HibernateAuditLogUtil.startMonitoring(ConceptDescription.class);
 			
-			monitoredClasses = AuditLogUtil.getMonitoredClasses();
+			monitoredClasses = HibernateAuditLogUtil.getMonitoredClasses();
 			Assert.assertEquals(++originalCount, monitoredClasses.size());
 			//Should have added it and maintained the existing ones
 			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptDescription.class));
@@ -128,7 +125,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		}
 		finally {
 			//reset
-			AuditLogUtil.stopMonitoring(ConceptDescription.class);
+			HibernateAuditLogUtil.stopMonitoring(ConceptDescription.class);
 		}
 	}
 	
@@ -140,7 +137,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	public void startMonitoring_shouldUpdateTheUnMonitoredClassNamesGlobalPropertyIfTheStrategyIsAll_except()
 	    throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
-		Set<Class<?>> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+		Set<Class<?>> unMonitoredClasses = HibernateAuditLogUtil.getUnMonitoredClasses();
 		int originalCount = unMonitoredClasses.size();
 		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		AdministrationService as = Context.getAdministrationService();
@@ -149,15 +146,15 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
 		as.saveGlobalProperty(gp);
 		try {
-			AuditLogUtil.startMonitoring(EncounterType.class);
-			unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+			HibernateAuditLogUtil.startMonitoring(EncounterType.class);
+			unMonitoredClasses = HibernateAuditLogUtil.getUnMonitoredClasses();
 			Assert.assertEquals(--originalCount, unMonitoredClasses.size());
 			//Should have removed it and maintained the existing ones
 			Assert.assertFalse(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		}
 		finally {
 			//reset
-			AuditLogUtil.stopMonitoring(EncounterType.class);
+			HibernateAuditLogUtil.stopMonitoring(EncounterType.class);
 			gp.setPropertyValue(originalStrategy);
 			as.saveGlobalProperty(gp);
 		}
@@ -170,7 +167,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	@Verifies(value = "should not update any global property if the strategy is all", method = "startMonitoring(Set<Class<OpenmrsObject>>)")
 	public void startMonitoring_shouldNotUpdateAnyGlobalPropertyIfTheStrategyIsAll() throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
-		Set<Class<?>> monitoredClasses = AuditLogUtil.getMonitoredClasses();
+		Set<Class<?>> monitoredClasses = HibernateAuditLogUtil.getMonitoredClasses();
 		int originalMonitoredCount = monitoredClasses.size();
 		Assert.assertEquals(5, monitoredClasses.size());
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
@@ -179,7 +176,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
 		
-		Set<Class<?>> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+		Set<Class<?>> unMonitoredClasses = HibernateAuditLogUtil.getUnMonitoredClasses();
 		int originalUnMonitoredCount = unMonitoredClasses.size();
 		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		
@@ -189,11 +186,11 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		gp.setPropertyValue(MonitoringStrategy.ALL.name());
 		as.saveGlobalProperty(gp);
 		try {
-			AuditLogUtil.startMonitoring(EncounterType.class);
+			HibernateAuditLogUtil.startMonitoring(EncounterType.class);
 			
 			//Should not have changed
-			monitoredClasses = AuditLogUtil.getMonitoredClasses();
-			unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+			monitoredClasses = HibernateAuditLogUtil.getMonitoredClasses();
+			unMonitoredClasses = HibernateAuditLogUtil.getUnMonitoredClasses();
 			Assert.assertEquals(originalMonitoredCount, monitoredClasses.size());
 			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
 			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
@@ -206,7 +203,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		}
 		finally {
 			//reset
-			AuditLogUtil.stopMonitoring(EncounterType.class);
+			HibernateAuditLogUtil.stopMonitoring(EncounterType.class);
 			gp.setPropertyValue(originalStrategy);
 			as.saveGlobalProperty(gp);
 		}
@@ -219,7 +216,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	@Verifies(value = "should not update any global property if the strategy is none", method = "startMonitoring(Set<Class<OpenmrsObject>>)")
 	public void startMonitoring_shouldNotUpdateAnyGlobalPropertyIfTheStrategyIsNone() throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
-		Set<Class<?>> monitoredClasses = AuditLogUtil.getMonitoredClasses();
+		Set<Class<?>> monitoredClasses = HibernateAuditLogUtil.getMonitoredClasses();
 		int originalMonitoredCount = monitoredClasses.size();
 		Assert.assertEquals(5, monitoredClasses.size());
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
@@ -228,7 +225,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
 		
-		Set<Class<?>> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+		Set<Class<?>> unMonitoredClasses = HibernateAuditLogUtil.getUnMonitoredClasses();
 		int originalUnMonitoredCount = unMonitoredClasses.size();
 		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		
@@ -238,11 +235,11 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		gp.setPropertyValue(MonitoringStrategy.NONE.name());
 		as.saveGlobalProperty(gp);
 		try {
-			AuditLogUtil.startMonitoring(EncounterType.class);
+			HibernateAuditLogUtil.startMonitoring(EncounterType.class);
 			
 			//Should not have changed
-			monitoredClasses = AuditLogUtil.getMonitoredClasses();
-			unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+			monitoredClasses = HibernateAuditLogUtil.getMonitoredClasses();
+			unMonitoredClasses = HibernateAuditLogUtil.getUnMonitoredClasses();
 			Assert.assertEquals(originalMonitoredCount, monitoredClasses.size());
 			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
 			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
@@ -254,7 +251,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		}
 		finally {
-			AuditLogUtil.stopMonitoring(EncounterType.class);
+			HibernateAuditLogUtil.stopMonitoring(EncounterType.class);
 			gp.setPropertyValue(originalStrategy);
 			as.saveGlobalProperty(gp);
 		}
@@ -267,7 +264,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	@Verifies(value = "should not update any global property if the strategy is all", method = "stopMonitoring(Set<Class<OpenmrsObject>>)")
 	public void stopMonitoring_shouldNotUpdateAnyGlobalPropertyIfTheStrategyIsAll() throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
-		Set<Class<?>> monitoredClasses = AuditLogUtil.getMonitoredClasses();
+		Set<Class<?>> monitoredClasses = HibernateAuditLogUtil.getMonitoredClasses();
 		int originalMonitoredCount = monitoredClasses.size();
 		Assert.assertEquals(5, monitoredClasses.size());
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
@@ -276,7 +273,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
 		
-		Set<Class<?>> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+		Set<Class<?>> unMonitoredClasses = HibernateAuditLogUtil.getUnMonitoredClasses();
 		int originalUnMonitoredCount = unMonitoredClasses.size();
 		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		
@@ -286,11 +283,11 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		gp.setPropertyValue(MonitoringStrategy.ALL.name());
 		as.saveGlobalProperty(gp);
 		try {
-			AuditLogUtil.stopMonitoring(Concept.class);
+			HibernateAuditLogUtil.stopMonitoring(Concept.class);
 			
 			//Should not have changed
-			monitoredClasses = AuditLogUtil.getMonitoredClasses();
-			unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+			monitoredClasses = HibernateAuditLogUtil.getMonitoredClasses();
+			unMonitoredClasses = HibernateAuditLogUtil.getUnMonitoredClasses();
 			Assert.assertEquals(originalMonitoredCount, monitoredClasses.size());
 			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
 			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
@@ -303,7 +300,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		}
 		finally {
 			//reset
-			AuditLogUtil.startMonitoring(Concept.class);
+			HibernateAuditLogUtil.startMonitoring(Concept.class);
 			gp.setPropertyValue(originalStrategy);
 			as.saveGlobalProperty(gp);
 		}
@@ -316,7 +313,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	@Verifies(value = "should not update any global property if the strategy is none", method = "stopMonitoring(Set<Class<OpenmrsObject>>)")
 	public void stopMonitoring_shouldNotUpdateAnyGlobalPropertyIfTheStrategyIsNone() throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
-		Set<Class<?>> monitoredClasses = AuditLogUtil.getMonitoredClasses();
+		Set<Class<?>> monitoredClasses = HibernateAuditLogUtil.getMonitoredClasses();
 		int originalMonitoredCount = monitoredClasses.size();
 		Assert.assertEquals(5, monitoredClasses.size());
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
@@ -325,7 +322,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
 		
-		Set<Class<?>> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+		Set<Class<?>> unMonitoredClasses = HibernateAuditLogUtil.getUnMonitoredClasses();
 		int originalUnMonitoredCount = unMonitoredClasses.size();
 		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		
@@ -335,11 +332,11 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		gp.setPropertyValue(MonitoringStrategy.NONE.name());
 		as.saveGlobalProperty(gp);
 		try {
-			AuditLogUtil.stopMonitoring(Concept.class);
+			HibernateAuditLogUtil.stopMonitoring(Concept.class);
 			
 			//Should not have changed
-			monitoredClasses = AuditLogUtil.getMonitoredClasses();
-			unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+			monitoredClasses = HibernateAuditLogUtil.getMonitoredClasses();
+			unMonitoredClasses = HibernateAuditLogUtil.getUnMonitoredClasses();
 			Assert.assertEquals(originalMonitoredCount, monitoredClasses.size());
 			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
 			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
@@ -351,7 +348,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		}
 		finally {
-			AuditLogUtil.startMonitoring(Concept.class);
+			HibernateAuditLogUtil.startMonitoring(Concept.class);
 			gp.setPropertyValue(originalStrategy);
 			as.saveGlobalProperty(gp);
 		}
@@ -365,9 +362,9 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	public void stopMonitoring_shouldUpdateTheMonitoredClassNamesGlobalPropertyIfTheStrategyIsNone_except() throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
 		setMonitoringStrategy(MonitoringStrategy.NONE_EXCEPT);
-		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, AuditLogUtil.getMonitoringStrategy());
+		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, HibernateAuditLogUtil.getMonitoringStrategy());
 		
-		Set<Class<?>> monitoredClasses = AuditLogUtil.getMonitoredClasses();
+		Set<Class<?>> monitoredClasses = HibernateAuditLogUtil.getMonitoredClasses();
 		int originalCount = monitoredClasses.size();
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
@@ -376,9 +373,9 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
 		
 		try {
-			AuditLogUtil.stopMonitoring(Concept.class);
+			HibernateAuditLogUtil.stopMonitoring(Concept.class);
 			
-			monitoredClasses = AuditLogUtil.getMonitoredClasses();
+			monitoredClasses = HibernateAuditLogUtil.getMonitoredClasses();
 			Assert.assertEquals(originalCount -= 3, monitoredClasses.size());
 			//Should have added it and maintained the existing ones
 			Assert.assertFalse(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
@@ -389,7 +386,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		}
 		finally {
 			//reset
-			AuditLogUtil.startMonitoring(Concept.class);
+			HibernateAuditLogUtil.startMonitoring(Concept.class);
 		}
 	}
 	
@@ -401,7 +398,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	public void stopMonitoring_shouldUpdateTheUnMonitoredClassNamesGlobalPropertyIfTheStrategyIsAll_except()
 	    throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
-		Set<Class<?>> unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+		Set<Class<?>> unMonitoredClasses = HibernateAuditLogUtil.getUnMonitoredClasses();
 		int originalCount = unMonitoredClasses.size();
 		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
 		Assert.assertFalse(OpenmrsUtil.collectionContains(unMonitoredClasses, Concept.class));
@@ -413,8 +410,8 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
 		as.saveGlobalProperty(gp);
 		try {
-			AuditLogUtil.stopMonitoring(Concept.class);
-			unMonitoredClasses = AuditLogUtil.getUnMonitoredClasses();
+			HibernateAuditLogUtil.stopMonitoring(Concept.class);
+			unMonitoredClasses = HibernateAuditLogUtil.getUnMonitoredClasses();
 			Assert.assertEquals(originalCount += 3, unMonitoredClasses.size());
 			//Should have removed it and maintained the existing ones
 			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
@@ -424,37 +421,10 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		}
 		finally {
 			//reset
-			AuditLogUtil.startMonitoring(Concept.class);
+			HibernateAuditLogUtil.startMonitoring(Concept.class);
 			//reset
 			gp.setPropertyValue(originalStrategy);
 			as.saveGlobalProperty(gp);
-		}
-	}
-	
-	/**
-	 * @see {@link AuditLogUtil#getPersistentConcreteSubclasses(Class<OpenmrsObject>)}
-	 */
-	@Test
-	@Verifies(value = "should return a list of subclasses for the specified type", method = "getPersistentConcreteSubclasses(Class<OpenmrsObject>)")
-	public void getPersistentConcreteSubclasses_shouldReturnAListOfSubclassesForTheSpecifiedType() throws Exception {
-		Set<Class<?>> subclasses = AuditLogUtil.getPersistentConcreteSubclasses(Concept.class, null, null);
-		Assert.assertEquals(2, subclasses.size());
-		Assert.assertTrue(subclasses.contains(ConceptNumeric.class));
-		Assert.assertTrue(subclasses.contains(ConceptComplex.class));
-	}
-	
-	/**
-	 * @see {@link AuditLogUtil#getPersistentConcreteSubclasses(List<Class<OpenmrsObject>>)}
-	 */
-	@Test
-	@Verifies(value = "should exclude interfaces and abstract classes", method = "getPersistentConcreteSubclasses(List<Class<OpenmrsObject>>)")
-	public void getPersistentConcreteSubclasses_shouldExcludeInterfacesAndAbstractClasses() throws Exception {
-		Set<Class<?>> subclasses = AuditLogUtil.getPersistentConcreteSubclasses(OpenmrsObject.class, null, null);
-		for (Class<?> clazz : subclasses) {
-			Assert.assertFalse("Found interface:" + clazz.getName() + ", interfaces should be excluded",
-			    Modifier.isInterface(clazz.getModifiers()));
-			Assert.assertFalse("Found abstract class:" + clazz.getName() + ", abstract classes should be excluded",
-			    Modifier.isAbstract(clazz.getModifiers()));
 		}
 	}
 	
@@ -465,17 +435,17 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	@Verifies(value = "should mark a class and its known subclasses as monitored", method = "startMonitoring(Set<Class<OpenmrsObject>>)")
 	public void startMonitoring_shouldMarkAClassAndItsKnownSubclassesAsMonitored() throws Exception {
 		setMonitoringStrategy(MonitoringStrategy.NONE_EXCEPT);
-		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, AuditLogUtil.getMonitoringStrategy());
+		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, HibernateAuditLogUtil.getMonitoringStrategy());
 		
-		Set<Class<?>> monitoredClasses = AuditLogUtil.getMonitoredClasses();
+		Set<Class<?>> monitoredClasses = HibernateAuditLogUtil.getMonitoredClasses();
 		Assert.assertFalse(monitoredClasses.contains(Concept.class));
 		Assert.assertFalse(monitoredClasses.contains(ConceptNumeric.class));
 		Assert.assertFalse(monitoredClasses.contains(ConceptComplex.class));
 		
 		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
 		classes.add(Concept.class);
-		AuditLogUtil.startMonitoring(classes);
-		monitoredClasses = AuditLogUtil.getMonitoredClasses();
+		HibernateAuditLogUtil.startMonitoring(classes);
+		monitoredClasses = HibernateAuditLogUtil.getMonitoredClasses();
 		Assert.assertTrue(monitoredClasses.contains(Concept.class));
 		Assert.assertTrue(monitoredClasses.contains(ConceptNumeric.class));
 		Assert.assertTrue(monitoredClasses.contains(ConceptComplex.class));
@@ -489,24 +459,24 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	public void stopMonitoring_shouldMarkAClassAndItsKnownSubclassesAsUnMonitored() throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
 		setMonitoringStrategy(MonitoringStrategy.NONE_EXCEPT);
-		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, AuditLogUtil.getMonitoringStrategy());
+		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, HibernateAuditLogUtil.getMonitoringStrategy());
 		
-		AuditLogUtil.startMonitoring(Concept.class);
-		Set<Class<?>> monitoredClasses = AuditLogUtil.getMonitoredClasses();
+		HibernateAuditLogUtil.startMonitoring(Concept.class);
+		Set<Class<?>> monitoredClasses = HibernateAuditLogUtil.getMonitoredClasses();
 		Assert.assertTrue(monitoredClasses.contains(Concept.class));
 		Assert.assertTrue(monitoredClasses.contains(ConceptNumeric.class));
 		Assert.assertTrue(monitoredClasses.contains(ConceptComplex.class));
 		
 		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
 		classes.add(Concept.class);
-		AuditLogUtil.stopMonitoring(classes);
+		HibernateAuditLogUtil.stopMonitoring(classes);
 		Assert.assertFalse(monitoredClasses.contains(Concept.class));
 		Assert.assertFalse(monitoredClasses.contains(ConceptNumeric.class));
 		Assert.assertFalse(monitoredClasses.contains(ConceptComplex.class));
 	}
 	
 	/**
-	 * @see {@link AuditLogUtil#getImplicitlyMonitoredClasses()}
+	 * @see {@link HibernateAuditLogUtil#getImplicitlyMonitoredClasses()}
 	 */
 	@Test
 	@Verifies(value = "should return a set of implicitly monitored classes", method = "getImplicitlyMonitoredClassNames()")
@@ -514,8 +484,8 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 		AdministrationService as = Context.getAdministrationService();
 		as.saveGlobalProperty(new GlobalProperty(AuditLogConstants.GP_MONITORING_STRATEGY, MonitoringStrategy.NONE_EXCEPT
 		        .name()));
-		AuditLogUtil.startMonitoring(Concept.class);
-		Set<Class<?>> implicitlyMonitoredClasses = AuditLogUtil.getImplicitlyMonitoredClasses();
+		HibernateAuditLogUtil.startMonitoring(Concept.class);
+		Set<Class<?>> implicitlyMonitoredClasses = HibernateAuditLogUtil.getImplicitlyMonitoredClasses();
 		Assert.assertEquals(6, implicitlyMonitoredClasses.size());
 		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptName.class));
 		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptDescription.class));
@@ -531,6 +501,7 @@ public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	@Test
 	@Verifies(value = "should return the element class", method = "getCollectionElementType(Class<*>,String)")
 	public void getCollectionElementType_shouldReturnTheElementClass() throws Exception {
-		Assert.assertEquals(ConceptMap.class, AuditLogUtil.getCollectionElementType(ConceptComplex.class, "conceptMappings"));
+		Assert.assertEquals(ConceptMap.class,
+		    HibernateAuditLogUtil.getCollectionElementType(ConceptComplex.class, "conceptMappings"));
 	}
 }

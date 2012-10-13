@@ -27,7 +27,6 @@ import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
-import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.util.OpenmrsUtil;
 
 public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogService {
@@ -67,7 +66,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 			for (Class clazz : clazzes) {
 				if (OpenmrsObject.class.isAssignableFrom(clazz)) {
 					classesToMatch.add(clazz.getName());
-					for (Class subclass : AuditLogUtil.getPersistentConcreteSubclasses(clazz, null, null)) {
+					for (Class subclass : dao.getPersistentConcreteSubclasses(clazz)) {
 						classesToMatch.add(subclass.getName());
 					}
 				}

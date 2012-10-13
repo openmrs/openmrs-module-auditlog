@@ -258,7 +258,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					log.debug("Creating log entry for updated object with uuid:" + openmrsObject.getUuid() + " of type:"
 					        + entity.getClass().getName());
 				
-				if (AuditLogUtil.getMonitoredClasses().contains(openmrsObject.getClass()))
+				if (HibernateAuditLogUtil.getMonitoredClasses().contains(openmrsObject.getClass()))
 					updates.get().add(openmrsObject);
 				else
 					otherUpdates.get().add(openmrsObject);
@@ -320,8 +320,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					//e.g when a privilege is removed from a role, hibernate doesn't delete it however
 					//when a person name is removed from a patient, it gets deleted from the database
 					//because it can't exist on its own
-					ClassMetadata cmd = getSessionFactory().getClassMetadata(owningObject.getClass());
-					Type collType = cmd.getPropertyType(propertyName);
+					//ClassMetadata cmd = getSessionFactory().getClassMetadata(owningObject.getClass());
+					//Type collType = cmd.getPropertyType(propertyName);
 					if (OpenmrsObject.class.isAssignableFrom(removedItems.iterator().next().getClass())) {
 						for (Object object : removedItems) {
 							deletes.get().add((OpenmrsObject) object);
@@ -494,7 +494,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	 * @return true if the object is a monitored one otherwise false
 	 */
 	private boolean isMonitored(Object obj) {
-		if (!AuditLogUtil.areMonitoredClassnamesCached() || !AuditLogUtil.isMonitoringStrategyCached()) {
+		if (!HibernateAuditLogUtil.areMonitoredClassnamesCached() || !HibernateAuditLogUtil.isMonitoringStrategyCached()) {
 			Session session = getSessionFactory().getCurrentSession();
 			FlushMode originalFlushMode = session.getFlushMode();
 			session.setFlushMode(FlushMode.MANUAL);
@@ -518,18 +518,18 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	 * @return true if it is monitored otherwise false
 	 */
 	private boolean isMonitoredInternal(Class<?> clazz) {
-		if (!OpenmrsObject.class.isAssignableFrom(clazz) || AuditLogUtil.getMonitoringStrategy() == null
-		        || AuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.NONE)
+		if (!OpenmrsObject.class.isAssignableFrom(clazz) || HibernateAuditLogUtil.getMonitoringStrategy() == null
+		        || HibernateAuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.NONE)
 			return false;
-		if (AuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.ALL)
+		if (HibernateAuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.ALL)
 			return true;
-		if (OpenmrsUtil.collectionContains(AuditLogUtil.getImplicitlyMonitoredClasses(), clazz))
+		if (OpenmrsUtil.collectionContains(HibernateAuditLogUtil.getImplicitlyMonitoredClasses(), clazz))
 			return true;
-		if (AuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT) {
-			return OpenmrsUtil.collectionContains(AuditLogUtil.getMonitoredClasses(), clazz);
+		if (HibernateAuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT) {
+			return OpenmrsUtil.collectionContains(HibernateAuditLogUtil.getMonitoredClasses(), clazz);
 		}
 		//Strategy is ALL_EXCEPT
-		return !OpenmrsUtil.collectionContains(AuditLogUtil.getUnMonitoredClasses(), clazz);
+		return !OpenmrsUtil.collectionContains(HibernateAuditLogUtil.getUnMonitoredClasses(), clazz);
 	}
 	
 	/**

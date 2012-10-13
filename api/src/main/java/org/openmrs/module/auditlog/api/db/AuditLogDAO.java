@@ -11,11 +11,11 @@
  *
  * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
  */
-
 package org.openmrs.module.auditlog.api.db;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
@@ -54,4 +54,15 @@ public interface AuditLogDAO {
 	 * @see AuditLogService#getObjectByUuid(Class, String)
 	 */
 	public <T> T getObjectByUuid(Class<T> clazz, String uuid);
+	
+	/**
+	 * Gets a set of concrete subclasses for the specified class recursively, note that interfaces
+	 * and abstract classes are excluded
+	 * 
+	 * @param clazz
+	 * @return a set of subclasses
+	 * @should return a list of subclasses for the specified type
+	 * @should exclude interfaces and abstract classes
+	 */
+	public Set<Class<?>> getPersistentConcreteSubclasses(Class<?> clazz);
 }
