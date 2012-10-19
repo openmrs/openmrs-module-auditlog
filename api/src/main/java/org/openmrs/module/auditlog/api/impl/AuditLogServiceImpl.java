@@ -15,7 +15,9 @@ package org.openmrs.module.auditlog.api.impl;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.openmrs.OpenmrsObject;
@@ -24,6 +26,7 @@ import org.openmrs.api.context.Context;
 import org.openmrs.api.impl.BaseOpenmrsService;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
+import org.openmrs.module.auditlog.MonitoringStrategy;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
@@ -95,5 +98,65 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 			return null;
 		
 		return dao.getObjectByUuid(clazz, uuid);
+	}
+	
+	/**
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#startMonitoring(java.lang.Class)
+	 */
+	@Override
+	public void startMonitoring(Class<? extends OpenmrsObject> clazz) {
+		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
+		classes.add(clazz);
+		startMonitoring(classes);
+	}
+	
+	/**
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#startMonitoring(java.util.Set)
+	 */
+	@Override
+	public void startMonitoring(Set<Class<? extends OpenmrsObject>> clazzes) {
+		dao.startMonitoring(clazzes);
+	}
+	
+	/**
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#stopMonitoring(java.lang.Class)
+	 */
+	@Override
+	public void stopMonitoring(Class<? extends OpenmrsObject> clazz) {
+		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
+		classes.add(clazz);
+		stopMonitoring(classes);
+	}
+	
+	/**
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#stopMonitoring(java.util.Set)
+	 */
+	@Override
+	public void stopMonitoring(Set<Class<? extends OpenmrsObject>> clazzes) {
+		dao.stopMonitoring(clazzes);
+	}
+	
+	/**
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#getMonitoringStrategy()
+	 */
+	@Override
+	public MonitoringStrategy getMonitoringStrategy() {
+		return dao.getMonitoringStrategy();
+	}
+	
+	/**
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#getMonitoredClasses()
+	 */
+	@Override
+	public Set<Class<?>> getMonitoredClasses() {
+		return dao.getMonitoredClasses();
+	}
+	
+	/**
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#getUnMonitoredClasses()
+	 */
+	@Override
+	public Set<Class<?>> getUnMonitoredClasses() {
+		return dao.getUnMonitoredClasses();
 	}
 }

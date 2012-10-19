@@ -51,8 +51,8 @@ import org.openmrs.api.UserService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.api.AuditLogService;
-import org.openmrs.module.auditlog.api.db.hibernate.interceptor.HibernateAuditLogUtil;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
+import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.test.annotation.NotTransactional;
@@ -74,14 +74,16 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@Before
 	public void before() throws Exception {
 		executeDataSet(MODULE_TEST_DATA);
-		if (MonitoringStrategy.NONE_EXCEPT != HibernateAuditLogUtil.getMonitoringStrategy()) {
+		auditLogService = Context.getService(AuditLogService.class);
+		
+		if (MonitoringStrategy.NONE_EXCEPT != auditLogService.getMonitoringStrategy()) {
 			AdministrationService as = Context.getAdministrationService();
 			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
 			    AuditLogConstants.GP_MONITORING_STRATEGY);
 			gp.setPropertyValue(MonitoringStrategy.NONE_EXCEPT.name());
 			as.saveGlobalProperty(gp);
 		}
-		Set<Class<?>> monitoredClasses = HibernateAuditLogUtil.getMonitoredClasses();
+		Set<Class<?>> monitoredClasses = auditLogService.getMonitoredClasses();
 		if (monitoredClasses.size() != 3 || !monitoredClasses.contains(Concept.class)
 		        || !monitoredClasses.contains(EncounterType.class)
 		        || !monitoredClasses.contains(PatientIdentifierType.class)) {
@@ -92,8 +94,8 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 			        + PatientIdentifierType.class.getName());
 			as.saveGlobalProperty(gp);
 		}
-		if (HibernateAuditLogUtil.getUnMonitoredClasses().size() != 1
-		        || !HibernateAuditLogUtil.getUnMonitoredClasses().contains(EncounterType.class)) {
+		if (auditLogService.getUnMonitoredClasses().size() != 1
+		        || !auditLogService.getUnMonitoredClasses().contains(EncounterType.class)) {
 			AdministrationService as = Context.getAdministrationService();
 			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
 			    AuditLogConstants.GP_UN_MONITORED_CLASSES);
@@ -103,7 +105,6 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		
 		conceptService = Context.getConceptService();
 		encounterService = Context.getEncounterService();
-		auditLogService = Context.getService(AuditLogService.class);
 		
 		//No log entries should be existing
 		Assert.assertTrue(getAllLogs().isEmpty());
@@ -274,7 +275,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@Test
 	@NotTransactional
 	public void shouldNotCreateAuditLogsForUnMonitoredObjects() {
-		Assert.assertFalse(OpenmrsUtil.collectionContains(HibernateAuditLogUtil.getMonitoredClasses(), Location.class.getName()));
+		Assert.assertFalse(OpenmrsUtil.collectionContains(auditLogService.getMonitoredClasses(), Location.class.getName()));
 		Location location = new Location();
 		location.setName("najja");
 		location.setAddress1("test address");
@@ -426,36 +427,36 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@NotTransactional
 	public void shouldUpdateTheMonitoredClassCacheWhenTheMonitoredClassGlobalPropertyIsUpdatedWithAnAddition()
 	    throws Exception {
-		Assert.assertFalse(HibernateAuditLogUtil.getMonitoredClasses().contains(Encounter.class));
+		Assert.assertFalse(auditLogService.getMonitoredClasses().contains(Encounter.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORED_CLASSES);
 		Set<Class<?>> monitoredClasses = new HashSet<Class<?>>();
-		monitoredClasses.addAll(HibernateAuditLogUtil.getMonitoredClasses());
+		monitoredClasses.addAll(auditLogService.getMonitoredClasses());
 		monitoredClasses.add(Encounter.class);
-		gp.setPropertyValue(StringUtils.join(HibernateAuditLogUtil.getAsListOfClassnames(monitoredClasses), ","));
+		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), ","));
 		as.saveGlobalProperty(gp);
-		Assert.assertTrue(HibernateAuditLogUtil.getMonitoredClasses().contains(Encounter.class));
+		Assert.assertTrue(auditLogService.getMonitoredClasses().contains(Encounter.class));
 	}
 	
 	@Test
 	@NotTransactional
 	public void shouldUpdateTheMonitoredClassCacheWhenTheMonitoredClassGlobalPropertyIsUpdatedWithARemoval()
 	    throws Exception {
-		Assert.assertTrue(HibernateAuditLogUtil.getMonitoredClasses().contains(Concept.class));
+		Assert.assertTrue(auditLogService.getMonitoredClasses().contains(Concept.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORED_CLASSES);
 		Set<Class<?>> monitoredClasses = new HashSet<Class<?>>();
-		monitoredClasses.addAll(HibernateAuditLogUtil.getMonitoredClasses());
+		monitoredClasses.addAll(auditLogService.getMonitoredClasses());
 		monitoredClasses.remove(Concept.class);
-		gp.setPropertyValue(StringUtils.join(HibernateAuditLogUtil.getAsListOfClassnames(monitoredClasses), ","));
+		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), ","));
 		as.saveGlobalProperty(gp);
-		Assert.assertFalse(HibernateAuditLogUtil.getMonitoredClasses().contains(Concept.class));
+		Assert.assertFalse(auditLogService.getMonitoredClasses().contains(Concept.class));
 	}
 	
 	@Test
 	@NotTransactional
 	public void shouldMonitorAnyOpenmrsObjectWhenStrateyIsSetToAll() throws Exception {
-		Assert.assertFalse(HibernateAuditLogUtil.getMonitoredClasses().contains(Location.class.getName()));
+		Assert.assertFalse(auditLogService.getMonitoredClasses().contains(Location.class.getName()));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
 		gp.setPropertyValue(MonitoringStrategy.ALL.name());
@@ -471,7 +472,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@Test
 	@NotTransactional
 	public void shouldNotMonitorAnyObjectWhenStrateyIsSetToNone() throws Exception {
-		Assert.assertTrue(HibernateAuditLogUtil.getMonitoredClasses().contains(EncounterType.class));
+		Assert.assertTrue(auditLogService.getMonitoredClasses().contains(EncounterType.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
 		gp.setPropertyValue(MonitoringStrategy.NONE.name());
@@ -485,7 +486,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@NotTransactional
 	public void shouldNotCreateLogWhenStrateyIsSetToAllExceptAndObjectTypeIsListedAsExcluded() throws Exception {
 		//sanity check
-		Assert.assertTrue(OpenmrsUtil.collectionContains(HibernateAuditLogUtil.getUnMonitoredClasses(), EncounterType.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(auditLogService.getUnMonitoredClasses(), EncounterType.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
 		gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
@@ -502,7 +503,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@NotTransactional
 	public void shouldCreateLogWhenStrateyIsSetToAllExceptAndObjectTypeIsNotListedAsIncluded() throws Exception {
 		//sanity check
-		Assert.assertFalse(OpenmrsUtil.collectionContains(HibernateAuditLogUtil.getUnMonitoredClasses(), Location.class));
+		Assert.assertFalse(OpenmrsUtil.collectionContains(auditLogService.getUnMonitoredClasses(), Location.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
 		gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
@@ -528,7 +529,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
 		as.saveGlobalProperty(gp);
 		
-		HibernateAuditLogUtil.stopMonitoring(LocationTag.class);
+		auditLogService.stopMonitoring(LocationTag.class);
 		Location loc = ls.getLocation(2);
 		loc.getTags().iterator().next().setDescription("new");
 		ls.saveLocation(loc);
@@ -541,13 +542,13 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	//@Test
 	@NotTransactional
 	public void shouldNotCreateADeletedLogWhenAnItemIsRemovedFromACollectionWithAManyToManyRelationship() throws Exception {
-		HibernateAuditLogUtil.startMonitoring(User.class);
-		Assert.assertTrue(HibernateAuditLogUtil.getImplicitlyMonitoredClasses().contains(Role.class));
+		auditLogService.startMonitoring(User.class);
+		//Assert.assertTrue(auditLogService.getImplicitlyMonitoredClasses().contains(Role.class));
 		UserService us = Context.getUserService();
 		User user = us.getUser(501);
 		Role role = us.getRole("Provider");
 		Assert.assertTrue(user.getRoles().contains(role));
-		HibernateAuditLogUtil.startMonitoring(Role.class);
+		auditLogService.startMonitoring(Role.class);
 		user.getRoles().remove(role);
 		us.saveUser(user, "Test");
 		Assert.assertFalse(user.getRoles().contains(role));

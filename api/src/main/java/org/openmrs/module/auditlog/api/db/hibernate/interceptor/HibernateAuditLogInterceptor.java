@@ -258,7 +258,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					log.debug("Creating log entry for updated object with uuid:" + openmrsObject.getUuid() + " of type:"
 					        + entity.getClass().getName());
 				
-				if (HibernateAuditLogUtil.getMonitoredClasses().contains(openmrsObject.getClass()))
+				if (getAuditLogDao().getMonitoredClasses().contains(openmrsObject.getClass()))
 					updates.get().add(openmrsObject);
 				else
 					otherUpdates.get().add(openmrsObject);
@@ -494,7 +494,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	 * @return true if the object is a monitored one otherwise false
 	 */
 	private boolean isMonitored(Object obj) {
-		if (!HibernateAuditLogUtil.areMonitoredClassnamesCached() || !HibernateAuditLogUtil.isMonitoringStrategyCached()) {
+		if (!getAuditLogDao().areMonitoredClassesCached() || !getAuditLogDao().isMonitoringStrategyCached()) {
 			Session session = getSessionFactory().getCurrentSession();
 			FlushMode originalFlushMode = session.getFlushMode();
 			session.setFlushMode(FlushMode.MANUAL);
@@ -518,18 +518,18 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	 * @return true if it is monitored otherwise false
 	 */
 	private boolean isMonitoredInternal(Class<?> clazz) {
-		if (!OpenmrsObject.class.isAssignableFrom(clazz) || HibernateAuditLogUtil.getMonitoringStrategy() == null
-		        || HibernateAuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.NONE)
+		if (!OpenmrsObject.class.isAssignableFrom(clazz) || getAuditLogDao().getMonitoringStrategy() == null
+		        || getAuditLogDao().getMonitoringStrategy() == MonitoringStrategy.NONE)
 			return false;
-		if (HibernateAuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.ALL)
+		if (getAuditLogDao().getMonitoringStrategy() == MonitoringStrategy.ALL)
 			return true;
-		if (OpenmrsUtil.collectionContains(HibernateAuditLogUtil.getImplicitlyMonitoredClasses(), clazz))
+		if (OpenmrsUtil.collectionContains(getAuditLogDao().getImplicitlyMonitoredClasses(), clazz))
 			return true;
-		if (HibernateAuditLogUtil.getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT) {
-			return OpenmrsUtil.collectionContains(HibernateAuditLogUtil.getMonitoredClasses(), clazz);
+		if (getAuditLogDao().getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT) {
+			return OpenmrsUtil.collectionContains(getAuditLogDao().getMonitoredClasses(), clazz);
 		}
 		//Strategy is ALL_EXCEPT
-		return !OpenmrsUtil.collectionContains(HibernateAuditLogUtil.getUnMonitoredClasses(), clazz);
+		return !OpenmrsUtil.collectionContains(getAuditLogDao().getUnMonitoredClasses(), clazz);
 	}
 	
 	/**

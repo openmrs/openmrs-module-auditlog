@@ -14,20 +14,32 @@
 package org.openmrs.module.auditlog.api.db;
 
 import java.lang.reflect.Modifier;
+import java.util.HashSet;
 import java.util.Set;
 
 import junit.framework.Assert;
 
 import org.junit.Test;
 import org.openmrs.Concept;
+import org.openmrs.ConceptAnswer;
 import org.openmrs.ConceptComplex;
+import org.openmrs.ConceptDescription;
+import org.openmrs.ConceptMap;
+import org.openmrs.ConceptName;
+import org.openmrs.ConceptNameTag;
 import org.openmrs.ConceptNumeric;
+import org.openmrs.ConceptSet;
+import org.openmrs.GlobalProperty;
 import org.openmrs.OpenmrsObject;
-import org.openmrs.test.BaseContextSensitiveTest;
+import org.openmrs.api.AdministrationService;
+import org.openmrs.api.context.Context;
+import org.openmrs.module.auditlog.MonitoringStrategy;
+import org.openmrs.module.auditlog.util.AuditLogConstants;
+import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.openmrs.test.Verifies;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class AuditLogDAOTest extends BaseContextSensitiveTest {
+public class AuditLogDAOTest extends BaseModuleContextSensitiveTest {
 	
 	@Autowired
 	private AuditLogDAO dao;
@@ -57,6 +69,28 @@ public class AuditLogDAOTest extends BaseContextSensitiveTest {
 			Assert.assertFalse("Found abstract class:" + clazz.getName() + ", abstract classes should be excluded",
 			    Modifier.isAbstract(clazz.getModifiers()));
 		}
+	}
+	
+	/**
+	 * @see {@link AuditLogDAO#getImplicitlyMonitoredClasses()}
+	 */
+	@Test
+	@Verifies(value = "should return a set of implicitly monitored classes", method = "getImplicitlyMonitoredClasses()")
+	public void getImplicitlyMonitoredClasses_shouldReturnASetOfImplicitlyMonitoredClasses() throws Exception {
+		AdministrationService as = Context.getAdministrationService();
+		as.saveGlobalProperty(new GlobalProperty(AuditLogConstants.GP_MONITORING_STRATEGY, MonitoringStrategy.NONE_EXCEPT
+		        .name()));
+		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
+		classes.add(Concept.class);
+		dao.startMonitoring(classes);
+		Set<Class<?>> implicitlyMonitoredClasses = dao.getImplicitlyMonitoredClasses();
+		Assert.assertEquals(6, implicitlyMonitoredClasses.size());
+		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptName.class));
+		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptDescription.class));
+		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptMap.class));
+		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptSet.class));
+		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptAnswer.class));
+		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptNameTag.class));
 	}
 	
 }

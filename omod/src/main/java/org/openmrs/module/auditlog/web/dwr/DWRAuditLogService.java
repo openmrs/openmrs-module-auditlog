@@ -37,7 +37,6 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.api.AuditLogService;
-import org.openmrs.module.auditlog.api.db.hibernate.interceptor.HibernateAuditLogUtil;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.util.Reflect;
 import org.springframework.beans.BeanUtils;
@@ -195,7 +194,7 @@ public class DWRAuditLogService {
 				for (String currUuidOrStr : uuidsOrIds) {
 					Object item = null;
 					currUuidOrStr = currUuidOrStr.trim();
-					Class<?> itemType = HibernateAuditLogUtil.getCollectionElementType(owningType, propertyName);
+					Class<?> itemType = null;//HibernateAuditLogUtil.getCollectionElementType(owningType, propertyName);
 					if (currUuidOrStr.startsWith(AuditLogConstants.UUID_LABEL)) {
 						currUuidOrStr = currUuidOrStr.substring(currUuidOrStr.indexOf(AuditLogConstants.UUID_LABEL)
 						        + AuditLogConstants.UUID_LABEL.length());

@@ -15,12 +15,16 @@ package org.openmrs.module.auditlog.api;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.openmrs.Concept;
+import org.openmrs.GlobalProperty;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.api.OpenmrsService;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
+import org.openmrs.module.auditlog.MonitoringStrategy;
+import org.openmrs.module.auditlog.util.AuditLogConstants;
 
 /**
  * Contains service methods related to {@link AuditLog}s
@@ -71,4 +75,71 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should get the saved object matching the specified arguments
 	 */
 	public <T> T getObjectByUuid(Class<T> clazz, String uuid);
+	
+	/**
+	 * Convenience method that marks a given object type as monitored
+	 * 
+	 * @param clazz the type to start monitoring
+	 */
+	public void startMonitoring(Class<? extends OpenmrsObject> clazz);
+	
+	/**
+	 * Marks the specified classes as monitored by adding their class names to the
+	 * {@link GlobalProperty} {@link AuditLogConstants#GP_MONITORED_CLASSES}
+	 * 
+	 * @param clazzes the classes to monitor
+	 * @param subclassesToInclude list of subclasses to mark as monitored objects
+	 * @should update the monitored class names global property if the strategy is none_except
+	 * @should not update any global property if the strategy is all
+	 * @should not update any global property if the strategy is none
+	 * @should update the un monitored class names global property if the strategy is all_except
+	 * @should mark a class and its known subclasses as monitored
+	 */
+	public void startMonitoring(Set<Class<? extends OpenmrsObject>> clazzes);
+	
+	/**
+	 * Convenience method that marks a given object type as un monitored
+	 * 
+	 * @param clazz the type to stop monitoring
+	 */
+	public void stopMonitoring(Class<? extends OpenmrsObject> clazz);
+	
+	/**
+	 * Marks the specified classes as not monitored by removing their class names from the
+	 * {@link GlobalProperty} {@link AuditLogConstants#GP_MONITORED_CLASSES}
+	 * 
+	 * @param clazzes the class to stop monitoring
+	 * @should update the monitored class names global property if the strategy is none_except
+	 * @should not update any global property if the strategy is all
+	 * @should not update any global property if the strategy is none
+	 * @should update the un monitored class names global property if the strategy is all_except
+	 * @should mark a class and its known subclasses as un monitored
+	 */
+	public void stopMonitoring(Set<Class<? extends OpenmrsObject>> clazzes);
+	
+	/**
+	 * Gets the {@link MonitoringStrategy} which is the value of the
+	 * {@link AuditLogConstants#GP_MONITORING_STRATEGY} global property
+	 * 
+	 * @return the monitoringStrategy
+	 */
+	public MonitoringStrategy getMonitoringStrategy();
+	
+	/**
+	 * Convenience method that returns a set of monitored classes as specified by the
+	 * {@link GlobalProperty} {@link AuditLogConstants#GP_MONITORED_CLASSES}
+	 * 
+	 * @return a set of monitored classes
+	 * @should return a set of monitored classes
+	 */
+	public Set<Class<?>> getMonitoredClasses();
+	
+	/**
+	 * Convenience method that returns a set of un monitored classes as specified by the
+	 * {@link GlobalProperty} {@link AuditLogConstants#GP_UN_MONITORED_CLASSES}
+	 * 
+	 * @return a set of monitored classes
+	 * @should return a set of un monitored classes
+	 */
+	public Set<Class<?>> getUnMonitoredClasses();
 }

@@ -17,8 +17,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import org.openmrs.OpenmrsObject;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
+import org.openmrs.module.auditlog.MonitoringStrategy;
 import org.openmrs.module.auditlog.api.AuditLogService;
 
 /**
@@ -56,6 +58,35 @@ public interface AuditLogDAO {
 	public <T> T getObjectByUuid(Class<T> clazz, String uuid);
 	
 	/**
+	 * Marks the specified classes as monitored
+	 * 
+	 * @param clazzes
+	 */
+	public void startMonitoring(Set<Class<? extends OpenmrsObject>> clazzes);
+	
+	/**
+	 * Un marks the specified classes as monitored
+	 * 
+	 * @param clazzes
+	 */
+	public void stopMonitoring(Set<Class<? extends OpenmrsObject>> clazzes);
+	
+	/**
+	 * @return
+	 */
+	public MonitoringStrategy getMonitoringStrategy();
+	
+	/**
+	 * @return
+	 */
+	public Set<Class<?>> getMonitoredClasses();
+	
+	/**
+	 * @return
+	 */
+	public Set<Class<?>> getUnMonitoredClasses();
+	
+	/**
 	 * Gets a set of concrete subclasses for the specified class recursively, note that interfaces
 	 * and abstract classes are excluded
 	 * 
@@ -65,4 +96,46 @@ public interface AuditLogDAO {
 	 * @should exclude interfaces and abstract classes
 	 */
 	public Set<Class<?>> getPersistentConcreteSubclasses(Class<?> clazz);
+	
+	/**
+	 * Finds all the types for associations to monitor in as recursive way i.e if a Persistent type
+	 * is found, then we also find its collection element types and types for fields mapped as one
+	 * to one, note that this only includes sub types of {@link OpenmrsObject}
+	 * 
+	 * @param clazz
+	 * @return a set of found class names
+	 */
+	public Set<Class<?>> getAssociationTypesToMonitor(Class<?> clazz);
+	
+	/**
+	 * Checks if the monitoring strategy has been set and cached
+	 * 
+	 * @return
+	 */
+	public boolean isMonitoringStrategyCached();
+	
+	/**
+	 * Checks if the monitored classes list has been created and cached if necessary
+	 * 
+	 * @return
+	 */
+	public boolean areMonitoredClassesCached();
+	
+	/**
+	 * Checks if the un monitored classes list has been created and cached if necessary
+	 * 
+	 * @return
+	 */
+	public boolean areUnMonitoredClassesCached();
+	
+	/**
+	 * Gets implicitly monitored classes, this are generated as a result of their owning entity
+	 * types being marked as monitored if they are not explicitly marked as monitored themselves,
+	 * i.e if Concept is marked as monitored, then ConceptName, ConceptDesctiption, ConceptMapping
+	 * etc implicitly get marked as monitored
+	 * 
+	 * @return a set of implicitly monitored classes
+	 * @should return a set of implicitly monitored classes
+	 */
+	public Set<Class<?>> getImplicitlyMonitoredClasses();
 }

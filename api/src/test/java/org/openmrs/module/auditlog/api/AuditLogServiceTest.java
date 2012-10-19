@@ -16,20 +16,29 @@ package org.openmrs.module.auditlog.api;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import junit.framework.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.openmrs.Concept;
+import org.openmrs.ConceptComplex;
+import org.openmrs.ConceptDescription;
 import org.openmrs.ConceptName;
+import org.openmrs.ConceptNumeric;
+import org.openmrs.EncounterType;
 import org.openmrs.GlobalProperty;
 import org.openmrs.OpenmrsObject;
+import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.APIException;
+import org.openmrs.api.AdministrationService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
+import org.openmrs.module.auditlog.MonitoringStrategy;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.openmrs.test.Verifies;
@@ -52,8 +61,25 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		service = Context.getService(AuditLogService.class);
 	}
 	
+	/*@After
+	public void before() throws Exception {
+		setMonitoringStrategy(MonitoringStrategy.NONE_EXCEPT);
+	}*/
+
 	private List<AuditLog> getAllAuditLogs() {
 		return service.getAuditLogs(null, null, null, null, null, null);
+	}
+	
+	private void setMonitoringStrategy(MonitoringStrategy strategy) throws Exception {
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
+		    AuditLogConstants.GP_MONITORING_STRATEGY);
+		if (gp == null) {
+			gp = new GlobalProperty(AuditLogConstants.GP_MONITORING_STRATEGY, MonitoringStrategy.NONE_EXCEPT.name());
+		} else {
+			gp.setPropertyValue(strategy.name());
+		}
+		as.saveGlobalProperty(gp);
 	}
 	
 	/**
@@ -100,7 +126,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#getAuditLogs(List<QClass<OpenmrsObject>>,List<Action>,Date,Date,
+	 * @see {@link AuditLogService#getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,
 	 *      Integer,Integer)}
 	 */
 	@Test
@@ -226,11 +252,417 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	 *      Integer,Integer)}
 	 */
 	@Test
-	@Verifies(value = "should include logs for subclasses when getting logs by type", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<QAction>,Date,Date,Integer,Integer)")
+	@Verifies(value = "should include logs for subclasses when getting logs by type", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
 	public void getAuditLogs_shouldIncludeLogsForSubclassesWhenGettingLogsByType() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
 		clazzes.add(OpenmrsObject.class);
 		Assert.assertEquals(4, service.getAuditLogs(clazzes, null, null, null, null, null).size());
+	}
+	
+	/**
+	 * @see {@link AuditLogService#getMonitoredClasses()}
+	 */
+	@Test
+	@Verifies(value = "should return a set of monitored classes", method = "getMonitoredClasses()")
+	public void getMonitoredClasses_shouldReturnASetOfMonitoredClasses() throws Exception {
+		Set<Class<?>> monitoredClasses = service.getMonitoredClasses();
+		Assert.assertEquals(5, monitoredClasses.size());
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptComplex.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
+	}
+	
+	/**
+	 * @see {@link AuditLogService#getUnMonitoredClasses()}
+	 */
+	@Test
+	@Verifies(value = "should return a set of un monitored classes", method = "getUnMonitoredClasses()")
+	public void getUnMonitoredClasses_shouldReturnASetOfUnMonitoredClasses() throws Exception {
+		AdministrationService as = Context.getAdministrationService();
+		//In case previous tests changed the value
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_UN_MONITORED_CLASSES);
+		gp.setPropertyValue(EncounterType.class.getName());
+		as.saveGlobalProperty(gp);
+		Set<Class<?>> unMonitoredClasses = service.getUnMonitoredClasses();
+		Assert.assertEquals(1, unMonitoredClasses.size());
+		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
+	}
+	
+	/**
+	 * @see {@link AuditLogService#startMonitoring(Set<Class<OpenmrsObject>>)}
+	 */
+	@Test
+	@Verifies(value = "should update the monitored class names global property if the strategy is none_except", method = "startMonitoring(Set<Class<OpenmrsObject>>)")
+	public void startMonitoring_shouldUpdateTheMonitoredClassNamesGlobalPropertyIfTheStrategyIsNone_except()
+	    throws Exception {
+		setMonitoringStrategy(MonitoringStrategy.NONE_EXCEPT);
+		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, service.getMonitoringStrategy());
+		
+		Set<Class<?>> monitoredClasses = service.getMonitoredClasses();
+		int originalCount = monitoredClasses.size();
+		Assert.assertFalse(OpenmrsUtil.collectionContains(monitoredClasses, ConceptDescription.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptComplex.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
+		
+		try {
+			service.startMonitoring(ConceptDescription.class);
+			
+			monitoredClasses = service.getMonitoredClasses();
+			Assert.assertEquals(++originalCount, monitoredClasses.size());
+			//Should have added it and maintained the existing ones
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptDescription.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptComplex.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
+		}
+		finally {
+			//reset
+			service.stopMonitoring(ConceptDescription.class);
+		}
+	}
+	
+	/**
+	 * @see {@link AuditLogService#startMonitoring(Set<Class<OpenmrsObject>>)}
+	 */
+	@Test
+	@Verifies(value = "should not update any global property if the strategy is all", method = "startMonitoring(Set<Class<OpenmrsObject>>)")
+	public void startMonitoring_shouldNotUpdateAnyGlobalPropertyIfTheStrategyIsAll() throws Exception {
+		setMonitoringStrategy(MonitoringStrategy.NONE_EXCEPT);//reset
+		Set<Class<?>> monitoredClasses = service.getMonitoredClasses();
+		int originalMonitoredCount = monitoredClasses.size();
+		Assert.assertEquals(5, monitoredClasses.size());
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptComplex.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
+		
+		Set<Class<?>> unMonitoredClasses = service.getUnMonitoredClasses();
+		int originalUnMonitoredCount = unMonitoredClasses.size();
+		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
+		
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
+		String originalStrategy = gp.getPropertyValue();
+		gp.setPropertyValue(MonitoringStrategy.ALL.name());
+		as.saveGlobalProperty(gp);
+		try {
+			service.startMonitoring(EncounterType.class);
+			
+			//Should not have changed
+			monitoredClasses = service.getMonitoredClasses();
+			unMonitoredClasses = service.getUnMonitoredClasses();
+			Assert.assertEquals(originalMonitoredCount, monitoredClasses.size());
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptComplex.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
+			
+			Assert.assertEquals(originalUnMonitoredCount, unMonitoredClasses.size());
+			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
+		}
+		finally {
+			//reset
+			service.stopMonitoring(EncounterType.class);
+			gp.setPropertyValue(originalStrategy);
+			as.saveGlobalProperty(gp);
+		}
+	}
+	
+	/**
+	 * @see {@link AuditLogService#startMonitoring(Set<Class<OpenmrsObject>>)}
+	 */
+	@Test
+	@Verifies(value = "should not update any global property if the strategy is none", method = "startMonitoring(Set<Class<OpenmrsObject>>)")
+	public void startMonitoring_shouldNotUpdateAnyGlobalPropertyIfTheStrategyIsNone() throws Exception {
+		Set<Class<?>> monitoredClasses = service.getMonitoredClasses();
+		int originalMonitoredCount = monitoredClasses.size();
+		Assert.assertEquals(5, monitoredClasses.size());
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptComplex.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
+		
+		Set<Class<?>> unMonitoredClasses = service.getUnMonitoredClasses();
+		int originalUnMonitoredCount = unMonitoredClasses.size();
+		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
+		
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
+		String originalStrategy = gp.getPropertyValue();
+		gp.setPropertyValue(MonitoringStrategy.NONE.name());
+		as.saveGlobalProperty(gp);
+		try {
+			service.startMonitoring(EncounterType.class);
+			
+			//Should not have changed
+			monitoredClasses = service.getMonitoredClasses();
+			unMonitoredClasses = service.getUnMonitoredClasses();
+			Assert.assertEquals(originalMonitoredCount, monitoredClasses.size());
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptComplex.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
+			
+			Assert.assertEquals(originalUnMonitoredCount, unMonitoredClasses.size());
+			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
+		}
+		finally {
+			service.stopMonitoring(EncounterType.class);
+			gp.setPropertyValue(originalStrategy);
+			as.saveGlobalProperty(gp);
+		}
+	}
+	
+	/**
+	 * @see {@link AuditLogService#startMonitoring(Set<Class<OpenmrsObject>>)}
+	 */
+	@Test
+	@Verifies(value = "should update the un monitored class names global property if the strategy is all_except", method = "startMonitoring(Set<Class<OpenmrsObject>>)")
+	public void startMonitoring_shouldUpdateTheUnMonitoredClassNamesGlobalPropertyIfTheStrategyIsAll_except()
+	    throws Exception {
+		Set<Class<?>> unMonitoredClasses = service.getUnMonitoredClasses();
+		int originalCount = unMonitoredClasses.size();
+		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
+		Assert.assertFalse(OpenmrsUtil.collectionContains(unMonitoredClasses, Concept.class));
+		Assert.assertFalse(OpenmrsUtil.collectionContains(unMonitoredClasses, ConceptNumeric.class));
+		Assert.assertFalse(OpenmrsUtil.collectionContains(unMonitoredClasses, ConceptComplex.class));
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
+		String originalStrategy = gp.getPropertyValue();
+		gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
+		as.saveGlobalProperty(gp);
+		try {
+			service.stopMonitoring(Concept.class);
+			unMonitoredClasses = service.getUnMonitoredClasses();
+			Assert.assertEquals(originalCount += 3, unMonitoredClasses.size());
+			//Should have removed it and maintained the existing ones
+			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, Concept.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, ConceptNumeric.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, ConceptComplex.class));
+		}
+		finally {
+			//reset
+			service.startMonitoring(Concept.class);
+			//reset
+			gp.setPropertyValue(originalStrategy);
+			as.saveGlobalProperty(gp);
+		}
+	}
+	
+	/**
+	 * @see {@link AuditLogService#startMonitoring(Set<Class<OpenmrsObject>>)}
+	 */
+	@Test
+	@Verifies(value = "should mark a class and its known subclasses as monitored", method = "startMonitoring(Set<Class<OpenmrsObject>>)")
+	public void startMonitoring_shouldMarkAClassAndItsKnownSubclassesAsMonitored() throws Exception {
+		AdministrationService as = Context.getAdministrationService();
+		as.purgeGlobalProperty(as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORED_CLASSES));
+		setMonitoringStrategy(MonitoringStrategy.NONE_EXCEPT);
+		Set<Class<?>> monitoredClasses = service.getMonitoredClasses();
+		Assert.assertFalse(monitoredClasses.contains(Concept.class));
+		Assert.assertFalse(monitoredClasses.contains(ConceptNumeric.class));
+		Assert.assertFalse(monitoredClasses.contains(ConceptComplex.class));
+		
+		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
+		classes.add(Concept.class);
+		service.startMonitoring(classes);
+		monitoredClasses = service.getMonitoredClasses();
+		Assert.assertTrue(monitoredClasses.contains(Concept.class));
+		Assert.assertTrue(monitoredClasses.contains(ConceptNumeric.class));
+		Assert.assertTrue(monitoredClasses.contains(ConceptComplex.class));
+	}
+	
+	/**
+	 * @see {@link AuditLogService#stopMonitoring(Set<Class<OpenmrsObject>>)}
+	 */
+	@Test
+	@Verifies(value = "should update the monitored class names global property if the strategy is none_except", method = "stopMonitoring(Set<Class<OpenmrsObject>>)")
+	public void stopMonitoring_shouldUpdateTheMonitoredClassNamesGlobalPropertyIfTheStrategyIsNone_except() throws Exception {
+		setMonitoringStrategy(MonitoringStrategy.NONE_EXCEPT);
+		Set<Class<?>> monitoredClasses = service.getMonitoredClasses();
+		int originalCount = monitoredClasses.size();
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptComplex.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
+		
+		try {
+			service.stopMonitoring(Concept.class);
+			
+			monitoredClasses = service.getMonitoredClasses();
+			Assert.assertEquals(originalCount -= 3, monitoredClasses.size());
+			//Should have added it and maintained the existing ones
+			Assert.assertFalse(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
+			Assert.assertFalse(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
+			Assert.assertFalse(OpenmrsUtil.collectionContains(monitoredClasses, ConceptComplex.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
+		}
+		finally {
+			//reset
+			service.startMonitoring(Concept.class);
+		}
+	}
+	
+	/**
+	 * @see {@link AuditLogService#stopMonitoring(Set<Class<OpenmrsObject>>)}
+	 */
+	@Test
+	@Verifies(value = "should not update any global property if the strategy is all", method = "stopMonitoring(Set<Class<OpenmrsObject>>)")
+	public void stopMonitoring_shouldNotUpdateAnyGlobalPropertyIfTheStrategyIsAll() throws Exception {
+		setMonitoringStrategy(MonitoringStrategy.NONE_EXCEPT);
+		Set<Class<?>> monitoredClasses = service.getMonitoredClasses();
+		int originalMonitoredCount = monitoredClasses.size();
+		Assert.assertEquals(5, monitoredClasses.size());
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptComplex.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
+		
+		Set<Class<?>> unMonitoredClasses = service.getUnMonitoredClasses();
+		int originalUnMonitoredCount = unMonitoredClasses.size();
+		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
+		
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
+		String originalStrategy = gp.getPropertyValue();
+		gp.setPropertyValue(MonitoringStrategy.ALL.name());
+		as.saveGlobalProperty(gp);
+		try {
+			service.stopMonitoring(Concept.class);
+			
+			//Should not have changed
+			monitoredClasses = service.getMonitoredClasses();
+			unMonitoredClasses = service.getUnMonitoredClasses();
+			Assert.assertEquals(originalMonitoredCount, monitoredClasses.size());
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptComplex.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
+			
+			Assert.assertEquals(originalUnMonitoredCount, unMonitoredClasses.size());
+			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
+		}
+		finally {
+			//reset
+			service.startMonitoring(Concept.class);
+			gp.setPropertyValue(originalStrategy);
+			as.saveGlobalProperty(gp);
+		}
+	}
+	
+	/**
+	 * @see {@link AuditLogService#stopMonitoring(Set<Class<OpenmrsObject>>)}
+	 */
+	@Test
+	@Verifies(value = "should not update any global property if the strategy is none", method = "stopMonitoring(Set<Class<OpenmrsObject>>)")
+	public void stopMonitoring_shouldNotUpdateAnyGlobalPropertyIfTheStrategyIsNone() throws Exception {
+		setMonitoringStrategy(MonitoringStrategy.NONE_EXCEPT);
+		Set<Class<?>> monitoredClasses = service.getMonitoredClasses();
+		int originalMonitoredCount = monitoredClasses.size();
+		Assert.assertEquals(5, monitoredClasses.size());
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptComplex.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
+		Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
+		
+		Set<Class<?>> unMonitoredClasses = service.getUnMonitoredClasses();
+		int originalUnMonitoredCount = unMonitoredClasses.size();
+		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
+		
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
+		String originalStrategy = gp.getPropertyValue();
+		gp.setPropertyValue(MonitoringStrategy.NONE.name());
+		as.saveGlobalProperty(gp);
+		try {
+			service.stopMonitoring(Concept.class);
+			
+			//Should not have changed
+			monitoredClasses = service.getMonitoredClasses();
+			unMonitoredClasses = service.getUnMonitoredClasses();
+			Assert.assertEquals(originalMonitoredCount, monitoredClasses.size());
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, Concept.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptNumeric.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, ConceptComplex.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, EncounterType.class));
+			Assert.assertTrue(OpenmrsUtil.collectionContains(monitoredClasses, PatientIdentifierType.class));
+			
+			Assert.assertEquals(originalUnMonitoredCount, unMonitoredClasses.size());
+			Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
+		}
+		finally {
+			service.startMonitoring(Concept.class);
+			gp.setPropertyValue(originalStrategy);
+			as.saveGlobalProperty(gp);
+		}
+	}
+	
+	/**
+	 * @see {@link AuditLogService#stopMonitoring(Set<Class<OpenmrsObject>>)}
+	 */
+	@Test
+	@Verifies(value = "should update the un monitored class names global property if the strategy is all_except", method = "stopMonitoring(Set<Class<OpenmrsObject>>)")
+	public void stopMonitoring_shouldUpdateTheUnMonitoredClassNamesGlobalPropertyIfTheStrategyIsAll_except()
+	    throws Exception {
+		Set<Class<?>> unMonitoredClasses = service.getUnMonitoredClasses();
+		int originalCount = unMonitoredClasses.size();
+		Assert.assertTrue(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
+		String originalStrategy = gp.getPropertyValue();
+		gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
+		as.saveGlobalProperty(gp);
+		try {
+			service.startMonitoring(EncounterType.class);
+			unMonitoredClasses = service.getUnMonitoredClasses();
+			Assert.assertEquals(--originalCount, unMonitoredClasses.size());
+			//Should have removed it and maintained the existing ones
+			Assert.assertFalse(OpenmrsUtil.collectionContains(unMonitoredClasses, EncounterType.class));
+		}
+		finally {
+			//reset
+			service.stopMonitoring(EncounterType.class);
+			gp.setPropertyValue(originalStrategy);
+			as.saveGlobalProperty(gp);
+		}
+	}
+	
+	/**
+	 * @see {@link AuditLogService#stopMonitoring(Set<Class<OpenmrsObject>>)}
+	 */
+	@Test
+	@Verifies(value = "should mark a class and its known subclasses as un monitored", method = "stopMonitoring(Set<Class<OpenmrsObject>>)")
+	public void stopMonitoring_shouldMarkAClassAndItsKnownSubclassesAsUnMonitored() throws Exception {
+		setMonitoringStrategy(MonitoringStrategy.NONE_EXCEPT);
+		service.startMonitoring(Concept.class);
+		Set<Class<?>> monitoredClasses = service.getMonitoredClasses();
+		Assert.assertTrue(monitoredClasses.contains(Concept.class));
+		Assert.assertTrue(monitoredClasses.contains(ConceptNumeric.class));
+		Assert.assertTrue(monitoredClasses.contains(ConceptComplex.class));
+		
+		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
+		classes.add(Concept.class);
+		service.stopMonitoring(classes);
+		Assert.assertFalse(monitoredClasses.contains(Concept.class));
+		Assert.assertFalse(monitoredClasses.contains(ConceptNumeric.class));
+		Assert.assertFalse(monitoredClasses.contains(ConceptComplex.class));
 	}
 }
