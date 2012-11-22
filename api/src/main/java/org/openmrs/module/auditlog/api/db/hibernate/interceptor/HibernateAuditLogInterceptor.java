@@ -61,7 +61,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	
 	private static final Log log = LogFactory.getLog(HibernateAuditLogInterceptor.class);
 	
-	//we use a set because the same object can be loaded multiple times
 	private ThreadLocal<HashSet<OpenmrsObject>> inserts = new ThreadLocal<HashSet<OpenmrsObject>>();
 	
 	private ThreadLocal<HashSet<OpenmrsObject>> updates = new ThreadLocal<HashSet<OpenmrsObject>>();
@@ -312,22 +311,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				        .get(ownerUuid)
 				        .put(propertyName,
 				            new String[] { getItemUuidsOrIds(currentColl), getItemUuidsOrIds(previousMap.values()) });
-				
-				if (removedItems.size() > 0) {
-					//Create DELETED log for the removed item here because hibernate doesn't call 
-					//interceptor.onDelete for an element that is removed from a child collection
-					//But we need to ignore ManyToMany relationships since they can exist on their own
-					//e.g when a privilege is removed from a role, hibernate doesn't delete it however
-					//when a person name is removed from a patient, it gets deleted from the database
-					//because it can't exist on its own
-					//ClassMetadata cmd = getSessionFactory().getClassMetadata(owningObject.getClass());
-					//Type collType = cmd.getPropertyType(propertyName);
-					if (OpenmrsObject.class.isAssignableFrom(removedItems.iterator().next().getClass())) {
-						for (Object object : removedItems) {
-							deletes.get().add((OpenmrsObject) object);
-						}
-					}
-				}
 				
 				updates.get().add((OpenmrsObject) owningObject);
 			}
