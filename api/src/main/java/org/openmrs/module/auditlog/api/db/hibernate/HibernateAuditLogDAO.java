@@ -148,7 +148,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 */
 	@Override
 	public Set<Class<?>> getPersistentConcreteSubclasses(Class<?> clazz) {
-		return getPersistentConcreteSubclasseInternal(clazz, null, null);
+		return getPersistentConcreteSubclassesInternal(clazz, null, null);
 	}
 	
 	/**
@@ -474,7 +474,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 * @should exclude interfaces and abstract classes
 	 */
 	@SuppressWarnings("unchecked")
-	private Set<Class<?>> getPersistentConcreteSubclasseInternal(Class<?> clazz, Set<Class<?>> foundSubclasses,
+	private Set<Class<?>> getPersistentConcreteSubclassesInternal(Class<?> clazz, Set<Class<?>> foundSubclasses,
 	                                                             Collection<ClassMetadata> mappedClasses) {
 		if (foundSubclasses == null)
 			foundSubclasses = new HashSet<Class<?>>();
@@ -487,7 +487,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 				if (!clazz.equals(possibleSubclass) && clazz.isAssignableFrom(possibleSubclass)) {
 					if (!Modifier.isAbstract(possibleSubclass.getModifiers()) && !possibleSubclass.isInterface())
 						foundSubclasses.add(possibleSubclass);
-					foundSubclasses.addAll(getPersistentConcreteSubclasseInternal(possibleSubclass, foundSubclasses,
+					foundSubclasses.addAll(getPersistentConcreteSubclassesInternal(possibleSubclass, foundSubclasses,
 					    mappedClasses));
 				}
 			}

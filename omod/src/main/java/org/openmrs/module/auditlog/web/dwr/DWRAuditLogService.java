@@ -84,8 +84,8 @@ public class DWRAuditLogService {
 								try {
 									objectId = obj.getId();
 								}
-								catch (Exception e) {
-									log.error("Error:", e);
+								catch (UnsupportedOperationException e) {
+									//ignore
 								}
 								displayString = getDisplayString(obj, false);
 							} else {
@@ -283,10 +283,19 @@ public class DWRAuditLogService {
 		
 		if (includeUuidAndId && OpenmrsObject.class.isAssignableFrom(obj.getClass())) {
 			OpenmrsObject openmrsObj = (OpenmrsObject) obj;
-			if (StringUtils.isBlank(displayString))
-				displayString = openmrsObj.getUuid() + " [" + openmrsObj.getId() + "]";
-			else
-				displayString = displayString + " - " + openmrsObj.getUuid() + " [" + openmrsObj.getId() + "]";
+			String id = "";
+			try {
+				if (openmrsObj.getId() != null)
+					id = " [" + openmrsObj.getId() + "]";
+			}
+			catch (UnsupportedOperationException e) {
+				//ignore
+			}
+			if (StringUtils.isBlank(displayString)) {
+				displayString = openmrsObj.getUuid() + id;
+			} else {
+				displayString = displayString + " - " + openmrsObj.getUuid() + id;
+			}
 		}
 		return displayString;
 	}
