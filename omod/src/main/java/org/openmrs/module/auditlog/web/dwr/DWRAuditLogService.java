@@ -13,7 +13,7 @@
  */
 package org.openmrs.module.auditlog.web.dwr;
 
-import java.beans.PropertyDescriptor;
+import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -40,7 +40,6 @@ import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.util.Reflect;
-import org.springframework.beans.BeanUtils;
 
 /**
  * Processes DWR calls for the module
@@ -106,45 +105,51 @@ public class DWRAuditLogService {
 									if (entry.getValue().length > 0)
 										previousValue = entry.getValue()[1];
 									if (StringUtils.isNotBlank(newValue) || StringUtils.isNotBlank(previousValue)) {
-										PropertyDescriptor pd = BeanUtils.getPropertyDescriptor(clazz, propertyName);
-										if (Date.class.isAssignableFrom(pd.getPropertyType())) {
-											if (newValue != null) {
-												try {
-													newValueDisplay += Context.getDateFormat().format(
-													    new SimpleDateFormat(AuditLogConstants.DATE_FORMAT).parse(newValue));
+										Field field = AuditLogUtil.getField(clazz, propertyName);
+										//This can be null if the auditlog was created and then 
+										//later upgraded to a version where the field was removed
+										if (field != null) {
+											if (Date.class.isAssignableFrom(field.getType())) {
+												if (newValue != null) {
+													try {
+														newValueDisplay += Context.getDateFormat().format(
+														    new SimpleDateFormat(AuditLogConstants.DATE_FORMAT)
+														            .parse(newValue));
+													}
+													catch (ParseException e) {
+														log.warn(e.getMessage());
+														newValueDisplay = newValue;
+													}
 												}
-												catch (ParseException e) {
-													log.warn(e.getMessage());
+												if (previousValue != null) {
+													try {
+														preValueDisplay += Context.getDateFormat().format(
+														    new SimpleDateFormat(AuditLogConstants.DATE_FORMAT)
+														            .parse(previousValue));
+													}
+													catch (Exception e) {
+														log.warn(e.getMessage());
+														preValueDisplay = previousValue;
+													}
+												}
+											} else {
+												if (StringUtils.isNotBlank(newValue)
+												        && (newValue.startsWith(AuditLogConstants.UUID_LABEL) || newValue
+												                .startsWith(AuditLogConstants.ID_LABEL))) {
+													newValueDisplay += getPropertyDisplayString(clazz, propertyName,
+													    field.getType(), newValue);
+												} else if (newValue != null) {
 													newValueDisplay = newValue;
 												}
-											}
-											if (previousValue != null) {
-												try {
-													preValueDisplay += Context.getDateFormat().format(
-													    new SimpleDateFormat(AuditLogConstants.DATE_FORMAT)
-													            .parse(previousValue));
-												}
-												catch (Exception e) {
-													log.warn(e.getMessage());
+												
+												if (StringUtils.isNotBlank(previousValue)
+												        && (previousValue.startsWith(AuditLogConstants.UUID_LABEL) || previousValue
+												                .startsWith(AuditLogConstants.ID_LABEL))) {
+													preValueDisplay += getPropertyDisplayString(clazz, propertyName,
+													    field.getType(), previousValue);
+												} else if (previousValue != null) {
 													preValueDisplay = previousValue;
 												}
-											}
-										} else {
-											if (StringUtils.isNotBlank(newValue)
-											        && (newValue.startsWith(AuditLogConstants.UUID_LABEL) || newValue
-											                .startsWith(AuditLogConstants.ID_LABEL))) {
-												newValueDisplay += getPropertyDisplayString(clazz, propertyName, newValue);
-											} else if (newValue != null) {
-												newValueDisplay = newValue;
-											}
-											
-											if (StringUtils.isNotBlank(previousValue)
-											        && (previousValue.startsWith(AuditLogConstants.UUID_LABEL) || previousValue
-											                .startsWith(AuditLogConstants.ID_LABEL))) {
-												preValueDisplay += getPropertyDisplayString(clazz, propertyName,
-												    previousValue);
-											} else if (previousValue != null) {
-												preValueDisplay = previousValue;
 											}
 										}
 									}
@@ -182,12 +187,12 @@ public class DWRAuditLogService {
 	 * @param propertyValue
 	 * @return the display text
 	 */
-	private String getPropertyDisplayString(Class<?> owningType, String propertyName, String propertyValue) {
+	private String getPropertyDisplayString(Class<?> owningType, String propertyName, Class<?> propertyType,
+	                                        String propertyValue) {
 		String displayString = "";
 		try {
-			PropertyDescriptor pd = BeanUtils.getPropertyDescriptor(owningType, propertyName);
 			Object actualObject = null;
-			if (Reflect.isCollection(pd.getPropertyType())) {
+			if (Reflect.isCollection(propertyType)) {
 				//TODO this not to fail if the primary key was a String e.g for privileges and had a ',' in it
 				String[] uuidsOrIds = StringUtils.split(propertyValue, ",");
 				List<Object> items = new ArrayList<Object>();
@@ -232,11 +237,11 @@ public class DWRAuditLogService {
 				if (propertyValue.startsWith(AuditLogConstants.UUID_LABEL)) {
 					propertyValue = propertyValue.substring(propertyValue.indexOf(AuditLogConstants.UUID_LABEL)
 					        + AuditLogConstants.UUID_LABEL.length());
-					actualObject = getService().getObjectByUuid(pd.getPropertyType(), propertyValue);
+					actualObject = getService().getObjectByUuid(propertyType, propertyValue);
 				} else {
 					propertyValue = propertyValue.substring(propertyValue.indexOf(AuditLogConstants.ID_LABEL)
 					        + AuditLogConstants.ID_LABEL.length());
-					actualObject = getService().getObjectById(pd.getPropertyType(), Integer.valueOf(propertyValue));
+					actualObject = getService().getObjectById(propertyType, Integer.valueOf(propertyValue));
 				}
 				
 				if (actualObject != null) {

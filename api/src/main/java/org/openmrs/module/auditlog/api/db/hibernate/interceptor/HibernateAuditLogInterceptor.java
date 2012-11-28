@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -163,9 +164,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				
 				Object previousValue = (previousState != null) ? previousState[i] : null;
 				Object currentValue = (currentState != null) ? currentState[i] : null;
-				Class<?> propertyType = BeanUtils.getPropertyDescriptor(entity.getClass(), propertyNames[i])
-				        .getPropertyType();
-				
+				Class<?> propertyType = AuditLogUtil.getField(entity.getClass(), propertyNames[i]).getType();
 				//TODO We need to handle time zones issues better
 				if (!Reflect.isCollection(propertyType) && !OpenmrsUtil.nullSafeEquals(currentValue, previousValue)) {
 					//For string properties, ignore changes from null to blank and vice versa
@@ -506,8 +505,15 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 			return false;
 		if (getAuditLogDao().getMonitoringStrategy() == MonitoringStrategy.ALL)
 			return true;
-		if (OpenmrsUtil.collectionContains(getAuditLogDao().getImplicitlyMonitoredClasses(), clazz))
-			return true;
+		
+		try {
+			if (OpenmrsUtil.collectionContains(getAuditLogDao().getImplicitlyMonitoredClasses(), clazz))
+				return true;
+		}
+		catch (ConcurrentModificationException e) {
+			System.err.println("\nError while Checking if collection contains:" + clazz + "\n");
+			e.printStackTrace();
+		}
 		if (getAuditLogDao().getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT) {
 			return OpenmrsUtil.collectionContains(getAuditLogDao().getMonitoredClasses(), clazz);
 		}

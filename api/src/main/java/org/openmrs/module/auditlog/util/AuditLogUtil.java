@@ -186,7 +186,7 @@ public class AuditLogUtil {
 	 * @param fieldName
 	 * @return
 	 */
-	private static Field getField(Class<?> clazz, String fieldName) {
+	public static Field getField(Class<?> clazz, String fieldName) {
 		Field field = null;
 		try {
 			field = clazz.getDeclaredField(fieldName);
