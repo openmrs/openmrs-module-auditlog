@@ -76,7 +76,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 			}
 		}
 		
-		return dao.getAuditLogs(classesToMatch, actions, startDate, endDate, start, length);
+		return dao.getAuditLogs(null, classesToMatch, actions, startDate, endDate, start, length);
 	}
 	
 	/**
@@ -158,5 +158,21 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	@Override
 	public Set<Class<?>> getUnMonitoredClasses() {
 		return dao.getUnMonitoredClasses();
+	}
+	
+	/**
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#getAuditLogs(java.lang.String,
+	 *      java.lang.Class, java.util.List, java.util.Date, java.util.Date)
+	 */
+	@Override
+	public List<AuditLog> getAuditLogs(String uuid, Class<? extends OpenmrsObject> clazz, List<Action> actions,
+	                                   Date startDate, Date endDate) {
+		if (clazz == null)
+			throw new APIException("class cannot be null");
+		
+		List<String> clazzes = new ArrayList<String>();
+		clazzes.add(clazz.getName());
+		
+		return dao.getAuditLogs(uuid, clazzes, actions, startDate, endDate, null, null);
 	}
 }

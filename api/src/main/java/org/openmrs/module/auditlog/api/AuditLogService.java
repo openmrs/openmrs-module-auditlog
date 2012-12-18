@@ -142,4 +142,19 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should return a set of un monitored classes
 	 */
 	public Set<Class<?>> getUnMonitoredClasses();
+	
+	/**
+	 * Gets all audit logs for the object that matches the specified uuid and class that match the
+	 * the other specified arguments
+	 * 
+	 * @param uuid the uuid of the object to match against
+	 * @param clazz the Class of the object to match against
+	 * @param actions the actions to match against
+	 * @param startDate the start date to match against
+	 * @param endDate the end date to match against
+	 * @return a list of audit logs
+	 * @should get all logs for the object matching the specified uuid
+	 */
+	public List<AuditLog> getAuditLogs(String uuid, Class<? extends OpenmrsObject> clazz, List<Action> actions,
+	                                   Date startDate, Date endDate);
 }

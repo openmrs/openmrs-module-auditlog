@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import org.openmrs.Concept;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
@@ -29,10 +30,22 @@ import org.openmrs.module.auditlog.api.AuditLogService;
 public interface AuditLogDAO {
 	
 	/**
-	 * @see AuditLogService#getAuditLogs(List, List, Date, Date, Integer, Integer)
+	 * Fetches the audit log entries matching the specified arguments
+	 * 
+	 * @param uuid the uuid to match against
+	 * @param classnames the class names to match against e.g for objects of type {@link Concept}
+	 * @param actions the list of {@link Action}s to match against
+	 * @param startDate the creation date of the log entries to return should be after or equal to
+	 *            this date
+	 * @param endDate the creation date of the log entries to return should be before or equal to
+	 *            this date
+	 * @param start index to start with (defaults to 0 if <code>null<code>)
+	 * @param length number of results to return (default to return all matching results if
+	 *            <code>null<code>)
+	 * @return list of auditlogs
 	 */
-	public List<AuditLog> getAuditLogs(List<String> classnames, List<Action> actions, Date startDate, Date endDate,
-	                                   Integer start, Integer length);
+	public List<AuditLog> getAuditLogs(String uuid, List<String> classnames, List<Action> actions, Date startDate,
+	                                   Date endDate, Integer start, Integer length);
 	
 	/**
 	 * Saves the specified object to the database

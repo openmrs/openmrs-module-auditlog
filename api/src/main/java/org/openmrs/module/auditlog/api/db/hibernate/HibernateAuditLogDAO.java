@@ -68,15 +68,17 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.db.AuditLogDAO#getAuditLogs(List, List, java.util.Date,
-	 *      java.util.Date, java.lang.Integer, java.lang.Integer)
+	 * @see AuditLogDAO#getAuditLogs(String, List, List, Date, Date, Integer, Integer)
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	@Transactional(readOnly = true)
-	public List<AuditLog> getAuditLogs(List<String> classnames, List<Action> actions, Date startDate, Date endDate,
-	                                   Integer start, Integer length) {
+	public List<AuditLog> getAuditLogs(String uuid, List<String> classnames, List<Action> actions, Date startDate,
+	                                   Date endDate, Integer start, Integer length) {
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(AuditLog.class);
+		if (uuid != null)
+			criteria.add(Restrictions.ge("objectUuid", uuid));
+		
 		if (classnames != null)
 			criteria.add(Restrictions.in("className", classnames));
 		
@@ -475,7 +477,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 */
 	@SuppressWarnings("unchecked")
 	private Set<Class<?>> getPersistentConcreteSubclassesInternal(Class<?> clazz, Set<Class<?>> foundSubclasses,
-	                                                             Collection<ClassMetadata> mappedClasses) {
+	                                                              Collection<ClassMetadata> mappedClasses) {
 		if (foundSubclasses == null)
 			foundSubclasses = new HashSet<Class<?>>();
 		if (mappedClasses == null)
