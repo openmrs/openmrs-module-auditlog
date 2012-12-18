@@ -164,7 +164,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				
 				Object previousValue = (previousState != null) ? previousState[i] : null;
 				Object currentValue = (currentState != null) ? currentState[i] : null;
-				Class<?> propertyType = AuditLogUtil.getField(entity.getClass(), propertyNames[i]).getType();
+				Class<?> propertyType = types[i].getReturnedClass();
 				//TODO We need to handle time zones issues better
 				if (!Reflect.isCollection(propertyType) && !OpenmrsUtil.nullSafeEquals(currentValue, previousValue)) {
 					//For string properties, ignore changes from null to blank and vice versa
