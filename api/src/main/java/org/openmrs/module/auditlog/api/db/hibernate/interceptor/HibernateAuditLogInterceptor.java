@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -501,18 +500,15 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	 */
 	private boolean isMonitoredInternal(Class<?> clazz) {
 		if (!OpenmrsObject.class.isAssignableFrom(clazz) || getAuditLogDao().getMonitoringStrategy() == null
-		        || getAuditLogDao().getMonitoringStrategy() == MonitoringStrategy.NONE)
+		        || getAuditLogDao().getMonitoringStrategy() == MonitoringStrategy.NONE) {
 			return false;
-		if (getAuditLogDao().getMonitoringStrategy() == MonitoringStrategy.ALL)
-			return true;
-		
-		try {
-			if (OpenmrsUtil.collectionContains(getAuditLogDao().getImplicitlyMonitoredClasses(), clazz))
-				return true;
 		}
-		catch (ConcurrentModificationException e) {
-			System.err.println("\nError while Checking if collection contains:" + clazz + "\n");
-			e.printStackTrace();
+		if (getAuditLogDao().getMonitoringStrategy() == MonitoringStrategy.ALL) {
+			return true;
+		}
+		Set<Class<?>> imClasses = getAuditLogDao().getImplicitlyMonitoredClasses();
+		if (OpenmrsUtil.collectionContains(imClasses, clazz)) {
+			return true;
 		}
 		if (getAuditLogDao().getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT) {
 			return OpenmrsUtil.collectionContains(getAuditLogDao().getMonitoredClasses(), clazz);
