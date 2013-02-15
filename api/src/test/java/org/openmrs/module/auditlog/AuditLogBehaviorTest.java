@@ -398,7 +398,19 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@Test
 	@NotTransactional
 	public void shouldCreateAnAuditLogForTheParentObjectWhenAnElementInAChildCollectionIsUpdated() throws Exception {
+		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, auditLogService.getMonitoringStrategy());
+		Assert.assertFalse(OpenmrsUtil.collectionContains(auditLogService.getMonitoredClasses(), ConceptDescription.class));
+		
+		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
+		clazzes.add(Concept.class);
+		List<AuditLog> conceptLogs = auditLogService.getAuditLogs(clazzes, Collections.singletonList(UPDATED), null, null,
+		    null, null);
+		Assert.assertEquals(0, conceptLogs.size());
 		Concept concept = conceptService.getConcept(7);
+		Assert.assertEquals(0,
+		    auditLogService.getAuditLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED), null, null)
+		            .size());
+		
 		int originalDescriptionCount = concept.getDescriptions().size();
 		Assert.assertTrue(originalDescriptionCount > 0);
 		
@@ -406,15 +418,17 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		concept = conceptService.saveConcept(concept);
 		Assert.assertEquals(originalDescriptionCount, concept.getDescriptions().size());
 		
-		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
-		clazzes.add(Concept.class);//get only location logs since there those of GPs that we have changed
-		List<AuditLog> conceptLogs = auditLogService.getAuditLogs(clazzes, Collections.singletonList(UPDATED), null, null,
+		List<AuditLog> conceptLogs2 = auditLogService.getAuditLogs(clazzes, Collections.singletonList(UPDATED), null, null,
 		    null, null);
-		Assert.assertEquals(1, conceptLogs.size());
-		Assert.assertEquals(conceptLogs.get(0).getObjectUuid(), concept.getUuid());
+		Assert.assertEquals(1, conceptLogs2.size());
+		Assert.assertEquals(conceptLogs2.get(0).getObjectUuid(), concept.getUuid());
+		Assert.assertEquals(1,
+		    auditLogService.getAuditLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED), null, null)
+		            .size());
 		
 		clazzes.remove(Concept.class);
 		clazzes.add(ConceptDescription.class);
+		Assert.assertEquals(1, clazzes.size());
 		List<AuditLog> descriptionLogs = auditLogService.getAuditLogs(clazzes, Collections.singletonList(UPDATED), null,
 		    null, null, null);
 		Assert.assertEquals(1, descriptionLogs.size());
@@ -538,14 +552,13 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	
 	//@Test
 	@NotTransactional
-	public void shouldCreateLogForAParentWhenACollectionElementIsEdited() throws Exception {
+	public void shouldCreateLogForAParentWhenACollectionElementOfAnUnMonitoredTypeIsEdited() throws Exception {
 		Concept concept = conceptService.getConcept(5089);
 		Assert.assertEquals(0,
 		    auditLogService.getAuditLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED), null, null)
 		            .size());
-		
+		//TODO use a concept mapping here
 		concept.getDescription().setDescription("random description");
-		auditLogService.startMonitoring(ConceptDescription.class);
 		conceptService.saveConcept(concept);
 		Assert.assertEquals(
 		    1,

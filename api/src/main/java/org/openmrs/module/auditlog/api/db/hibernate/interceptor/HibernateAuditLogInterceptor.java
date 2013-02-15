@@ -255,10 +255,12 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 					log.debug("Creating log entry for updated object with uuid:" + openmrsObject.getUuid() + " of type:"
 					        + entity.getClass().getName());
 				
-				if (getAuditLogDao().getMonitoredClasses().contains(openmrsObject.getClass()))
+				if (getAuditLogDao().getMonitoredClasses().contains(openmrsObject.getClass())) {
 					updates.get().add(openmrsObject);
-				else
+				} else {
+					//This is an implicitly monitored class
 					otherUpdates.get().add(openmrsObject);
+				}
 				
 				objectChangesMap.get().put(openmrsObject.getUuid(), propertyChangesMap);
 			}
