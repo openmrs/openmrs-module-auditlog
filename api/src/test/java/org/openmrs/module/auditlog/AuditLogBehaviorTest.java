@@ -401,11 +401,6 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, auditLogService.getMonitoringStrategy());
 		Assert.assertFalse(OpenmrsUtil.collectionContains(auditLogService.getMonitoredClasses(), ConceptDescription.class));
 		
-		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
-		clazzes.add(Concept.class);
-		List<AuditLog> conceptLogs = auditLogService.getAuditLogs(clazzes, Collections.singletonList(UPDATED), null, null,
-		    null, null);
-		Assert.assertEquals(0, conceptLogs.size());
 		Concept concept = conceptService.getConcept(7);
 		Assert.assertEquals(0,
 		    auditLogService.getAuditLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED), null, null)
@@ -418,20 +413,9 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		concept = conceptService.saveConcept(concept);
 		Assert.assertEquals(originalDescriptionCount, concept.getDescriptions().size());
 		
-		List<AuditLog> conceptLogs2 = auditLogService.getAuditLogs(clazzes, Collections.singletonList(UPDATED), null, null,
-		    null, null);
-		Assert.assertEquals(1, conceptLogs2.size());
-		Assert.assertEquals(conceptLogs2.get(0).getObjectUuid(), concept.getUuid());
 		Assert.assertEquals(1,
 		    auditLogService.getAuditLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED), null, null)
 		            .size());
-		
-		clazzes.remove(Concept.class);
-		clazzes.add(ConceptDescription.class);
-		Assert.assertEquals(1, clazzes.size());
-		List<AuditLog> descriptionLogs = auditLogService.getAuditLogs(clazzes, Collections.singletonList(UPDATED), null,
-		    null, null, null);
-		Assert.assertEquals(1, descriptionLogs.size());
 	}
 	
 	@Test
@@ -548,24 +532,5 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		clazzes.add(Location.class);
 		clazzes.add(LocationTag.class);
 		Assert.assertEquals(2, auditLogService.getAuditLogs(clazzes, null, null, null, null, null).size());
-	}
-	
-	//@Test
-	@NotTransactional
-	public void shouldCreateLogForAParentWhenACollectionElementOfAnUnMonitoredTypeIsEdited() throws Exception {
-		Concept concept = conceptService.getConcept(5089);
-		Assert.assertEquals(0,
-		    auditLogService.getAuditLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED), null, null)
-		            .size());
-		//TODO use a concept mapping here
-		concept.getDescription().setDescription("random description");
-		conceptService.saveConcept(concept);
-		Assert.assertEquals(
-		    1,
-		    auditLogService.getAuditLogs(concept.getDescription().getUuid(), ConceptDescription.class,
-		        Collections.singletonList(UPDATED), null, null).size());
-		Assert.assertEquals(1,
-		    auditLogService.getAuditLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED), null, null)
-		            .size());
 	}
 }
