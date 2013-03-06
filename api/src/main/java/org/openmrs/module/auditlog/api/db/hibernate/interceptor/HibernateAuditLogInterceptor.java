@@ -345,18 +345,19 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				
 				try {
 					User user = Context.getAuthenticatedUser();
+					Date tempDate = (date.get() != null) ? date.get() : new Date();
 					//TODO handle daemon or un authenticated operations
 					
 					for (OpenmrsObject insert : inserts.get()) {
 						AuditLog auditLog = new AuditLog(insert.getClass().getName(), insert.getUuid(), Action.CREATED,
-						        user, date.get());
+						        user, tempDate);
 						auditLog.setUuid(UUID.randomUUID().toString());
 						getAuditLogDao().save(auditLog);
 					}
 					
 					for (OpenmrsObject delete : deletes.get()) {
 						AuditLog auditLog = new AuditLog(delete.getClass().getName(), delete.getUuid(), Action.DELETED,
-						        user, date.get());
+						        user, tempDate);
 						auditLog.setUuid(UUID.randomUUID().toString());
 						getAuditLogDao().save(auditLog);
 					}
@@ -397,7 +398,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					
 					for (OpenmrsObject update : updates.get()) {
 						AuditLog auditLog = new AuditLog(update.getClass().getName(), update.getUuid(), Action.UPDATED,
-						        user, date.get());
+						        user, tempDate);
 						auditLog.setUuid(UUID.randomUUID().toString());
 						Map<String, String[]> propertyValuesMap = objectChangesMap.get().get(update.getUuid());
 						if (propertyValuesMap != null) {
