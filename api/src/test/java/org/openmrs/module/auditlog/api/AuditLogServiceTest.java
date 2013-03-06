@@ -24,6 +24,7 @@ import junit.framework.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.openmrs.Cohort;
 import org.openmrs.Concept;
 import org.openmrs.ConceptComplex;
 import org.openmrs.ConceptDescription;
@@ -656,5 +657,43 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		Assert.assertEquals(3, service.getAuditLogs("c607c80f-1ea9-4da3-bb88-6276ce8868dd", Concept.class, null, null, null)
 		        .size());
+	}
+	
+	/**
+	 * @see {@link AuditLogService#isMonitored(Class<*>)}
+	 */
+	@Test
+	@Verifies(value = "should true if the class is monitored", method = "isMonitored(Class<*>)")
+	public void isMonitored_shouldTrueIfTheClassIsMonitored() throws Exception {
+		Assert.assertTrue(service.isMonitored(Concept.class));
+		Assert.assertTrue(service.isMonitored(ConceptNumeric.class));
+		Assert.assertTrue(service.isMonitored(EncounterType.class));
+		Assert.assertTrue(service.isMonitored(PatientIdentifierType.class));
+		Assert.assertTrue(service.isMonitored(ConceptName.class));
+		
+		MonitoringStrategy newStrategy = MonitoringStrategy.ALL_EXCEPT;
+		setGlobalProperty(AuditLogConstants.GP_MONITORING_STRATEGY, newStrategy.name());
+		Assert.assertEquals(newStrategy, service.getMonitoringStrategy());
+		
+		Assert.assertTrue(service.isMonitored(Concept.class));
+		Assert.assertTrue(service.isMonitored(ConceptNumeric.class));
+		Assert.assertTrue(service.isMonitored(PatientIdentifierType.class));
+		Assert.assertTrue(service.isMonitored(ConceptName.class));
+		Assert.assertTrue(service.isMonitored(Cohort.class));
+	}
+	
+	/**
+	 * @see {@link AuditLogService#isMonitored(Class<*>)}
+	 */
+	@Test
+	@Verifies(value = "should false if the class is not monitored", method = "isMonitored(Class<*>)")
+	public void isMonitored_shouldFalseIfTheClassIsNotMonitored() throws Exception {
+		Assert.assertFalse(service.isMonitored(Cohort.class));
+		
+		MonitoringStrategy newStrategy = MonitoringStrategy.ALL_EXCEPT;
+		setGlobalProperty(AuditLogConstants.GP_MONITORING_STRATEGY, newStrategy.name());
+		Assert.assertEquals(newStrategy, service.getMonitoringStrategy());
+		
+		Assert.assertFalse(service.isMonitored(EncounterType.class));
 	}
 }

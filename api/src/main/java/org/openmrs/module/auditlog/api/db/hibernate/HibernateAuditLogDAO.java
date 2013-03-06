@@ -313,7 +313,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		if (getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT
 		        || getMonitoringStrategy() == MonitoringStrategy.ALL_EXCEPT) {
 			updateGlobalProperty(clazzes, false);
-		}monitoredClassnamesCache =null;
+		}
 	}
 	
 	/**

@@ -140,7 +140,7 @@ public interface AuditLogDAO {
 	/**
 	 * Gets the {@link ClassMetadata} for the specified class
 	 * 
-	 * @return
+	 * @return the ClassMetadata
 	 */
 	public ClassMetadata getClassMetadata(Class<?> clazz);
 }

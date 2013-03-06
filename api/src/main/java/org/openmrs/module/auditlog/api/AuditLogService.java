@@ -32,15 +32,12 @@ import org.openmrs.module.auditlog.util.AuditLogConstants;
 public interface AuditLogService extends OpenmrsService {
 	
 	/**
-	 * Checks if specified object is monitored, it actually delegates to
-	 * {@link #isMonitoredInternal(Class)} Its role is to check if the monitored classes are not yet
-	 * cached so that it turns off hibernate auto flushing in case we have new objects without ids
-	 * when the Global Property {@link AuditLogConstants#GP_MONITORED_CLASSES} is getting read
+	 * Checks if specified type is monitored
 	 * 
-	 * @param clazz the class the check
+	 * @param clazz the class to check
 	 * @return true if the object is a monitored one otherwise false
-	 * @should true if the class is a monitored
-	 * @should false if the class is a not monitored
+	 * @should true if the class is monitored
+	 * @should false if the class is not monitored
 	 */
 	public boolean isMonitored(Class<?> clazz);
 	
