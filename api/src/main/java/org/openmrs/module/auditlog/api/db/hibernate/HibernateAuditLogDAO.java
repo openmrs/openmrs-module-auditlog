@@ -25,6 +25,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Criteria;
 import org.hibernate.EntityMode;
+import org.hibernate.FlushMode;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
@@ -44,6 +45,7 @@ import org.openmrs.module.auditlog.MonitoringStrategy;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
+import org.openmrs.util.OpenmrsUtil;
 import org.springframework.transaction.annotation.Transactional;
 
 public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener {
@@ -65,6 +67,55 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 */
 	public void setSessionFactory(SessionFactory sessionFactory) {
 		this.sessionFactory = sessionFactory;
+	}
+	
+	/**
+	 * @see org.openmrs.module.auditlog.api.db.AuditLogDAO#isMonitored(Class)
+	 */
+	@Override
+	public boolean isMonitored(Class<?> clazz) {
+		//We need to stop hibernate auto flushing which might happen as we fetch
+		//the GP values, Otherwise if a flush happens, then the interceptor
+		//logic will be called again which will result in an infinite loop/stack overflow
+		if (monitoredClassnamesCache == null || monitoringStrategyCache == null) {
+			FlushMode originalFlushMode = sessionFactory.getCurrentSession().getFlushMode();
+			sessionFactory.getCurrentSession().setFlushMode(FlushMode.MANUAL);
+			try {
+				return isMonitoredInternal(clazz);
+			}
+			finally {
+				//reset
+				sessionFactory.getCurrentSession().setFlushMode(originalFlushMode);
+			}
+		}
+		
+		return isMonitoredInternal(clazz);
+	}
+	
+	/**
+	 * Checks if specified object is among the ones that are monitored and is an
+	 * {@link OpenmrsObject}
+	 * 
+	 * @param clazz the class to check against
+	 * @return true if it is monitored otherwise false
+	 */
+	private boolean isMonitoredInternal(Class<?> clazz) {
+		if (!OpenmrsObject.class.isAssignableFrom(clazz) || getMonitoringStrategy() == null
+		        || getMonitoringStrategy() == MonitoringStrategy.NONE) {
+			return false;
+		}
+		if (getMonitoringStrategy() == MonitoringStrategy.ALL) {
+			return true;
+		}
+		Set<Class<?>> imClasses = getImplicitlyMonitoredClasses();
+		if (OpenmrsUtil.collectionContains(imClasses, clazz)) {
+			return true;
+		}
+		if (getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT) {
+			return OpenmrsUtil.collectionContains(getMonitoredClasses(), clazz);
+		}
+		//Strategy is ALL_EXCEPT
+		return !OpenmrsUtil.collectionContains(getUnMonitoredClasses(), clazz);
 	}
 	
 	/**
@@ -182,30 +233,6 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.api.db.AuditLogDAO#isMonitoringStrategyCached()
-	 */
-	@Override
-	public boolean isMonitoringStrategyCached() {
-		return monitoringStrategyCache != null;
-	}
-	
-	/**
-	 * @see org.openmrs.module.auditlog.api.db.AuditLogDAO#areMonitoredClassesCached()
-	 */
-	@Override
-	public boolean areMonitoredClassesCached() {
-		return monitoredClassnamesCache != null;
-	}
-	
-	/**
-	 * @see org.openmrs.module.auditlog.api.db.AuditLogDAO#areUnMonitoredClassesCached()
-	 */
-	@Override
-	public boolean areUnMonitoredClassesCached() {
-		return unMonitoredClassnamesCache != null;
-	}
-	
-	/**
 	 * @see org.openmrs.module.auditlog.api.db.AuditLogDAO#getMonitoredClasses()
 	 */
 	@Override
@@ -286,7 +313,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		if (getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT
 		        || getMonitoringStrategy() == MonitoringStrategy.ALL_EXCEPT) {
 			updateGlobalProperty(clazzes, false);
-		}
+		}monitoredClassnamesCache =null;
 	}
 	
 	/**
@@ -508,5 +535,13 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 				getImplicitlyMonitoredClasses().add(assocType);
 			}
 		}
+	}
+	
+	/**
+	 * @see org.openmrs.module.auditlog.api.db.AuditLogDAO#getClassMetadata(java.lang.Class)
+	 */
+	@Override
+	public ClassMetadata getClassMetadata(Class<?> clazz) {
+		return sessionFactory.getClassMetadata(clazz);
 	}
 }

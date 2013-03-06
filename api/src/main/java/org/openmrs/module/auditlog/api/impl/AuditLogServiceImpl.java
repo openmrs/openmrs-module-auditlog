@@ -53,6 +53,13 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	}
 	
 	/**
+	 * @see AuditLogService#isMonitored(Class)
+	 */
+	public boolean isMonitored(Class<?> clazz) {
+		return dao.isMonitored(clazz);
+	}
+	
+	/**
 	 * @see org.openmrs.module.auditlog.AuditLogService#getAuditLogs(List, List, java.util.Date,
 	 *      java.util.Date, java.lang.Integer, java.lang.Integer)
 	 */

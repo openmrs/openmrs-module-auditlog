@@ -21,10 +21,7 @@ import org.apache.commons.logging.LogFactory;
 import org.hibernate.CallbackException;
 import org.hibernate.EmptyInterceptor;
 import org.hibernate.EntityMode;
-import org.hibernate.FlushMode;
 import org.hibernate.Interceptor;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.collection.PersistentCollection;
 import org.hibernate.collection.PersistentMap;
@@ -37,16 +34,12 @@ import org.openmrs.User;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
-import org.openmrs.module.auditlog.MonitoringStrategy;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.util.OpenmrsUtil;
 import org.openmrs.util.Reflect;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 
 /**
  * A hibernate {@link Interceptor} implementation, intercepts any database inserts, updates and
@@ -55,7 +48,7 @@ import org.springframework.context.ApplicationContextAware;
  * entries in the DB, one for each user's session. Any changes/inserts/deletes made to the DB that
  * are not made through the application won't be detected by the module.
  */
-public class HibernateAuditLogInterceptor extends EmptyInterceptor implements ApplicationContextAware {
+public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	
 	private static final long serialVersionUID = 1L;
 	
@@ -80,34 +73,17 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	
 	private AuditLogDAO auditLogDao;
 	
-	private SessionFactory sessionFactory;
-	
 	//Ignore these properties because they match auditLog.user and auditLog.dateCreated
 	//TODO Should we not ignore personDateChanged and personDateChangedBy?
 	private static final String[] IGNORED_PROPERTIES = new String[] { "changedBy", "dateChanged", "personDateChangedBy",
 	        "personDateChanged", "creator", "dateCreated", "voidedBy", "dateVoided", "retiredBy", "dateRetired" };
 	
 	/**
-	 * We need access to this to get the auditLogDao bean, the saveAuditLog method is not available
-	 * to in auditLogservice to ensure no other code creates log entries. We also need the
-	 * sessionFactory instance to be able to get class metadata of mapped classes,
-	 */
-	private ApplicationContext applicationContext;
-	
-	/**
-	 * @see org.springframework.context.ApplicationContextAware#setApplicationContext(org.springframework.context.ApplicationContext)
-	 */
-	@Override
-	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-		this.applicationContext = applicationContext;
-	}
-	
-	/**
 	 * @return the dao
 	 */
 	public AuditLogDAO getAuditLogDao() {
 		if (auditLogDao == null)
-			auditLogDao = applicationContext.getBean(AuditLogDAO.class);
+			auditLogDao = Context.getRegisteredComponents(AuditLogDAO.class).get(0);
 		
 		return auditLogDao;
 	}
@@ -131,7 +107,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	 */
 	@Override
 	public boolean onSave(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
-		if (isMonitored(entity)) {
+		if (getAuditLogDao().isMonitored(entity.getClass())) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			if (log.isDebugEnabled())
 				log.debug("Creating log entry for created object with uuid:" + openmrsObject.getUuid() + " of type:"
@@ -151,7 +127,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	public boolean onFlushDirty(Object entity, Serializable id, Object[] currentState, Object[] previousState,
 	                            String[] propertyNames, Type[] types) {
 		
-		if (isMonitored(entity) && propertyNames != null) {
+		if (getAuditLogDao().isMonitored(entity.getClass()) && propertyNames != null) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			Map<String, String[]> propertyChangesMap = null;//Map<propertyName, Object[]{currentValue, PreviousValue}>
 			for (int i = 0; i < propertyNames.length; i++) {
@@ -228,7 +204,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 								        + ((OpenmrsObject) currentValue).getUuid();
 							}
 						} else {
-							ClassMetadata metadata = getSessionFactory().getClassMetadata(propertyType);
+							ClassMetadata metadata = getAuditLogDao().getClassMetadata(propertyType);
 							if (previousValue != null && metadata.getIdentifier(previousValue, EntityMode.POJO) != null) {
 								flattenedPreviousValue = AuditLogConstants.ID_LABEL
 								        + metadata.getIdentifier(previousValue, EntityMode.POJO).toString();
@@ -268,7 +244,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	 */
 	@Override
 	public void onDelete(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
-		if (isMonitored(entity)) {
+		if (getAuditLogDao().isMonitored(entity.getClass())) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			if (log.isDebugEnabled())
 				log.debug("Creating log entry for deleted object with uuid:" + openmrsObject.getUuid() + " of type:"
@@ -288,7 +264,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 		if (collection != null && Collection.class.isAssignableFrom(collection.getClass())) {
 			PersistentCollection persistentColl = ((PersistentCollection) collection);
 			Object owningObject = persistentColl.getOwner();
-			if (isMonitored(owningObject)) {
+			if (getAuditLogDao().isMonitored(owningObject.getClass())) {
 				Set<Object> removedItems = new HashSet<Object>();
 				Collection currentColl = (Collection) collection;
 				Map previousMap = (Map) persistentColl.getStoredSnapshot();
@@ -311,7 +287,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 			//TODO Handle persistent maps
 			PersistentMap persistentMap = (PersistentMap) collection;
 			Object owningObject = persistentMap.getOwner();
-			if (isMonitored(owningObject)) {
+			if (getAuditLogDao().isMonitored(owningObject.getClass())) {
 				log.error("PersistentMaps not supported: Can't create log entry for updated map:" + persistentMap.getRole()
 				        + " in class:" + persistentMap.getOwner().getClass());
 			}
@@ -327,7 +303,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	@Override
 	public int[] findDirty(Object entity, Serializable id, Object[] currentState, Object[] previousState,
 	                       String[] propertyNames, Type[] types) {
-		if (isMonitored(entity)) {
+		if (getAuditLogDao().isMonitored(entity.getClass())) {
 			if (entityCollectionsMap.get().get(entity) == null) {
 				//This is the first time we are trying to find collection elements for this object
 				if (log.isDebugEnabled())
@@ -457,69 +433,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 	}
 	
 	/**
-	 * Checks if specified object is monitored, it actually delegates to
-	 * {@link #isMonitoredInternal(Class)} Its role is to check if the monitored classes are not yet
-	 * cached so that it turns off hibernate auto flushing in case we have new objects without ids
-	 * when the Global Property {@link AuditLogConstants#GP_MONITORED_CLASSES} is getting read
-	 * 
-	 * @param obj the object the check
-	 * @return true if the object is a monitored one otherwise false
-	 */
-	private boolean isMonitored(Object obj) {
-		if (!getAuditLogDao().areMonitoredClassesCached() || !getAuditLogDao().isMonitoringStrategyCached()) {
-			Session session = getSessionFactory().getCurrentSession();
-			FlushMode originalFlushMode = session.getFlushMode();
-			session.setFlushMode(FlushMode.MANUAL);
-			try {
-				return isMonitoredInternal(obj.getClass());
-			}
-			finally {
-				//reset
-				session.setFlushMode(originalFlushMode);
-			}
-		}
-		
-		return isMonitoredInternal(obj.getClass());
-	}
-	
-	/**
-	 * Checks if specified object is among the ones that are monitored and is an
-	 * {@link OpenmrsObject}
-	 * 
-	 * @param clazz the class to check against
-	 * @return true if it is monitored otherwise false
-	 */
-	private boolean isMonitoredInternal(Class<?> clazz) {
-		if (!OpenmrsObject.class.isAssignableFrom(clazz) || getAuditLogDao().getMonitoringStrategy() == null
-		        || getAuditLogDao().getMonitoringStrategy() == MonitoringStrategy.NONE) {
-			return false;
-		}
-		if (getAuditLogDao().getMonitoringStrategy() == MonitoringStrategy.ALL) {
-			return true;
-		}
-		Set<Class<?>> imClasses = getAuditLogDao().getImplicitlyMonitoredClasses();
-		if (OpenmrsUtil.collectionContains(imClasses, clazz)) {
-			return true;
-		}
-		if (getAuditLogDao().getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT) {
-			return OpenmrsUtil.collectionContains(getAuditLogDao().getMonitoredClasses(), clazz);
-		}
-		//Strategy is ALL_EXCEPT
-		return !OpenmrsUtil.collectionContains(getAuditLogDao().getUnMonitoredClasses(), clazz);
-	}
-	
-	/**
-	 * Gets the {@link SessionFactory} object
-	 * 
-	 * @return
-	 */
-	private SessionFactory getSessionFactory() {
-		if (sessionFactory == null)
-			sessionFactory = ((SessionFactory) applicationContext.getBean("sessionFactory"));
-		return sessionFactory;
-	}
-	
-	/**
 	 * @param collection
 	 * @return
 	 */
@@ -537,7 +450,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor implements Ap
 				}
 			}
 			if (StringUtils.isBlank(uuidOrId)) {
-				ClassMetadata metadata = getSessionFactory().getClassMetadata(currItem.getClass());
+				ClassMetadata metadata = getAuditLogDao().getClassMetadata(currItem.getClass());
 				if (metadata.getIdentifier(currItem, EntityMode.POJO) != null) {
 					uuidOrId = metadata.getIdentifier(currItem, EntityMode.POJO).toString();
 				}

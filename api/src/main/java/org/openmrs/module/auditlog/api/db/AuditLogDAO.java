@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.metadata.ClassMetadata;
 import org.openmrs.Concept;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.module.auditlog.AuditLog;
@@ -28,6 +29,11 @@ import org.openmrs.module.auditlog.api.AuditLogService;
  * Database access methods for {@link AuditLog}s
  */
 public interface AuditLogDAO {
+	
+	/**
+	 * @see AuditLogService#isMonitored(Class)
+	 */
+	public boolean isMonitored(Class<?> clazz);
 	
 	/**
 	 * Fetches the audit log entries matching the specified arguments
@@ -121,27 +127,6 @@ public interface AuditLogDAO {
 	public Set<Class<?>> getAssociationTypesToMonitor(Class<?> clazz);
 	
 	/**
-	 * Checks if the monitoring strategy has been set and cached
-	 * 
-	 * @return
-	 */
-	public boolean isMonitoringStrategyCached();
-	
-	/**
-	 * Checks if the monitored classes list has been created and cached if necessary
-	 * 
-	 * @return
-	 */
-	public boolean areMonitoredClassesCached();
-	
-	/**
-	 * Checks if the un monitored classes list has been created and cached if necessary
-	 * 
-	 * @return
-	 */
-	public boolean areUnMonitoredClassesCached();
-	
-	/**
 	 * Gets implicitly monitored classes, this are generated as a result of their owning entity
 	 * types being marked as monitored if they are not explicitly marked as monitored themselves,
 	 * i.e if Concept is marked as monitored, then ConceptName, ConceptDesctiption, ConceptMapping
@@ -151,4 +136,11 @@ public interface AuditLogDAO {
 	 * @should return a set of implicitly monitored classes
 	 */
 	public Set<Class<?>> getImplicitlyMonitoredClasses();
+	
+	/**
+	 * Gets the {@link ClassMetadata} for the specified class
+	 * 
+	 * @return
+	 */
+	public ClassMetadata getClassMetadata(Class<?> clazz);
 }
