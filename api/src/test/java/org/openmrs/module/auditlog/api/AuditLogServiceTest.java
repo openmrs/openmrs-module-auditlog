@@ -23,6 +23,7 @@ import java.util.Set;
 import junit.framework.Assert;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openmrs.Cohort;
 import org.openmrs.Concept;
@@ -468,9 +469,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		Assert.assertFalse(monitoredClasses.contains(Order.class));
 		Assert.assertFalse(monitoredClasses.contains(DrugOrder.class));
 		
-		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
-		classes.add(Order.class);
-		service.startMonitoring(classes);
+		service.startMonitoring(Order.class);
 		monitoredClasses = service.getMonitoredClasses();
 		Assert.assertTrue(monitoredClasses.contains(Order.class));
 		Assert.assertTrue(monitoredClasses.contains(DrugOrder.class));
@@ -695,5 +694,47 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		Assert.assertEquals(newStrategy, service.getMonitoringStrategy());
 		
 		Assert.assertFalse(service.isMonitored(EncounterType.class));
+	}
+	
+	/**
+	 * @see {@link AuditLogService#startMonitoring(Set<Class<OpenmrsObject>>)}
+	 */
+	@Test
+	@Ignore
+	@Verifies(value = "should mark a class and its known subclasses as monitored for all_except strategy", method = "startMonitoring(Set<Class<OpenmrsObject>>)")
+	public void startMonitoring_shouldMarkAClassAndItsKnownSubclassesAsMonitoredForAll_exceptStrategy() throws Exception {
+		//TODO fix me
+		MonitoringStrategy newStrategy = MonitoringStrategy.ALL_EXCEPT;
+		setGlobalProperty(AuditLogConstants.GP_MONITORING_STRATEGY, newStrategy.name());
+		Assert.assertEquals(newStrategy, service.getMonitoringStrategy());
+		Assert.assertTrue(service.isMonitored(Order.class));
+		Assert.assertTrue(service.isMonitored(DrugOrder.class));
+		//mark orders as un monitored for test purposes
+		service.stopMonitoring(Order.class);
+		Assert.assertFalse(service.isMonitored(Order.class));
+		Assert.assertFalse(service.isMonitored(DrugOrder.class));
+		
+		service.startMonitoring(Order.class);
+		Assert.assertTrue(service.isMonitored(Order.class));
+		Assert.assertTrue(service.isMonitored(DrugOrder.class));
+	}
+	
+	/**
+	 * @see {@link AuditLogService#stopMonitoring(Set<Class<OpenmrsObject>>)}
+	 */
+	@Test
+	@Ignore
+	@Verifies(value = "should mark a class and its known subclasses as un monitored for all_except strategy", method = "stopMonitoring(Set<Class<OpenmrsObject>>)")
+	public void stopMonitoring_shouldMarkAClassAndItsKnownSubclassesAsUnMonitoredForAll_exceptStrategy() throws Exception {
+		//TODO Fix me
+		MonitoringStrategy newStrategy = MonitoringStrategy.ALL_EXCEPT;
+		setGlobalProperty(AuditLogConstants.GP_MONITORING_STRATEGY, newStrategy.name());
+		Assert.assertEquals(newStrategy, service.getMonitoringStrategy());
+		Assert.assertTrue(service.isMonitored(Order.class));
+		Assert.assertTrue(service.isMonitored(DrugOrder.class));
+		
+		service.stopMonitoring(Order.class);
+		Assert.assertFalse(service.isMonitored(Order.class));
+		Assert.assertFalse(service.isMonitored(DrugOrder.class));
 	}
 }

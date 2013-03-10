@@ -98,12 +98,12 @@ public interface AuditLogService extends OpenmrsService {
 	 * {@link GlobalProperty} {@link AuditLogConstants#GP_MONITORED_CLASSES}
 	 * 
 	 * @param clazzes the classes to monitor
-	 * @param subclassesToInclude list of subclasses to mark as monitored objects
 	 * @should update the monitored class names global property if the strategy is none_except
 	 * @should not update any global property if the strategy is all
 	 * @should not update any global property if the strategy is none
 	 * @should update the un monitored class names global property if the strategy is all_except
 	 * @should mark a class and its known subclasses as monitored
+	 * @should mark a class and its known subclasses as monitored for all_except strategy
 	 */
 	public void startMonitoring(Set<Class<? extends OpenmrsObject>> clazzes);
 	
@@ -124,6 +124,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should not update any global property if the strategy is none
 	 * @should update the un monitored class names global property if the strategy is all_except
 	 * @should mark a class and its known subclasses as un monitored
+	 * @should mark a class and its known subclasses as un monitored for all_except strategy
 	 */
 	public void stopMonitoring(Set<Class<? extends OpenmrsObject>> clazzes);
 	

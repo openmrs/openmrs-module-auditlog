@@ -518,8 +518,8 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(auditLogService.isMonitored(Order.class));
 		Assert.assertTrue(auditLogService.isMonitored(DrugOrder.class));
 	}
-	//TODO fix this test
-	/*@Test
+	
+	@Test
 	public void shouldUpdateTheMonitoredClassCacheWhenTheMonitoredClassGlobalPropertyIsUpdatedWithARemoval()
 	    throws Exception {
 		Assert.assertTrue(auditLogService.isMonitored(Concept.class));
@@ -533,7 +533,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), ","));
 		as.saveGlobalProperty(gp);
 		Assert.assertFalse(auditLogService.isMonitored(Concept.class));
-		Assert.assertFalse(auditLogService.isMonitored(ConceptNumeric.class));
-		Assert.assertFalse(auditLogService.isMonitored(ConceptComplex.class));
-	}*/
+		Assert.assertTrue(auditLogService.isMonitored(ConceptNumeric.class));
+		Assert.assertTrue(auditLogService.isMonitored(ConceptComplex.class));
+	}
 }
