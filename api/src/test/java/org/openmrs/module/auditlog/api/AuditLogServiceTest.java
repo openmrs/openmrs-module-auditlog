@@ -668,7 +668,6 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(service.isMonitored(ConceptNumeric.class));
 		Assert.assertTrue(service.isMonitored(EncounterType.class));
 		Assert.assertTrue(service.isMonitored(PatientIdentifierType.class));
-		Assert.assertTrue(service.isMonitored(ConceptName.class));
 		
 		MonitoringStrategy newStrategy = MonitoringStrategy.ALL_EXCEPT;
 		setGlobalProperty(AuditLogConstants.GP_MONITORING_STRATEGY, newStrategy.name());
@@ -677,7 +676,6 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(service.isMonitored(Concept.class));
 		Assert.assertTrue(service.isMonitored(ConceptNumeric.class));
 		Assert.assertTrue(service.isMonitored(PatientIdentifierType.class));
-		Assert.assertTrue(service.isMonitored(ConceptName.class));
 		Assert.assertTrue(service.isMonitored(Cohort.class));
 	}
 	

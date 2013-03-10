@@ -107,7 +107,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	 */
 	@Override
 	public boolean onSave(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
-		if (getAuditLogDao().isMonitored(entity.getClass())) {
+		if (isAuditable(entity)) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			if (log.isDebugEnabled())
 				log.debug("Creating log entry for created object with uuid:" + openmrsObject.getUuid() + " of type:"
@@ -127,7 +127,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	public boolean onFlushDirty(Object entity, Serializable id, Object[] currentState, Object[] previousState,
 	                            String[] propertyNames, Type[] types) {
 		
-		if (getAuditLogDao().isMonitored(entity.getClass()) && propertyNames != null) {
+		if (propertyNames != null && isAuditable(entity)) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			Map<String, String[]> propertyChangesMap = null;//Map<propertyName, Object[]{currentValue, PreviousValue}>
 			for (int i = 0; i < propertyNames.length; i++) {
@@ -244,7 +244,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	 */
 	@Override
 	public void onDelete(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
-		if (getAuditLogDao().isMonitored(entity.getClass())) {
+		if (isAuditable(entity)) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			if (log.isDebugEnabled())
 				log.debug("Creating log entry for deleted object with uuid:" + openmrsObject.getUuid() + " of type:"
@@ -264,7 +264,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 		if (collection != null && Collection.class.isAssignableFrom(collection.getClass())) {
 			PersistentCollection persistentColl = ((PersistentCollection) collection);
 			Object owningObject = persistentColl.getOwner();
-			if (getAuditLogDao().isMonitored(owningObject.getClass())) {
+			if (isAuditable(owningObject)) {
 				Set<Object> removedItems = new HashSet<Object>();
 				Collection currentColl = (Collection) collection;
 				Map previousMap = (Map) persistentColl.getStoredSnapshot();
@@ -431,6 +431,16 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			disableInterceptor.remove();
 			date.remove();
 		}
+	}
+	
+	/**
+	 * Checks if a class is marked as monitored or is explicitly monitored
+	 * 
+	 * @param entity
+	 * @return
+	 */
+	private boolean isAuditable(Object entity) {
+		return getAuditLogDao().isMonitored(entity.getClass()) || getAuditLogDao().isImplicitlyMonitored(entity.getClass());
 	}
 	
 	/**

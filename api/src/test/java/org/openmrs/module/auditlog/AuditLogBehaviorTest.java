@@ -338,6 +338,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(originalCount == 1);
 		String previousDescriptionUuids = AuditLogConstants.UUID_LABEL + concept.getDescription().getUuid();
 		
+		String cdUuid = concept.getDescription().getUuid();
 		concept.removeDescription(concept.getDescription());
 		conceptService.saveConcept(concept);
 		Assert.assertEquals(originalCount - 1, concept.getDescriptions().size());
@@ -353,6 +354,9 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		Assert.assertEquals(al.getObjectUuid(), concept.getUuid());
 		Assert.assertNull(al.getChanges().get("descriptions")[0]);
 		Assert.assertEquals(al.getChanges().get("descriptions")[1], previousDescriptionUuids);
+		List<AuditLog> descriptionLogs = auditLogService.getAuditLogs(cdUuid, ConceptDescription.class,
+		    Collections.singletonList(DELETED), null, null);
+		Assert.assertEquals(1, descriptionLogs.size());
 	}
 	
 	@Test

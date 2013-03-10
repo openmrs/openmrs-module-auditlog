@@ -36,6 +36,11 @@ public interface AuditLogDAO {
 	public boolean isMonitored(Class<?> clazz);
 	
 	/**
+	 * Checks if the specified type is implicitly monitored
+	 */
+	public boolean isImplicitlyMonitored(Class<?> clazz);
+	
+	/**
 	 * Fetches the audit log entries matching the specified arguments
 	 * 
 	 * @param uuid the uuid to match against

@@ -32,7 +32,7 @@ import org.openmrs.module.auditlog.util.AuditLogConstants;
 public interface AuditLogService extends OpenmrsService {
 	
 	/**
-	 * Checks if specified type is monitored
+	 * Checks if the specified type is monitored
 	 * 
 	 * @param clazz the class to check
 	 * @return true if the object is a monitored one otherwise false

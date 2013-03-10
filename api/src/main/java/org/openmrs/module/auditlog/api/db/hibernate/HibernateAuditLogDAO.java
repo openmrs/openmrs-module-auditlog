@@ -45,7 +45,6 @@ import org.openmrs.module.auditlog.MonitoringStrategy;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
-import org.openmrs.util.OpenmrsUtil;
 import org.springframework.transaction.annotation.Transactional;
 
 public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener {
@@ -107,15 +106,51 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		if (getMonitoringStrategy() == MonitoringStrategy.ALL) {
 			return true;
 		}
-		Set<Class<?>> imClasses = getImplicitlyMonitoredClasses();
-		if (OpenmrsUtil.collectionContains(imClasses, clazz)) {
-			return true;
-		}
+		
 		if (getMonitoringStrategy() == MonitoringStrategy.NONE_EXCEPT) {
-			return OpenmrsUtil.collectionContains(getMonitoredClasses(), clazz);
+			return getMonitoredClasses().contains(clazz);
 		}
 		//Strategy is ALL_EXCEPT
-		return !OpenmrsUtil.collectionContains(getUnMonitoredClasses(), clazz);
+		return !getUnMonitoredClasses().contains(clazz);
+	}
+	
+	/**
+	 * @see org.openmrs.module.auditlog.api.db.AuditLogDAO#isImplicitlyMonitored(java.lang.Class)
+	 */
+	@Override
+	public boolean isImplicitlyMonitored(Class<?> clazz) {
+		//We need to stop hibernate auto flushing which might happen as we fetch
+		//the GP values, Otherwise if a flush happens, then the interceptor
+		//logic will be called again which will result in an infinite loop/stack overflow
+		if (implicitlyMonitoredClassnamesCache == null) {
+			FlushMode originalFlushMode = sessionFactory.getCurrentSession().getFlushMode();
+			sessionFactory.getCurrentSession().setFlushMode(FlushMode.MANUAL);
+			try {
+				return isImplicitlyMonitoredInternal(clazz);
+			}
+			finally {
+				//reset
+				sessionFactory.getCurrentSession().setFlushMode(originalFlushMode);
+			}
+		}
+		
+		return isImplicitlyMonitoredInternal(clazz);
+	}
+	
+	/**
+	 * Checks if specified object is among the ones that are implicitly monitored and is an
+	 * {@link OpenmrsObject}
+	 * 
+	 * @param clazz the class to check against
+	 * @return true if it is implicitly monitored otherwise false
+	 */
+	private boolean isImplicitlyMonitoredInternal(Class<?> clazz) {
+		if (!OpenmrsObject.class.isAssignableFrom(clazz) || getMonitoringStrategy() == null
+		        || getMonitoringStrategy() == MonitoringStrategy.NONE) {
+			return false;
+		}
+		
+		return getImplicitlyMonitoredClasses().contains(clazz);
 	}
 	
 	/**
