@@ -36,6 +36,7 @@ import org.hibernate.type.OneToOneType;
 import org.hibernate.type.Type;
 import org.openmrs.GlobalProperty;
 import org.openmrs.OpenmrsObject;
+import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.GlobalPropertyListener;
 import org.openmrs.api.context.Context;
@@ -254,8 +255,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 			    AuditLogConstants.GP_MONITORING_STRATEGY);
 			if (gp != null) {
 				if (StringUtils.isNotBlank(gp.getPropertyValue())) {
-					String value = gp.getPropertyValue();
-					monitoringStrategyCache = MonitoringStrategy.valueOf(value);
+					monitoringStrategyCache = MonitoringStrategy.valueOf(gp.getPropertyValue().trim());
 				}
 			}
 		}

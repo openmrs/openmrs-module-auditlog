@@ -165,6 +165,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @param endDate the end date to match against
 	 * @return a list of audit logs
 	 * @should get all logs for the object matching the specified uuid
+	 * @should include logs for subclasses when getting by type
 	 */
 	public List<AuditLog> getAuditLogs(String uuid, Class<? extends OpenmrsObject> clazz, List<Action> actions,
 	                                   Date startDate, Date endDate);

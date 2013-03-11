@@ -654,8 +654,8 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	@Verifies(value = "should get all logs for the object matching the specified uuid", method = "getAuditLogs(String,Class<+QOpenmrsObject;>,List<QAction;>,Date,Date)")
 	public void getAuditLogs_shouldGetAllLogsForTheObjectMatchingTheSpecifiedUuid() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
-		Assert.assertEquals(3, service.getAuditLogs("c607c80f-1ea9-4da3-bb88-6276ce8868dd", Concept.class, null, null, null)
-		        .size());
+		Assert.assertEquals(3,
+		    service.getAuditLogs("c607c80f-1ea9-4da3-bb88-6276ce8868dd", ConceptNumeric.class, null, null, null).size());
 	}
 	
 	/**
@@ -734,5 +734,17 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		service.stopMonitoring(Order.class);
 		Assert.assertFalse(service.isMonitored(Order.class));
 		Assert.assertFalse(service.isMonitored(DrugOrder.class));
+	}
+	
+	/**
+	 * @see {@link
+	 *      AuditLogService#getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date)}
+	 */
+	@Test
+	@Verifies(value = "should include logs for subclasses when getting by type", method = "getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date)")
+	public void getAuditLogs_shouldIncludeLogsForSubclassesWhenGettingByType() throws Exception {
+		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
+		Assert.assertEquals(3, service.getAuditLogs("c607c80f-1ea9-4da3-bb88-6276ce8868dd", Concept.class, null, null, null)
+		        .size());
 	}
 }

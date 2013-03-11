@@ -44,9 +44,10 @@ import org.openmrs.EncounterType;
 import org.openmrs.GlobalProperty;
 import org.openmrs.Location;
 import org.openmrs.LocationTag;
-import org.openmrs.OpenmrsObject;
 import org.openmrs.Order;
+import org.openmrs.Patient;
 import org.openmrs.PatientIdentifierType;
+import org.openmrs.PersonName;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.EncounterService;
@@ -85,7 +86,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 			as.saveGlobalProperty(gp);
 		}
 		
-		final String monitoredGpValue = "org.openmrs.Concept, org.openmrs.EncounterType,org.openmrs.PatientIdentifierType";
+		final String monitoredGpValue = "org.openmrs.Concept,org.openmrs.EncounterType,org.openmrs.PatientIdentifierType";
 		GlobalProperty monitoredGP = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORED_CLASSES);
 		if (!monitoredGP.getPropertyValue().equals(monitoredGpValue)) {
 			monitoredGP.setPropertyValue(monitoredGpValue);
@@ -104,6 +105,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		
 		//No log entries should be existing
 		Assert.assertTrue(getAllLogs().isEmpty());
+		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, auditLogService.getMonitoringStrategy());
 	}
 	
 	/**
@@ -139,7 +141,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	public void shouldCreateAnAuditLogEntryWhenAnObjectIsDeleted() throws Exception {
 		EncounterType encounterType = encounterService.getEncounterType(6);
 		encounterService.purgeEncounterType(encounterType);
-		List<AuditLog> logs = getAllLogs();
+		List<AuditLog> logs = auditLogService.getAuditLogs(encounterType.getUuid(), EncounterType.class, null, null, null);
 		//Should have created a log entry for deleted Encounter type
 		Assert.assertEquals(1, logs.size());
 		Assert.assertEquals(DELETED, logs.get(0).getAction());
@@ -328,35 +330,34 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 	@Test
 	@NotTransactional
 	public void shouldCreateAnAuditLogEntryWhenAnElementIsRemovedFormAChildCollection() throws Exception {
-		Concept concept = conceptService.getConcept(5089);
-		//something with ConceptMaps having a blank uuids and now getting set, this should have been
-		//fixed in later versions
-		conceptService.saveConcept(concept);
-		List<AuditLog> existingUpdateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(UPDATED), null,
-		    null, null, null);
-		int originalCount = concept.getDescriptions().size();
-		Assert.assertTrue(originalCount == 1);
-		String previousDescriptionUuids = AuditLogConstants.UUID_LABEL + concept.getDescription().getUuid();
+		PatientService patientService = Context.getPatientService();
+		Patient patient = patientService.getPatient(2);
+		patientService.savePatient(patient);
+		String nameUuid = patient.getPersonName().getUuid();
+		List<AuditLog> existingUpdateLogs = auditLogService.getAuditLogs(patient.getUuid(), Patient.class,
+		    Collections.singletonList(UPDATED), null, null);
+		Assert.assertEquals(0, existingUpdateLogs.size());
+		int originalCount = patient.getNames().size();
+		Assert.assertTrue(originalCount > 0);
+		String previousNameUuids = "";
+		for (PersonName name : patient.getNames()) {
+			previousNameUuids += (AuditLogConstants.UUID_LABEL + name.getUuid());
+		}
 		
-		String cdUuid = concept.getDescription().getUuid();
-		concept.removeDescription(concept.getDescription());
-		conceptService.saveConcept(concept);
-		Assert.assertEquals(originalCount - 1, concept.getDescriptions().size());
-		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
-		clazzes.add(Concept.class);
-		List<AuditLog> conceptLogs = auditLogService.getAuditLogs(null, Collections.singletonList(UPDATED), null, null,
-		    null, null);
-		//TODO this test should check that the collection was updated
-		Assert.assertEquals(existingUpdateLogs.size() + 1, conceptLogs.size());
-		conceptLogs.removeAll(existingUpdateLogs);
-		Assert.assertEquals(1, conceptLogs.size());
-		AuditLog al = conceptLogs.get(0);
-		Assert.assertEquals(al.getObjectUuid(), concept.getUuid());
-		Assert.assertNull(al.getChanges().get("descriptions")[0]);
-		Assert.assertEquals(al.getChanges().get("descriptions")[1], previousDescriptionUuids);
-		List<AuditLog> descriptionLogs = auditLogService.getAuditLogs(cdUuid, ConceptDescription.class,
+		auditLogService.startMonitoring(Patient.class);
+		patient.removeName(patient.getPersonName());
+		patientService.savePatient(patient);
+		Assert.assertEquals(originalCount - 1, patient.getNames().size());
+		List<AuditLog> patientLogs = auditLogService.getAuditLogs(patient.getUuid(), Patient.class,
+		    Collections.singletonList(UPDATED), null, null);
+		Assert.assertEquals(1, patientLogs.size());
+		AuditLog al = patientLogs.get(0);
+		Assert.assertEquals(al.getObjectUuid(), patient.getUuid());
+		Assert.assertNull(al.getChanges().get("names")[0]);
+		Assert.assertEquals(al.getChanges().get("names")[1], previousNameUuids);
+		List<AuditLog> nameLogs = auditLogService.getAuditLogs(nameUuid, PersonName.class,
 		    Collections.singletonList(DELETED), null, null);
-		Assert.assertEquals(1, descriptionLogs.size());
+		Assert.assertEquals(1, nameLogs.size());
 	}
 	
 	@Test
@@ -366,8 +367,8 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		//something with ConceptMaps having blank uuids and now getting set, this should have been
 		//fixed in later versions
 		conceptService.saveConcept(concept);
-		List<AuditLog> existingUpdateLogs = auditLogService.getAuditLogs(null, Collections.singletonList(UPDATED), null,
-		    null, null, null);
+		List<AuditLog> existingUpdateLogs = auditLogService.getAuditLogs(concept.getUuid(), Concept.class,
+		    Collections.singletonList(UPDATED), null, null);
 		int originalCount = concept.getDescriptions().size();
 		Assert.assertTrue(originalCount == 1);
 		String previousDescriptionUuids = AuditLogConstants.UUID_LABEL + concept.getDescription().getUuid();
@@ -378,8 +379,8 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		concept.addDescription(cd1);
 		conceptService.saveConcept(concept);
 		
-		List<AuditLog> conceptLogs = auditLogService.getAuditLogs(null, Collections.singletonList(UPDATED), null, null,
-		    null, null);
+		List<AuditLog> conceptLogs = auditLogService.getAuditLogs(concept.getUuid(), Concept.class,
+		    Collections.singletonList(UPDATED), null, null);
 		Assert.assertEquals(existingUpdateLogs.size() + 1, conceptLogs.size());
 		conceptLogs.removeAll(existingUpdateLogs);
 		Assert.assertEquals(1, conceptLogs.size());
@@ -389,8 +390,8 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		        + AuditLogConstants.UUID_LABEL + cd1.getUuid());
 		Assert.assertEquals(al.getChanges().get("descriptions")[1], previousDescriptionUuids);
 		
-		List<AuditLog> descriptionLogs = auditLogService.getAuditLogs(null, Collections.singletonList(CREATED), null, null,
-		    null, null);
+		List<AuditLog> descriptionLogs = auditLogService.getAuditLogs(cd1.getUuid(), ConceptDescription.class,
+		    Collections.singletonList(CREATED), null, null);
 		Assert.assertEquals(1, descriptionLogs.size());
 	}
 	
@@ -430,9 +431,9 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		Location location = new Location();
 		location.setName("new location");
 		Context.getLocationService().saveLocation(location);
-		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
-		clazzes.add(Location.class);//get only location logs
-		Assert.assertEquals(1, auditLogService.getAuditLogs(clazzes, null, null, null, null, null).size());
+		Assert.assertEquals(1,
+		    auditLogService.getAuditLogs(location.getUuid(), Location.class, Collections.singletonList(CREATED), null, null)
+		            .size());
 	}
 	
 	@Test
@@ -461,9 +462,10 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		
 		EncounterType encounterType = encounterService.getEncounterType(6);
 		encounterService.purgeEncounterType(encounterType);
-		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
-		clazzes.add(EncounterType.class);//get only encounter type logs since there those of GPs that we have changed
-		Assert.assertEquals(0, auditLogService.getAuditLogs(clazzes, null, null, null, null, null).size());
+		Assert.assertEquals(
+		    0,
+		    auditLogService.getAuditLogs(encounterType.getUuid(), EncounterType.class, Collections.singletonList(DELETED),
+		        null, null).size());
 	}
 	
 	@Test
@@ -480,9 +482,9 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		Location location = new Location();
 		location.setName("new location");
 		Context.getLocationService().saveLocation(location);
-		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
-		clazzes.add(Location.class);//get only location logs since there those of GPs that we have changed
-		Assert.assertEquals(1, auditLogService.getAuditLogs(clazzes, null, null, null, null, null).size());
+		Assert.assertEquals(1,
+		    auditLogService.getAuditLogs(location.getUuid(), Location.class, Collections.singletonList(CREATED), null, null)
+		            .size());
 	}
 	
 	@Test
@@ -499,12 +501,15 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		
 		auditLogService.stopMonitoring(LocationTag.class);
 		Location loc = ls.getLocation(2);
-		loc.getTags().iterator().next().setDescription("new");
+		LocationTag tag = loc.getTags().iterator().next();
+		tag.setDescription("new");
 		ls.saveLocation(loc);
-		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
-		clazzes.add(Location.class);
-		clazzes.add(LocationTag.class);
-		Assert.assertEquals(2, auditLogService.getAuditLogs(clazzes, null, null, null, null, null).size());
+		Assert.assertEquals(1,
+		    auditLogService.getAuditLogs(loc.getUuid(), Location.class, Collections.singletonList(UPDATED), null, null)
+		            .size());
+		Assert.assertEquals(1,
+		    auditLogService.getAuditLogs(tag.getUuid(), LocationTag.class, Collections.singletonList(UPDATED), null, null)
+		            .size());
 	}
 	
 	@Test

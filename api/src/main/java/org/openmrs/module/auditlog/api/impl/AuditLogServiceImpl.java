@@ -171,6 +171,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 * @see org.openmrs.module.auditlog.api.AuditLogService#getAuditLogs(java.lang.String,
 	 *      java.lang.Class, java.util.List, java.util.Date, java.util.Date)
 	 */
+	@SuppressWarnings("rawtypes")
 	@Override
 	public List<AuditLog> getAuditLogs(String uuid, Class<? extends OpenmrsObject> clazz, List<Action> actions,
 	                                   Date startDate, Date endDate) {
@@ -179,6 +180,9 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 		
 		List<String> clazzes = new ArrayList<String>();
 		clazzes.add(clazz.getName());
+		for (Class subclass : dao.getPersistentConcreteSubclasses(clazz)) {
+			clazzes.add(subclass.getName());
+		}
 		
 		return dao.getAuditLogs(uuid, clazzes, actions, startDate, endDate, null, null);
 	}
