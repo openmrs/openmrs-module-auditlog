@@ -36,7 +36,6 @@ import org.hibernate.type.OneToOneType;
 import org.hibernate.type.Type;
 import org.openmrs.GlobalProperty;
 import org.openmrs.OpenmrsObject;
-import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.GlobalPropertyListener;
 import org.openmrs.api.context.Context;
@@ -293,6 +292,10 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 					}
 				}
 			}
+			
+			//in case implicit classes cache was already created, update it
+			if (implicitlyMonitoredClassnamesCache != null)
+				implicitlyMonitoredClassnamesCache.removeAll(monitoredClassnamesCache);
 		}
 		
 		return monitoredClassnamesCache;
@@ -566,7 +569,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	private void addAssociationTypes(Class<?> clazz) {
 		for (Class<?> assocType : getAssociationTypesToMonitor(clazz)) {
 			//If this type is not explicitly marked as monitored
-			if (OpenmrsObject.class.isAssignableFrom(assocType) && !getMonitoredClasses().contains(assocType.getName())) {
+			if (OpenmrsObject.class.isAssignableFrom(assocType) && !getMonitoredClasses().contains(assocType)) {
 				getImplicitlyMonitoredClasses().add(assocType);
 			}
 		}

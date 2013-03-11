@@ -30,16 +30,21 @@ import org.openmrs.ConceptNameTag;
 import org.openmrs.ConceptNumeric;
 import org.openmrs.ConceptSet;
 import org.openmrs.GlobalProperty;
+import org.openmrs.Location;
 import org.openmrs.OpenmrsObject;
+import org.openmrs.PersonName;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.MonitoringStrategy;
+import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.openmrs.test.Verifies;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class AuditLogDAOTest extends BaseModuleContextSensitiveTest {
+	
+	private static final String MODULE_TEST_DATA = "moduleTestData.xml";
 	
 	@Autowired
 	private AuditLogDAO dao;
@@ -91,6 +96,43 @@ public class AuditLogDAOTest extends BaseModuleContextSensitiveTest {
 		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptSet.class));
 		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptAnswer.class));
 		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptNameTag.class));
+	}
+	
+	/**
+	 * @see {@link AuditLogDAO#isImplicitlyMonitored(Class<*>)}
+	 */
+	@Test
+	@Verifies(value = "should return true if a class is implicitly monitored", method = "isImplicitlyMonitored(Class<*>)")
+	public void isImplicitlyMonitored_shouldReturnTrueIfAClassIsImplicitlyMonitored() throws Exception {
+		Assert.assertFalse(dao.isMonitored(ConceptName.class));//sanity check
+		Assert.assertTrue(dao.isImplicitlyMonitored(ConceptName.class));
+	}
+	
+	/**
+	 * @see {@link AuditLogDAO#isImplicitlyMonitored(Class<*>)}
+	 */
+	@Test
+	@Verifies(value = "should return false if a class is also marked as monitored", method = "isImplicitlyMonitored(Class<*>)")
+	public void isImplicitlyMonitored_shouldReturnFalseIfAClassIsAlsoMarkedAsMonitored() throws Exception {
+		executeDataSet(MODULE_TEST_DATA);
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty strategyGP = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
+		strategyGP.setPropertyValue(MonitoringStrategy.NONE_EXCEPT.name());
+		as.saveGlobalProperty(strategyGP);
+		
+		Context.getService(AuditLogService.class).startMonitoring(Location.class);
+		Assert.assertTrue(dao.isMonitored(Location.class));//sanity check
+		Assert.assertFalse(dao.isImplicitlyMonitored(Location.class));
+	}
+	
+	/**
+	 * @see {@link AuditLogDAO#isImplicitlyMonitored(Class<*>)}
+	 */
+	@Test
+	@Verifies(value = "should return false if a class is not implicitly monitored", method = "isImplicitlyMonitored(Class<*>)")
+	public void isImplicitlyMonitored_shouldReturnFalseIfAClassIsNotImplicitlyMonitored() throws Exception {
+		Assert.assertFalse(dao.isMonitored(PersonName.class));//sanity check
+		Assert.assertFalse(dao.isImplicitlyMonitored(PersonName.class));
 	}
 	
 }

@@ -36,7 +36,10 @@ public interface AuditLogDAO {
 	public boolean isMonitored(Class<?> clazz);
 	
 	/**
-	 * Checks if the specified type is implicitly monitored
+	 * Checks if the specified type is implicitly monitor
+	 * @should return true if a class is implicitly monitored
+	 * @should return false if a class is not implicitly monitored
+	 * @should return false if a class is also marked as monitored
 	 */
 	public boolean isImplicitlyMonitored(Class<?> clazz);
 	
