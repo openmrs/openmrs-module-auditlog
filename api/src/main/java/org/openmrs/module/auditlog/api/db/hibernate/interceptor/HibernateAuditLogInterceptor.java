@@ -450,9 +450,15 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	private String getItemUuidsOrIds(Collection<?> collection) {
 		String currElementUuidsOrIds = "";
 		boolean isFirst = true;
+		Class<?> elementClass = null;
 		for (Object currItem : collection) {
+			if (currItem == null)
+				continue;
+			
 			String uuidOrId = "";
-			if (OpenmrsObject.class.isAssignableFrom(currItem.getClass())) {
+			if (elementClass == null)
+				elementClass = currItem.getClass();
+			if (OpenmrsObject.class.isAssignableFrom(elementClass)) {
 				try {
 					uuidOrId += ((OpenmrsObject) currItem).getUuid();
 				}
@@ -461,12 +467,25 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				}
 			}
 			if (StringUtils.isBlank(uuidOrId)) {
-				ClassMetadata metadata = getAuditLogDao().getClassMetadata(currItem.getClass());
-				if (metadata.getIdentifier(currItem, EntityMode.POJO) != null) {
-					uuidOrId = metadata.getIdentifier(currItem, EntityMode.POJO).toString();
+				ClassMetadata metadata = getAuditLogDao().getClassMetadata(elementClass);
+				if (metadata != null) {
+					if (metadata.getIdentifier(currItem, EntityMode.POJO) != null) {
+						uuidOrId = metadata.getIdentifier(currItem, EntityMode.POJO).toString();
+					}
+					if (StringUtils.isNotBlank(uuidOrId))
+						uuidOrId = AuditLogConstants.ID_LABEL + uuidOrId;
+				} else {
+					//This is none persistent type e.g Integer in case of cohort members
+					if (Date.class.isAssignableFrom(elementClass)) {
+						uuidOrId = new SimpleDateFormat(AuditLogConstants.DATE_FORMAT).format(currItem);
+					} else if (Enum.class.isAssignableFrom(elementClass)) {
+						uuidOrId = ((Enum<?>) currItem).name();
+					} else if (Class.class.isAssignableFrom(elementClass)) {
+						uuidOrId = ((Class<?>) currItem).getName();
+					} else {
+						uuidOrId = currItem.toString();
+					}
 				}
-				if (StringUtils.isNotBlank(uuidOrId))
-					uuidOrId = AuditLogConstants.ID_LABEL + uuidOrId;
 			} else {
 				uuidOrId = AuditLogConstants.UUID_LABEL + uuidOrId;
 			}
