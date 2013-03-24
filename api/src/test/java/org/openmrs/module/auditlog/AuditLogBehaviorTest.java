@@ -30,7 +30,6 @@ import java.util.Set;
 import junit.framework.Assert;
 
 import org.apache.commons.lang.StringUtils;
-import org.junit.Before;
 import org.junit.Test;
 import org.openmrs.Cohort;
 import org.openmrs.Concept;
@@ -51,73 +50,20 @@ import org.openmrs.PatientIdentifierType;
 import org.openmrs.PersonName;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.CohortService;
-import org.openmrs.api.ConceptService;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.LocationService;
 import org.openmrs.api.PatientService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog.Action;
-import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
-import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.test.annotation.NotTransactional;
 
 /**
  * Contains tests for testing the core functionality of the module
  */
 @SuppressWarnings("deprecation")
-public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
-	
-	private static final String MODULE_TEST_DATA = "moduleTestData.xml";
-	
-	private ConceptService conceptService;
-	
-	private AuditLogService auditLogService;
-	
-	private EncounterService encounterService;
-	
-	@Before
-	public void before() throws Exception {
-		executeDataSet(MODULE_TEST_DATA);
-		auditLogService = Context.getService(AuditLogService.class);
-		AdministrationService as = Context.getAdministrationService();
-		if (MonitoringStrategy.NONE_EXCEPT != auditLogService.getMonitoringStrategy()) {
-			GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
-			gp.setPropertyValue(MonitoringStrategy.NONE_EXCEPT.name());
-			as.saveGlobalProperty(gp);
-		}
-		
-		final String monitoredGpValue = "org.openmrs.Concept,org.openmrs.EncounterType,org.openmrs.PatientIdentifierType";
-		GlobalProperty monitoredGP = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORED_CLASSES);
-		if (!monitoredGP.getPropertyValue().equals(monitoredGpValue)) {
-			monitoredGP.setPropertyValue(monitoredGpValue);
-			as.saveGlobalProperty(monitoredGP);
-		}
-		
-		final String unMonitoredGpValue = "org.openmrs.EncounterType";
-		GlobalProperty unMonitoredGP = as.getGlobalPropertyObject(AuditLogConstants.GP_UN_MONITORED_CLASSES);
-		if (!unMonitoredGP.getPropertyValue().equals(unMonitoredGpValue)) {
-			unMonitoredGP.setPropertyValue(unMonitoredGpValue);
-			as.saveGlobalProperty(unMonitoredGP);
-		}
-		
-		conceptService = Context.getConceptService();
-		encounterService = Context.getEncounterService();
-		
-		//No log entries should be existing
-		Assert.assertTrue(getAllLogs().isEmpty());
-		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, auditLogService.getMonitoringStrategy());
-	}
-	
-	/**
-	 * Utility method to get all logs
-	 * 
-	 * @return a list of {@link AuditLog}s
-	 */
-	private List<AuditLog> getAllLogs() {
-		return auditLogService.getAuditLogs(null, null, null, null, null, null);
-	}
+public class AuditLogBehaviorTest extends BaseAuditLogBehaviorTest {
 	
 	@Test
 	@NotTransactional
@@ -557,7 +503,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		final Integer memberId = 5;
 		Cohort c = cs.getCohort(1);
 		List actions = Collections.singletonList(UPDATED);
-		int count = auditLogService.getAuditLogs(c.getUuid(), Cohort.class, actions, null, null).size();
+		int count = getAllLogs(c.getUuid(), Cohort.class, actions).size();
 		try {
 			auditLogService.startMonitoring(Cohort.class);
 			Assert.assertTrue(auditLogService.isMonitored(Cohort.class));
@@ -565,7 +511,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 			c.addMember(memberId);
 			cs.saveCohort(c);
 			
-			List<AuditLog> logs = auditLogService.getAuditLogs(c.getUuid(), Cohort.class, actions, null, null);
+			List<AuditLog> logs = getAllLogs(c.getUuid(), Cohort.class, actions);
 			int newCount = logs.size();
 			Assert.assertEquals(++count, newCount);
 			Assert.assertTrue(logs.get(0).getChanges().get("memberIds")[0].indexOf(memberId.toString()) > -1);
@@ -586,7 +532,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 		final Integer memberId = 2;
 		Cohort c = cs.getCohort(1);
 		List actions = Collections.singletonList(UPDATED);
-		int count = auditLogService.getAuditLogs(c.getUuid(), Cohort.class, actions, null, null).size();
+		int count = getAllLogs(c.getUuid(), Cohort.class, actions).size();
 		try {
 			auditLogService.startMonitoring(Cohort.class);
 			Assert.assertTrue(auditLogService.isMonitored(Cohort.class));
@@ -594,7 +540,7 @@ public class AuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
 			c.removeMember(memberId);
 			cs.saveCohort(c);
 			
-			List<AuditLog> logs = auditLogService.getAuditLogs(c.getUuid(), Cohort.class, actions, null, null);
+			List<AuditLog> logs = getAllLogs(c.getUuid(), Cohort.class, actions);
 			int newCount = logs.size();
 			Assert.assertEquals(++count, newCount);
 			Assert.assertEquals(-1, logs.get(0).getChanges().get("memberIds")[0].indexOf(memberId.toString()));
