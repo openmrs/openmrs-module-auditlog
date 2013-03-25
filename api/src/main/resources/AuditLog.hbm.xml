@@ -15,11 +15,11 @@
 		
 		<discriminator column="audit_log_id" insert="false" />
 		
-		<property name="className" type="string" column="class_name" length="512" not-null="true" update="false" />
+		<property name="className" type="string" column="class_name" length="512" not-null="true" />
 		
-		<property name="objectUuid" type="string" column="object_uuid" length="38" not-null="true" update="false" />
+		<property name="objectUuid" type="string" column="object_uuid" length="38" not-null="true" />
 		
-		<property name="action" length="50" not-null="true" update="false">
+		<property name="action" length="50" not-null="true">
 			<type name="org.openmrs.util.HibernateEnumType">
 				<param name="enumClassName">${project.parent.groupId}.${project.parent.artifactId}.AuditLog$Action</param>
 			</type>
@@ -27,11 +27,18 @@
 		
 		<property name="changesXml" type="string" column="changes_xml" access="field" length="16777215" />
 		
-		<property name="dateCreated" type="java.util.Date" column="date_created" length="19" not-null="true" update="false" />
+		<property name="dateCreated" type="java.util.Date" column="date_created" length="19" not-null="true" />
 		
 		<many-to-one name="user" class="org.openmrs.User" column="user" />
 		
-		<property name="uuid" type="string" length="38" unique="true" not-null="true" update="false" />
+		<property name="uuid" type="string" length="38" unique="true" not-null="true" />
+		
+		<many-to-one name="parentAuditLog" class="AuditLog" column="parent_auditlog_id" />
+		
+		<set name="childAuditLogs" cascade="save-update">
+			<key column="parent_auditlog_id" />
+			<one-to-many class="AuditLog" />
+		</set>
 		
 	</class>
 	

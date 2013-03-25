@@ -17,6 +17,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -52,6 +53,10 @@ public class AuditLog implements Serializable {
 	private Date dateCreated;
 	
 	private String uuid;
+	
+	private AuditLog parentAuditLog;
+	
+	private Set<AuditLog> childAuditLogs;
 	
 	private transient Map<String, String[]> changes;
 	
@@ -196,6 +201,34 @@ public class AuditLog implements Serializable {
 	 */
 	public void setUuid(String uuid) {
 		this.uuid = uuid;
+	}
+	
+	/**
+	 * @return the parentAuditLog
+	 */
+	public AuditLog getParentAuditLog() {
+		return parentAuditLog;
+	}
+	
+	/**
+	 * @param parentAuditLog the parentAuditLog to set
+	 */
+	public void setParentAuditLog(AuditLog parentAuditLog) {
+		this.parentAuditLog = parentAuditLog;
+	}
+	
+	/**
+	 * @return the childAuditLogs
+	 */
+	public Set<AuditLog> getChildAuditLogs() {
+		return childAuditLogs;
+	}
+	
+	/**
+	 * @param childAuditLogs the childAuditLogs to set
+	 */
+	public void setChildAuditLogs(Set<AuditLog> childAuditLogs) {
+		this.childAuditLogs = childAuditLogs;
 	}
 	
 	/**
