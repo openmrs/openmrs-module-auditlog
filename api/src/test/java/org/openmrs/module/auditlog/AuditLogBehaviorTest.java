@@ -556,6 +556,39 @@ public class AuditLogBehaviorTest extends BaseAuditLogBehaviorTest {
 		Assert.assertFalse(auditLogService.isMonitored(Cohort.class));
 	}
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Test
+	@NotTransactional
+	public void shouldCreateAnAuditLogWhenAllItemsAreRemovedFromCollectionOfNoneOpenmrsObjects() throws Exception {
+		executeDataSet("org/openmrs/api/include/CohortServiceTest-cohort.xml");
+		CohortService cs = Context.getCohortService();
+		final Integer memberId2 = 2;
+		final Integer memberId3 = 3;
+		Cohort c = cs.getCohort(1);
+		List actions = Collections.singletonList(UPDATED);
+		int count = getAllLogs(c.getUuid(), Cohort.class, actions).size();
+		try {
+			auditLogService.startMonitoring(Cohort.class);
+			Assert.assertTrue(auditLogService.isMonitored(Cohort.class));
+			Assert.assertEquals(2, c.getMemberIds().size());
+			Assert.assertTrue(c.contains(memberId2));
+			Assert.assertTrue(c.contains(memberId3));
+			c.getMemberIds().clear();
+			cs.saveCohort(c);
+			
+			List<AuditLog> logs = getAllLogs(c.getUuid(), Cohort.class, actions);
+			int newCount = logs.size();
+			Assert.assertEquals(++count, newCount);
+			Assert.assertNull(logs.get(0).getChanges().get("memberIds")[0]);
+			Assert.assertTrue(logs.get(0).getChanges().get("memberIds")[1].indexOf(memberId2.toString()) > -1);
+			Assert.assertTrue(logs.get(0).getChanges().get("memberIds")[1].indexOf(memberId3.toString()) > -1);
+		}
+		finally {
+			auditLogService.stopMonitoring(Cohort.class);
+		}
+		Assert.assertFalse(auditLogService.isMonitored(Cohort.class));
+	}
+	
 	@Test
 	@NotTransactional
 	public void shouldNotCreateAnAuditLogWhenTheTransactionIsRolledBack() throws Exception {
