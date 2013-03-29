@@ -16,18 +16,19 @@
 		<comment>Adding auditlog_audit_log table</comment>
 		<createTable tableName="auditlog_audit_log">
 			<column name="audit_log_id" type="int" autoIncrement="true" >
-				<constraints nullable="false" primaryKey="true"/>
+				<constraints nullable="false" primaryKey="true" />
 			</column>			
-			<column name="class_name" type="varchar(512)"><constraints nullable="false"/></column>
-			<column name="object_uuid" type="varchar(38)"><constraints nullable="false"/></column>
-			<column name="action" type="varchar(50)"><constraints nullable="false"/></column>
-			<column name="user" type="int" />
-			<column name="changes_xml" type="mediumtext" />
-			<column name="date_created" type="DATETIME"><constraints nullable="false"/></column>
-			<column name="uuid" type="varchar(38)"><constraints nullable="false" unique="true"/></column>
+			<column name="class_name" type="varchar(512)"><constraints nullable="false" /></column>
+			<column name="object_uuid" type="varchar(38)"><constraints nullable="false" /></column>
+			<column name="action" type="varchar(50)"><constraints nullable="false" /></column>
+			<column name="user_id" type="int" />
+			<column name="changes_data" type="mediumtext" />
+			<column name="date_created" type="DATETIME"><constraints nullable="false" /></column>
+			<column name="parent_auditlog_id" type="int" />
+			<column name="uuid" type="varchar(38)"><constraints nullable="false" unique="true" /></column>
 		</createTable>
 		<addForeignKeyConstraint constraintName="authenticated_user" 
-		 	baseTableName="auditlog_audit_log" baseColumnNames="user"   
+		 	baseTableName="auditlog_audit_log" baseColumnNames="user_id"   
 		 	referencedTableName="users" referencedColumnNames="user_id" />
  	</changeSet>
  

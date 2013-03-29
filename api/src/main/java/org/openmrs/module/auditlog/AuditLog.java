@@ -75,7 +75,7 @@ public class AuditLog implements Serializable {
 	 * 		</changes>
 	 * </pre>
 	 */
-	private String changesXml;
+	private String changesData;
 	
 	public enum Action {
 		CREATED, UPDATED, DELETED
@@ -232,10 +232,10 @@ public class AuditLog implements Serializable {
 	}
 	
 	/**
-	 * @param newAndPreviousValuesXml the newAndPreviousValuesXml to set
+	 * @param changesData the changesData to set
 	 */
-	public void setChangesXml(String newAndPreviousValuesXml) {
-		this.changesXml = newAndPreviousValuesXml;
+	public void setChangesData(String changesData) {
+		this.changesData = changesData;
 	}
 	
 	public String getSimpleClassname() {
@@ -255,8 +255,8 @@ public class AuditLog implements Serializable {
 	 * @return
 	 */
 	public Map<String, String[]> getChanges() {
-		if (StringUtils.isNotBlank(changesXml) && changes == null)
-			changes = convertChangesXmlToMap(changesXml);
+		if (StringUtils.isNotBlank(changesData) && changes == null)
+			changes = convertChangesXmlToMap(changesData);
 		else if (changes == null)
 			changes = new HashMap<String, String[]>();
 		

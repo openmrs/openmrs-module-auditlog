@@ -402,7 +402,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 						auditLog.setUuid(UUID.randomUUID().toString());
 						Map<String, String[]> propertyValuesMap = objectChangesMap.get().get(update.getUuid());
 						if (propertyValuesMap != null) {
-							auditLog.setChangesXml(AuditLogUtil.generateChangesXml(propertyValuesMap));
+							auditLog.setChangesData(AuditLogUtil.generateChangesXml(propertyValuesMap));
 						}
 						
 						getAuditLogDao().save(auditLog);
