@@ -333,13 +333,13 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	}
 	
 	/**
-	 * @see org.hibernate.EmptyInterceptor#afterTransactionCompletion(org.hibernate.Transaction)
+	 * @see org.hibernate.EmptyInterceptor#beforeTransactionCompletion(org.hibernate.Transaction)
 	 */
 	@Override
-	public void afterTransactionCompletion(Transaction tx) {
+	public void beforeTransactionCompletion(Transaction tx) {
 		//TODO This should typically happen in a separate thread for performance purposes
 		try {
-			if (disableInterceptor.get() == null && tx.wasCommitted()) {
+			if (disableInterceptor.get() == null) {
 				if (inserts.get().isEmpty() && updates.get().isEmpty() && deletes.get().isEmpty())
 					return;
 				

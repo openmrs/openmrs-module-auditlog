@@ -13,6 +13,8 @@
  */
 package org.openmrs.module.auditlog;
 
+import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.openmrs.module.auditlog.AuditLog.Action.CREATED;
 import static org.openmrs.module.auditlog.AuditLog.Action.DELETED;
 import static org.openmrs.module.auditlog.AuditLog.Action.UPDATED;
@@ -50,6 +52,7 @@ import org.openmrs.PatientIdentifierType;
 import org.openmrs.PersonName;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.CohortService;
+import org.openmrs.api.ConceptService;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.LocationService;
 import org.openmrs.api.PatientService;
@@ -57,6 +60,7 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
+import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.test.annotation.NotTransactional;
 
 /**
@@ -550,5 +554,27 @@ public class AuditLogBehaviorTest extends BaseAuditLogBehaviorTest {
 			auditLogService.stopMonitoring(Cohort.class);
 		}
 		Assert.assertFalse(auditLogService.isMonitored(Cohort.class));
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldNotCreateAnAuditLogWhenTheTransactionIsRolledBack() throws Exception {
+		ConceptService cs = Context.getConceptService();
+		
+		int initialLogCount = getAllLogs().size();
+		boolean exceptionThrown = false;
+		try {
+			ConceptClass cc = cs.getConceptClass(1);
+			cc.setUuid("An invalid long uuid that for sure should result into an exception");
+			cs.saveConceptClass(cc);
+		}
+		catch (UncategorizedSQLException e) {
+			exceptionThrown = true;
+		}
+		
+		assertTrue(exceptionThrown);
+		
+		//No sync record should have been created
+		assertEquals(initialLogCount, getAllLogs().size());
 	}
 }
