@@ -32,7 +32,7 @@ import org.openmrs.test.BaseModuleContextSensitiveTest;
 /**
  * Superclass for Test Classes that contain tests for testing the core functionality of the module
  */
-public abstract class BaseAuditLogBehaviorTest extends BaseModuleContextSensitiveTest {
+public abstract class BaseBehaviorTest extends BaseModuleContextSensitiveTest {
 	
 	protected static final String MODULE_TEST_DATA = "moduleTestData.xml";
 	
