@@ -45,7 +45,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldCreateAnAuditLogEntryWhenAnUnMonitoredElementIsRemovedFromAChildCollection() throws Exception {
+	public void shouldCreateAnAuditLogForAParentWhenAnUnMonitoredElementIsRemovedFromAChildCollection() throws Exception {
 		Assert.assertFalse(auditLogService.isMonitored(PersonName.class));
 		PatientService patientService = Context.getPatientService();
 		Patient patient = patientService.getPatient(2);
@@ -79,7 +79,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldCreateAnAuditLogEntryWhenAnUnMonitoredElementIsAddedToAChildCollection() throws Exception {
+	public void shouldCreateAnAuditLogForAParentWhenAnUnMonitoredElementIsAddedToAChildCollection() throws Exception {
 		Assert.assertFalse(auditLogService.isMonitored(ConceptDescription.class));
 		Concept concept = conceptService.getConcept(5089);
 		//something with ConceptMaps having blank uuids and now getting set, this should have been
@@ -138,7 +138,29 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Test
 	@NotTransactional
-	public void shouldCreateAnAuditLogWhenAnItemIsAddedToCollectionOfNoneOpenmrsObjects() throws Exception {
+	public void shouldCreateAnAuditLogForAParentWhenAllItemsAreRemovedFromACollection() throws Exception {
+		Concept c = conceptService.getConcept(7);
+		List actions = Collections.singletonList(UPDATED);
+		int count = getAllLogs(c.getUuid(), Concept.class, actions).size();
+		Assert.assertEquals(2, c.getDescriptions().size());
+		Iterator<ConceptDescription> it = c.getDescriptions().iterator();
+		String descriptionUuid1 = it.next().getUuid();
+		String descriptionUuid2 = it.next().getUuid();
+		c.getDescriptions().clear();
+		conceptService.saveConcept(c);
+		
+		List<AuditLog> logs = getAllLogs(c.getUuid(), Concept.class, actions);
+		int newCount = logs.size();
+		Assert.assertEquals(++count, newCount);
+		Assert.assertNull(logs.get(0).getChanges().get("descriptions")[0]);
+		Assert.assertNotNull(logs.get(0).getChanges().get("descriptions")[1].indexOf(descriptionUuid1) > -1);
+		Assert.assertNotNull(logs.get(0).getChanges().get("descriptions")[1].indexOf(descriptionUuid2) > -1);
+	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Test
+	@NotTransactional
+	public void shouldCreateAnAuditLogForAParentWhenAnItemIsAddedToCollectionOfNoneOpenmrsObjects() throws Exception {
 		executeDataSet("org/openmrs/api/include/CohortServiceTest-cohort.xml");
 		CohortService cs = Context.getCohortService();
 		final Integer memberId = 5;
@@ -167,7 +189,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Test
 	@NotTransactional
-	public void shouldCreateAnAuditLogWhenAnItemIsRemovedFromCollectionOfNoneOpenmrsObjects() throws Exception {
+	public void shouldCreateAnAuditLogForAParentWhenAnItemIsRemovedFromCollectionOfNoneOpenmrsObjects() throws Exception {
 		executeDataSet("org/openmrs/api/include/CohortServiceTest-cohort.xml");
 		CohortService cs = Context.getCohortService();
 		final Integer memberId = 2;
@@ -196,7 +218,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Test
 	@NotTransactional
-	public void shouldCreateAnAuditLogWhenAllItemsAreRemovedFromCollectionOfNoneOpenmrsObjects() throws Exception {
+	public void shouldCreateAnAuditLogForAParentWhenAllItemsAreRemovedFromCollectionOfNoneOpenmrsObjects() throws Exception {
 		executeDataSet("org/openmrs/api/include/CohortServiceTest-cohort.xml");
 		CohortService cs = Context.getCohortService();
 		final Integer memberId2 = 2;
