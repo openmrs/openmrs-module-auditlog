@@ -163,7 +163,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	                                   Date endDate, Integer start, Integer length) {
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(AuditLog.class);
 		if (uuid != null)
-			criteria.add(Restrictions.ge("objectUuid", uuid));
+			criteria.add(Restrictions.eq("objectUuid", uuid));
 		
 		if (classnames != null)
 			criteria.add(Restrictions.in("className", classnames));
