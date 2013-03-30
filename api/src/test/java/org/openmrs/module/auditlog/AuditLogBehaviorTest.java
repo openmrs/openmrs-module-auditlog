@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -281,7 +282,8 @@ public class AuditLogBehaviorTest extends BaseAuditLogBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldCreateAnAuditLogEntryWhenAnElementIsRemovedFormAChildCollection() throws Exception {
+	public void shouldCreateAnAuditLogEntryWhenAnUnMonitoredElementIsRemovedFromAChildCollection() throws Exception {
+		Assert.assertFalse(auditLogService.isMonitored(PersonName.class));
 		PatientService patientService = Context.getPatientService();
 		Patient patient = patientService.getPatient(2);
 		patientService.savePatient(patient);
@@ -314,7 +316,8 @@ public class AuditLogBehaviorTest extends BaseAuditLogBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldCreateAnAuditLogEntryWhenAnElementIsAddedToAChildCollection() throws Exception {
+	public void shouldCreateAnAuditLogEntryWhenAnUnMonitoredElementIsAddedToAChildCollection() throws Exception {
+		Assert.assertFalse(auditLogService.isMonitored(ConceptDescription.class));
 		Concept concept = conceptService.getConcept(5089);
 		//something with ConceptMaps having blank uuids and now getting set, this should have been
 		//fixed in later versions
@@ -349,12 +352,9 @@ public class AuditLogBehaviorTest extends BaseAuditLogBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldCreateAnAuditLogForTheParentObjectWhenAnElementInAChildCollectionIsUpdated() throws Exception {
-		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, auditLogService.getMonitoringStrategy());
-		GlobalProperty monitoredGP = Context.getAdministrationService().getGlobalPropertyObject(
-		    AuditLogConstants.GP_MONITORED_CLASSES);
-		Assert.assertEquals(-1, monitoredGP.getPropertyValue().indexOf(ConceptDescription.class.getName()));
-		
+	public void shouldCreateAnAuditLogForTheParentObjectWhenAnUnMonitoredElementInAChildCollectionIsUpdated()
+	    throws Exception {
+		Assert.assertFalse(auditLogService.isMonitored(ConceptDescription.class));
 		Concept concept = conceptService.getConcept(7);
 		Assert.assertEquals(0,
 		    auditLogService.getAuditLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED), null, null)
@@ -567,9 +567,9 @@ public class AuditLogBehaviorTest extends BaseAuditLogBehaviorTest {
 		Cohort c = cs.getCohort(1);
 		List actions = Collections.singletonList(UPDATED);
 		int count = getAllLogs(c.getUuid(), Cohort.class, actions).size();
+		auditLogService.startMonitoring(Cohort.class);
+		Assert.assertTrue(auditLogService.isMonitored(Cohort.class));
 		try {
-			auditLogService.startMonitoring(Cohort.class);
-			Assert.assertTrue(auditLogService.isMonitored(Cohort.class));
 			Assert.assertEquals(2, c.getMemberIds().size());
 			Assert.assertTrue(c.contains(memberId2));
 			Assert.assertTrue(c.contains(memberId3));
@@ -609,5 +609,50 @@ public class AuditLogBehaviorTest extends BaseAuditLogBehaviorTest {
 		
 		//No sync record should have been created
 		assertEquals(initialLogCount, getAllLogs().size());
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldAddChildLogsToThatOfTheOwnerWhenAMonitoredElementInAChildCollectionIsUpdated() throws Exception {
+		Concept concept = conceptService.getConcept(7);
+		Assert.assertEquals(0,
+		    auditLogService.getAuditLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED), null, null)
+		            .size());
+		int originalDescriptionCount = concept.getDescriptions().size();
+		Assert.assertTrue(originalDescriptionCount > 1);
+		Iterator<ConceptDescription> it = concept.getDescriptions().iterator();
+		ConceptDescription cd1 = it.next();
+		cd1.setDescription("another descr1");
+		ConceptDescription cd2 = it.next();
+		cd2.setDescription("another descr2");
+		auditLogService.startMonitoring(ConceptDescription.class);
+		Assert.assertTrue(auditLogService.isMonitored(ConceptDescription.class));
+		try {
+			concept = conceptService.saveConcept(concept);
+			Assert.assertEquals(originalDescriptionCount, concept.getDescriptions().size());
+			List<AuditLog> descriptionAuditLogs1 = getAllLogs(cd1.getUuid(), ConceptDescription.class,
+			    Collections.singletonList(UPDATED));
+			Assert.assertEquals(1, descriptionAuditLogs1.size());
+			AuditLog descriptionAuditLog1 = descriptionAuditLogs1.get(0);
+			Assert.assertNotNull(descriptionAuditLog1.getParentAuditLog());
+			
+			List<AuditLog> descriptionAuditLogs2 = getAllLogs(cd2.getUuid(), ConceptDescription.class,
+			    Collections.singletonList(UPDATED));
+			Assert.assertEquals(1, descriptionAuditLogs2.size());
+			AuditLog descriptionAuditLog2 = descriptionAuditLogs2.get(0);
+			Assert.assertNotNull(descriptionAuditLog2.getParentAuditLog());
+			
+			List<AuditLog> conceptAuditLogs = getAllLogs(concept.getUuid(), Concept.class,
+			    Collections.singletonList(UPDATED));
+			Assert.assertEquals(1, conceptAuditLogs.size());
+			Assert.assertEquals(2, conceptAuditLogs.get(0).getChildAuditLogs().size());
+			
+			Assert.assertEquals(conceptAuditLogs.get(0), descriptionAuditLog1.getParentAuditLog());
+			Assert.assertEquals(conceptAuditLogs.get(0), descriptionAuditLog2.getParentAuditLog());
+		}
+		finally {
+			auditLogService.stopMonitoring(ConceptDescription.class);
+		}
+		Assert.assertFalse(auditLogService.isMonitored(ConceptDescription.class));
 	}
 }

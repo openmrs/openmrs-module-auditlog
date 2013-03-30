@@ -16,8 +16,10 @@ package org.openmrs.module.auditlog;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -37,6 +39,8 @@ public class AuditLog implements Serializable {
 	
 	private static final Log log = LogFactory.getLog(AuditLog.class);
 	
+	private String uuid = UUID.randomUUID().toString();
+	
 	private Integer auditLogId;
 	
 	//the fully qualified java class name of the create/updated/deleted object
@@ -51,8 +55,6 @@ public class AuditLog implements Serializable {
 	private User user;
 	
 	private Date dateCreated;
-	
-	private String uuid;
 	
 	private AuditLog parentAuditLog;
 	
@@ -75,7 +77,7 @@ public class AuditLog implements Serializable {
 	 * 		</changes>
 	 * </pre>
 	 */
-	private String changesData;
+	public String changesData;
 	
 	public enum Action {
 		CREATED, UPDATED, DELETED
@@ -221,6 +223,9 @@ public class AuditLog implements Serializable {
 	 * @return the childAuditLogs
 	 */
 	public Set<AuditLog> getChildAuditLogs() {
+		if (childAuditLogs == null)
+			childAuditLogs = new LinkedHashSet<AuditLog>();
+		
 		return childAuditLogs;
 	}
 	
@@ -238,6 +243,12 @@ public class AuditLog implements Serializable {
 		this.changesData = changesData;
 	}
 	
+	/**
+	 * Returns the simple forms of the classname property e.g Concept Name will be returned for
+	 * ConceptName
+	 * 
+	 * @return the classname
+	 */
 	public String getSimpleClassname() {
 		String section = getClassName().substring(getClassName().lastIndexOf(".") + 1);
 		String[] sections = StringUtils.splitByCharacterTypeCamelCase(section);
@@ -246,6 +257,17 @@ public class AuditLog implements Serializable {
 		}
 		
 		return StringUtils.join(sections, " ");
+	}
+	
+	/**
+	 * @param auditLog
+	 */
+	public void addChildAuditLog(AuditLog auditLog) {
+		if (auditLog == null)
+			return;
+		auditLog.setParentAuditLog(this);
+		
+		getChildAuditLogs().add(auditLog);
 	}
 	
 	/**

@@ -668,13 +668,13 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	
 	/**
 	 * @see {@link
-	 *      AuditLogService#getAuditLogs(String,Class<+QOpenmrsObject;>,List<QAction;>,Date,Date)}
+	 *      AuditLogService#getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date)}
 	 */
 	@Test
-	@Verifies(value = "should get all logs for the object matching the specified uuid", method = "getAuditLogs(String,Class<+QOpenmrsObject;>,List<QAction;>,Date,Date)")
+	@Verifies(value = "should get all logs for the object matching the specified uuid", method = "getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date)")
 	public void getAuditLogs_shouldGetAllLogsForTheObjectMatchingTheSpecifiedUuid() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
-		Assert.assertEquals(3,
+		Assert.assertEquals(2,
 		    service.getAuditLogs("c607c80f-1ea9-4da3-bb88-6276ce8868dd", ConceptNumeric.class, null, null, null).size());
 	}
 	
