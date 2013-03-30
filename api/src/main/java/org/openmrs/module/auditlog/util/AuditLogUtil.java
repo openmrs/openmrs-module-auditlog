@@ -52,13 +52,13 @@ public class AuditLogUtil {
 	public static final String ATTRIBUTE_NAME = "name";
 	
 	/**
-	 * Utility method that generates the xml for edited properties including their previous and new
+	 * Utility method that generates the data for edited properties including their previous and new
 	 * property values of an edited object
 	 * 
 	 * @param propertyChangesMap mapping of edited properties to their previous and new values
-	 * @return the generated xml text
+	 * @return the generated text data
 	 */
-	public static String generateChangesXml(Map<String, String[]> propertyChangesMap) {
+	public static String generateChangesData(Map<String, String[]> propertyChangesMap) {
 		StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 		sb.append("\n<" + NODE_CHANGES + ">");
 		for (Map.Entry<String, String[]> entry : propertyChangesMap.entrySet()) {

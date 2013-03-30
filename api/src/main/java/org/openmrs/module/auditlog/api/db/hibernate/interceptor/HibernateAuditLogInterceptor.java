@@ -454,7 +454,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 		if (action == Action.UPDATED) {
 			Map<String, String[]> propertyValuesMap = objectChangesMap.get().get(object.getUuid());
 			if (propertyValuesMap != null) {
-				auditLog.setChangesData(AuditLogUtil.generateChangesXml(propertyValuesMap));
+				auditLog.setChangesData(AuditLogUtil.generateChangesData(propertyValuesMap));
 			}
 		}
 		return auditLog;

@@ -77,7 +77,7 @@ public class AuditLog implements Serializable {
 	 * 		</changes>
 	 * </pre>
 	 */
-	public String changesData;
+	private String changesData;
 	
 	public enum Action {
 		CREATED, UPDATED, DELETED
@@ -244,7 +244,7 @@ public class AuditLog implements Serializable {
 	}
 	
 	/**
-	 * Returns the simple forms of the classname property e.g Concept Name will be returned for
+	 * Returns the simple forms of the classname property e.g 'Concept Name' will be returned for
 	 * ConceptName
 	 * 
 	 * @return the classname
@@ -260,13 +260,14 @@ public class AuditLog implements Serializable {
 	}
 	
 	/**
-	 * @param auditLog
+	 * Adds the specified auditLog as a child
+	 * 
+	 * @param auditLog the AuditLog to add
 	 */
 	public void addChildAuditLog(AuditLog auditLog) {
 		if (auditLog == null)
 			return;
 		auditLog.setParentAuditLog(this);
-		
 		getChildAuditLogs().add(auditLog);
 	}
 	
