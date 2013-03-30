@@ -423,9 +423,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					}
 					getAuditLogDao().save(auditLog);
 				}
-				
-				//Ensures we don't step through the interceptor methods again when saving the auditLog
-				//disableInterceptor.set(true);
 			}
 			catch (Exception e) {
 				//error should not bubble out of the intercepter
