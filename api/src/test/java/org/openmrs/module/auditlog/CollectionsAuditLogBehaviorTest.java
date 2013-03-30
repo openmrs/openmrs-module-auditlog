@@ -13,55 +13,28 @@
  */
 package org.openmrs.module.auditlog;
 
-import static junit.framework.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.openmrs.module.auditlog.AuditLog.Action.CREATED;
 import static org.openmrs.module.auditlog.AuditLog.Action.DELETED;
 import static org.openmrs.module.auditlog.AuditLog.Action.UPDATED;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 
 import junit.framework.Assert;
 
-import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
 import org.openmrs.Cohort;
 import org.openmrs.Concept;
-import org.openmrs.ConceptClass;
-import org.openmrs.ConceptComplex;
-import org.openmrs.ConceptDatatype;
 import org.openmrs.ConceptDescription;
-import org.openmrs.ConceptName;
-import org.openmrs.ConceptNumeric;
-import org.openmrs.DrugOrder;
-import org.openmrs.EncounterType;
-import org.openmrs.GlobalProperty;
-import org.openmrs.Location;
-import org.openmrs.LocationTag;
-import org.openmrs.Order;
 import org.openmrs.Patient;
-import org.openmrs.PatientIdentifierType;
 import org.openmrs.PersonName;
-import org.openmrs.api.AdministrationService;
 import org.openmrs.api.CohortService;
-import org.openmrs.api.ConceptService;
-import org.openmrs.api.EncounterService;
-import org.openmrs.api.LocationService;
 import org.openmrs.api.PatientService;
 import org.openmrs.api.context.Context;
-import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
-import org.openmrs.module.auditlog.util.AuditLogUtil;
-import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.test.annotation.NotTransactional;
 
 /**
