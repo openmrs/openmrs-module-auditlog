@@ -142,10 +142,12 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		Concept c = conceptService.getConcept(7);
 		List actions = Collections.singletonList(UPDATED);
 		int count = getAllLogs(c.getUuid(), Concept.class, actions).size();
-		Assert.assertEquals(2, c.getDescriptions().size());
+		Assert.assertEquals(4, c.getDescriptions().size());
 		Iterator<ConceptDescription> it = c.getDescriptions().iterator();
 		String descriptionUuid1 = it.next().getUuid();
 		String descriptionUuid2 = it.next().getUuid();
+		String descriptionUuid3 = it.next().getUuid();
+		String descriptionUuid4 = it.next().getUuid();
 		c.getDescriptions().clear();
 		conceptService.saveConcept(c);
 		
@@ -155,6 +157,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		Assert.assertNull(logs.get(0).getChanges().get("descriptions")[0]);
 		Assert.assertNotNull(logs.get(0).getChanges().get("descriptions")[1].indexOf(descriptionUuid1) > -1);
 		Assert.assertNotNull(logs.get(0).getChanges().get("descriptions")[1].indexOf(descriptionUuid2) > -1);
+		Assert.assertNotNull(logs.get(0).getChanges().get("descriptions")[1].indexOf(descriptionUuid3) > -1);
+		Assert.assertNotNull(logs.get(0).getChanges().get("descriptions")[1].indexOf(descriptionUuid4) > -1);
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -167,8 +171,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		Cohort c = cs.getCohort(1);
 		List actions = Collections.singletonList(UPDATED);
 		int count = getAllLogs(c.getUuid(), Cohort.class, actions).size();
+		auditLogService.startMonitoring(Cohort.class);
 		try {
-			auditLogService.startMonitoring(Cohort.class);
 			Assert.assertTrue(auditLogService.isMonitored(Cohort.class));
 			Assert.assertFalse(c.contains(memberId));
 			c.addMember(memberId);
@@ -196,8 +200,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		Cohort c = cs.getCohort(1);
 		List actions = Collections.singletonList(UPDATED);
 		int count = getAllLogs(c.getUuid(), Cohort.class, actions).size();
+		auditLogService.startMonitoring(Cohort.class);
 		try {
-			auditLogService.startMonitoring(Cohort.class);
 			Assert.assertTrue(auditLogService.isMonitored(Cohort.class));
 			Assert.assertTrue(c.contains(memberId));
 			c.removeMember(memberId);
@@ -227,8 +231,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		List actions = Collections.singletonList(UPDATED);
 		int count = getAllLogs(c.getUuid(), Cohort.class, actions).size();
 		auditLogService.startMonitoring(Cohort.class);
-		Assert.assertTrue(auditLogService.isMonitored(Cohort.class));
 		try {
+			Assert.assertTrue(auditLogService.isMonitored(Cohort.class));
 			Assert.assertEquals(2, c.getMemberIds().size());
 			Assert.assertTrue(c.contains(memberId2));
 			Assert.assertTrue(c.contains(memberId3));
@@ -250,21 +254,38 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldAddChildLogsToThatOfTheOwnerWhenAMonitoredElementInAChildCollectionIsUpdated() throws Exception {
+	public void shouldLinkTheLogsOfCollectionItemsToThatOfTheUpdatedParent() throws Exception {
 		Concept concept = conceptService.getConcept(7);
 		Assert.assertEquals(0,
 		    auditLogService.getAuditLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED), null, null)
 		            .size());
 		int originalDescriptionCount = concept.getDescriptions().size();
-		Assert.assertTrue(originalDescriptionCount > 1);
-		Iterator<ConceptDescription> it = concept.getDescriptions().iterator();
-		ConceptDescription cd1 = it.next();
-		cd1.setDescription("another descr1");
-		ConceptDescription cd2 = it.next();
-		cd2.setDescription("another descr2");
+		Assert.assertTrue(originalDescriptionCount > 3);
+		
 		auditLogService.startMonitoring(ConceptDescription.class);
-		Assert.assertTrue(auditLogService.isMonitored(ConceptDescription.class));
 		try {
+			Assert.assertTrue(auditLogService.isMonitored(ConceptDescription.class));
+			Iterator<ConceptDescription> it = concept.getDescriptions().iterator();
+			//update some existing descriptions
+			ConceptDescription cd1 = it.next();
+			cd1.setDescription("another descr1");
+			ConceptDescription cd2 = it.next();
+			cd2.setDescription("another descr2");
+			//remove the next 2
+			ConceptDescription cd3 = it.next();
+			it.remove();
+			ConceptDescription cd4 = it.next();
+			it.remove();
+			ConceptDescription cd5 = new ConceptDescription("yes in japanese", Locale.JAPANESE);
+			cd5.setUuid("6e9226f4-999d-11e2-a6ac-b499bae1ce4e");
+			cd5.setDateCreated(new Date());
+			cd5.setCreator(Context.getAuthenticatedUser());
+			ConceptDescription cd6 = new ConceptDescription("yes in chinese", Locale.CHINESE);
+			cd6.setUuid("781f01b0-999d-11e2-a6ac-b499bae1ce4e");
+			cd6.setDateCreated(new Date());
+			cd6.setCreator(Context.getAuthenticatedUser());
+			concept.addDescription(cd5);
+			concept.addDescription(cd6);
 			concept = conceptService.saveConcept(concept);
 			Assert.assertEquals(originalDescriptionCount, concept.getDescriptions().size());
 			List<AuditLog> descriptionAuditLogs1 = getAllLogs(cd1.getUuid(), ConceptDescription.class,
@@ -279,10 +300,34 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 			AuditLog descriptionAuditLog2 = descriptionAuditLogs2.get(0);
 			Assert.assertNotNull(descriptionAuditLog2.getParentAuditLog());
 			
+			List<AuditLog> descriptionAuditLogs3 = getAllLogs(cd3.getUuid(), ConceptDescription.class,
+			    Collections.singletonList(DELETED));
+			Assert.assertEquals(1, descriptionAuditLogs3.size());
+			AuditLog descriptionAuditLog3 = descriptionAuditLogs3.get(0);
+			Assert.assertNotNull(descriptionAuditLog3.getParentAuditLog());
+			
+			List<AuditLog> descriptionAuditLogs4 = getAllLogs(cd4.getUuid(), ConceptDescription.class,
+			    Collections.singletonList(DELETED));
+			Assert.assertEquals(1, descriptionAuditLogs4.size());
+			AuditLog descriptionAuditLog4 = descriptionAuditLogs4.get(0);
+			Assert.assertNotNull(descriptionAuditLog4.getParentAuditLog());
+			
+			List<AuditLog> descriptionAuditLogs5 = getAllLogs(cd5.getUuid(), ConceptDescription.class,
+			    Collections.singletonList(CREATED));
+			Assert.assertEquals(1, descriptionAuditLogs5.size());
+			AuditLog descriptionAuditLog5 = descriptionAuditLogs5.get(0);
+			Assert.assertNotNull(descriptionAuditLog5.getParentAuditLog());
+			
+			List<AuditLog> descriptionAuditLogs6 = getAllLogs(cd6.getUuid(), ConceptDescription.class,
+			    Collections.singletonList(CREATED));
+			Assert.assertEquals(1, descriptionAuditLogs6.size());
+			AuditLog descriptionAuditLog6 = descriptionAuditLogs6.get(0);
+			Assert.assertNotNull(descriptionAuditLog6.getParentAuditLog());
+			
 			List<AuditLog> conceptAuditLogs = getAllLogs(concept.getUuid(), Concept.class,
 			    Collections.singletonList(UPDATED));
 			Assert.assertEquals(1, conceptAuditLogs.size());
-			Assert.assertEquals(2, conceptAuditLogs.get(0).getChildAuditLogs().size());
+			Assert.assertEquals(6, conceptAuditLogs.get(0).getChildAuditLogs().size());
 			
 			Assert.assertEquals(conceptAuditLogs.get(0), descriptionAuditLog1.getParentAuditLog());
 			Assert.assertEquals(conceptAuditLogs.get(0), descriptionAuditLog2.getParentAuditLog());

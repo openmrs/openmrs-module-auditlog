@@ -36,6 +36,7 @@ import org.hibernate.type.OneToOneType;
 import org.hibernate.type.Type;
 import org.openmrs.GlobalProperty;
 import org.openmrs.OpenmrsObject;
+import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.GlobalPropertyListener;
 import org.openmrs.api.context.Context;
@@ -525,6 +526,8 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 			else
 				unMonitoredClassnamesCache = null;
 			implicitlyMonitoredClassnamesCache = null;
+			
+			throw new APIException("Failed to " + ((startMonitoring) ? "start" : "stop") + " monitoring " + clazzes, e);
 		}
 	}
 	

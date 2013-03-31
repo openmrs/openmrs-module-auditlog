@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
@@ -30,7 +29,6 @@ import org.hibernate.type.StringType;
 import org.hibernate.type.TextType;
 import org.hibernate.type.Type;
 import org.openmrs.OpenmrsObject;
-import org.openmrs.User;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
@@ -60,11 +58,19 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	
 	private ThreadLocal<HashSet<OpenmrsObject>> deletes = new ThreadLocal<HashSet<OpenmrsObject>>();
 	
-	//Mapping between object uuids and maps of its changed property names and their older values, the first item in the array is the old value while the the second is the new value
+	//Mapping between object uuids and maps of their changed property names and their older values, 
+	//the first item in the array is the old value while the the second is the new value
 	private ThreadLocal<Map<String, Map<String, String[]>>> objectChangesMap = new ThreadLocal<Map<String, Map<String, String[]>>>();
 	
 	//Mapping between entities and lists of their Collections in the current session
 	private ThreadLocal<Map<Object, List<Collection<?>>>> entityCollectionsMap = new ThreadLocal<Map<Object, List<Collection<?>>>>();
+	
+	//Mapping between parent entity uuids and lists of AuditLogs for their collection elements
+	private ThreadLocal<Map<String, List<AuditLog>>> ownerUuidChildLogsMap = new ThreadLocal<Map<String, List<AuditLog>>>();
+	
+	//Mapping between collection element uuids and their AuditLogs, will use 
+	//this to avoid creating logs for collections elements multiple times
+	private ThreadLocal<Map<String, AuditLog>> childbjectUuidAuditLogMap = new ThreadLocal<Map<String, AuditLog>>();
 	
 	private ThreadLocal<Date> date = new ThreadLocal<Date>();
 	
@@ -95,6 +101,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 		deletes.set(new HashSet<OpenmrsObject>());
 		objectChangesMap.set(new HashMap<String, Map<String, String[]>>());
 		entityCollectionsMap.set(new HashMap<Object, List<Collection<?>>>());
+		ownerUuidChildLogsMap.set(new HashMap<String, List<AuditLog>>());
+		childbjectUuidAuditLogMap.set(new HashMap<String, AuditLog>());
 		date.set(new Date());
 	}
 	
@@ -340,43 +348,32 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				return;
 			
 			try {
-				User user = Context.getAuthenticatedUser();
-				Date tempDate = (date.get() != null) ? date.get() : new Date();
 				//TODO handle daemon or un authenticated operations
 				
-				for (OpenmrsObject insert : inserts.get()) {
-					AuditLog auditLog = new AuditLog(insert.getClass().getName(), insert.getUuid(), Action.CREATED, user,
-					        tempDate);
-					auditLog.setUuid(UUID.randomUUID().toString());
-					getAuditLogDao().save(auditLog);
-				}
-				
-				for (OpenmrsObject delete : deletes.get()) {
-					AuditLog auditLog = new AuditLog(delete.getClass().getName(), delete.getUuid(), Action.DELETED, user,
-					        tempDate);
-					auditLog.setUuid(UUID.randomUUID().toString());
-					getAuditLogDao().save(auditLog);
-				}
-				
-				Map<String, List<AuditLog>> ownerUuidChildLogsMap = new HashMap<String, List<AuditLog>>();
-				
-				//Will use this to avoid creating logs for collections elements multiple times
-				Map<String, AuditLog> childbjectUuidAuditLogMap = new HashMap<String, AuditLog>();
 				//If we have any entities in the session that have child collections and there were some updates, 
 				//check all collection items to find dirty ones so that we can mark the the owners as dirty too
 				//I.e if a ConceptName/Mapping/Description was edited, mark the the Concept as dirty too
-				
 				for (Map.Entry<Object, List<Collection<?>>> entry : entityCollectionsMap.get().entrySet()) {
 					for (Collection<?> coll : entry.getValue()) {
 						for (Object obj : coll) {
-							//If a collection item was updated and no other update had been made on the owner
-							if (updates.get().contains(obj)) {
+							//Apparently inserts.get().contains(obj) always returns false
+							//yet when looping and using obj.equals(ins) works					
+							//Strangely, updates.get().contains(obj) works
+							boolean isInsert = false;
+							for (OpenmrsObject ins : inserts.get()) {
+								if (obj.equals(ins)) {
+									isInsert = true;
+									break;
+								}
+							}
+							if (isInsert || updates.get().contains(obj)) {
 								OpenmrsObject owner = (OpenmrsObject) entry.getKey();
 								if (updates.get().contains(owner)) {
 									if (log.isDebugEnabled())
 										log.debug("There is already an  auditlog for:" + owner.getClass() + " - "
 										        + owner.getUuid());
 								} else {
+									//A collection item was updated and no other update had been made on the owner
 									if (log.isDebugEnabled())
 										log.debug("Creating log entry for edited object with uuid:" + owner.getUuid()
 										        + " of type:" + owner.getClass().getName()
@@ -385,16 +382,15 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 								}
 								
 								if (getAuditLogDao().isMonitored(obj.getClass())) {
-									if (ownerUuidChildLogsMap == null)
-										ownerUuidChildLogsMap = new HashMap<String, List<AuditLog>>();
-									if (ownerUuidChildLogsMap.get(owner.getUuid()) == null)
-										ownerUuidChildLogsMap.put(owner.getUuid(), new ArrayList<AuditLog>());
+									if (ownerUuidChildLogsMap.get().get(owner.getUuid()) == null)
+										ownerUuidChildLogsMap.get().put(owner.getUuid(), new ArrayList<AuditLog>());
 									
 									OpenmrsObject collElement = (OpenmrsObject) obj;
-									AuditLog childLog = createAuditLog(collElement, Action.UPDATED, user, tempDate);
-									ownerUuidChildLogsMap.get(owner.getUuid()).add(childLog);
+									AuditLog childLog = instantiateAuditLog(collElement, (isInsert) ? Action.CREATED
+									        : Action.UPDATED);
 									
-									childbjectUuidAuditLogMap.put(collElement.getUuid(), childLog);
+									childbjectUuidAuditLogMap.get().put(collElement.getUuid(), childLog);
+									ownerUuidChildLogsMap.get().get(owner.getUuid()).add(childLog);
 								}
 								
 								//TODO add this collection to the list of changes properties
@@ -409,19 +405,16 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				
 				entityCollectionsMap.remove();
 				
+				for (OpenmrsObject insert : inserts.get()) {
+					createAuditLog(insert, Action.CREATED);
+				}
+				
+				for (OpenmrsObject delete : deletes.get()) {
+					createAuditLog(delete, Action.DELETED);
+				}
+				
 				for (OpenmrsObject update : updates.get()) {
-					//If this is a collection element, we already created a log for it
-					AuditLog auditLog = childbjectUuidAuditLogMap.get(update.getUuid());
-					if (auditLog == null)
-						auditLog = createAuditLog(update, Action.UPDATED, user, tempDate);
-					
-					if ((ownerUuidChildLogsMap != null && ownerUuidChildLogsMap.containsKey(update.getUuid()))) {
-						for (AuditLog al : ownerUuidChildLogsMap.get(update.getUuid())) {
-							auditLog.addChildAuditLog(al);
-						}
-						
-					}
-					getAuditLogDao().save(auditLog);
+					createAuditLog(update, Action.UPDATED);
 				}
 			}
 			catch (Exception e) {
@@ -436,12 +429,44 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			deletes.remove();
 			objectChangesMap.remove();
 			entityCollectionsMap.remove();
+			ownerUuidChildLogsMap.remove();
+			childbjectUuidAuditLogMap.remove();
 			date.remove();
 		}
 	}
 	
-	private AuditLog createAuditLog(OpenmrsObject object, Action action, User user, Date tempDate) {
-		AuditLog auditLog = new AuditLog(object.getClass().getName(), object.getUuid(), action, user, tempDate);
+	/**
+	 * Creates and saves an auditLog in the DB for the specified object
+	 * 
+	 * @param object the object to create for the AuditLog
+	 * @param action see {@link Action}
+	 */
+	private void createAuditLog(OpenmrsObject object, Action action) {
+		//If this is a collection element, we already created a log for it
+		AuditLog auditLog = childbjectUuidAuditLogMap.get().get(object.getUuid());
+		if (auditLog == null) {
+			auditLog = instantiateAuditLog(object, action);
+		}
+		
+		if ((ownerUuidChildLogsMap != null && ownerUuidChildLogsMap.get().containsKey(object.getUuid()))) {
+			for (AuditLog al : ownerUuidChildLogsMap.get().get(object.getUuid())) {
+				auditLog.addChildAuditLog(al);
+			}
+		}
+		getAuditLogDao().save(auditLog);
+	}
+	
+	/**
+	 * Creates a new instance of an {@link AuditLog} for the specified object and Action
+	 * 
+	 * @param object the object to create for the AuditLog
+	 * @param action see {@link Action}
+	 * @return the created AuditLog
+	 */
+	private AuditLog instantiateAuditLog(OpenmrsObject object, Action action) {
+		Date tempDate = (date.get() != null) ? date.get() : new Date();
+		AuditLog auditLog = new AuditLog(object.getClass().getName(), object.getUuid(), action,
+		        Context.getAuthenticatedUser(), tempDate);
 		if (action == Action.UPDATED) {
 			Map<String, String[]> propertyValuesMap = objectChangesMap.get().get(object.getUuid());
 			if (propertyValuesMap != null) {
