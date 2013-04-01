@@ -342,7 +342,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	 */
 	@Override
 	public void beforeTransactionCompletion(Transaction tx) {
-		//TODO This should typically happen in a separate thread for performance purposes
 		try {
 			if (inserts.get().isEmpty() && updates.get().isEmpty() && deletes.get().isEmpty())
 				return;
@@ -402,20 +401,22 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 						}
 					}
 				}
-				
-				entityCollectionsMap.remove();
+				entityCollectionsMap.remove();//free some memory
 				
 				for (OpenmrsObject insert : inserts.get()) {
 					createAuditLog(insert, Action.CREATED);
 				}
+				inserts.remove();
 				
 				for (OpenmrsObject delete : deletes.get()) {
 					createAuditLog(delete, Action.DELETED);
 				}
+				deletes.remove();
 				
 				for (OpenmrsObject update : updates.get()) {
 					createAuditLog(update, Action.UPDATED);
 				}
+				updates.remove();
 			}
 			catch (Exception e) {
 				//error should not bubble out of the intercepter
