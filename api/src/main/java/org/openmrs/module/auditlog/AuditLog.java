@@ -25,6 +25,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.User;
+import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -301,12 +302,13 @@ public class AuditLog implements Serializable {
 			doc = AuditLogUtil.createDocument(changesXml);
 			Element changesElement = doc.getDocumentElement();
 			if (changesElement != null) {
-				NodeList propertyElements = changesElement.getElementsByTagName(AuditLogUtil.NODE_PROPERTY);
+				NodeList propertyElements = changesElement.getElementsByTagName(AuditLogConstants.NODE_PROPERTY);
 				for (int i = 0; i < propertyElements.getLength(); i++) {
 					Element propertyEle = (Element) propertyElements.item(i);
 					String newValue = AuditLogUtil.getPreviousOrNewPropertyValue(propertyEle, true);
 					String previousValue = AuditLogUtil.getPreviousOrNewPropertyValue(propertyEle, false);
-					map.put(propertyEle.getAttribute(AuditLogUtil.ATTRIBUTE_NAME), new String[] { newValue, previousValue });
+					map.put(propertyEle.getAttribute(AuditLogConstants.ATTRIBUTE_NAME), new String[] { newValue,
+					        previousValue });
 				}
 			}
 		}

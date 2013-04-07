@@ -20,6 +20,16 @@ public final class AuditLogConstants {
 	
 	public static final String MODULE_ID = "auditlog";
 	
+	public static final String NODE_CHANGES = "changes";
+	
+	public static final String NODE_PROPERTY = "property";
+	
+	public static final String NODE_PREVIOUS = "previous";
+	
+	public static final String NODE_NEW = "new";
+	
+	public static final String ATTRIBUTE_NAME = "name";
+
 	//Custom value to represent a null value
 	//public static final String AUDITLOG_UNDEFINED_VALUE = "AUDITLOG_UNDEFINED_VALUE";
 	

@@ -13,6 +13,9 @@
  */
 package org.openmrs.module.auditlog.util;
 
+import static org.openmrs.module.auditlog.util.AuditLogConstants.NODE_NEW;
+import static org.openmrs.module.auditlog.util.AuditLogConstants.NODE_PREVIOUS;
+
 import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -20,13 +23,11 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
@@ -35,58 +36,11 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 /**
- * Contains static utility methods
+ * Contains utility methods used by the module
  */
 public class AuditLogUtil {
 	
 	private static final Log log = LogFactory.getLog(AuditLogUtil.class);
-	
-	public static final String NODE_CHANGES = "changes";
-	
-	public static final String NODE_PROPERTY = "property";
-	
-	public static final String NODE_PREVIOUS = "previous";
-	
-	public static final String NODE_NEW = "new";
-	
-	public static final String ATTRIBUTE_NAME = "name";
-	
-	/**
-	 * Utility method that generates the data for edited properties including their previous and new
-	 * property values of an edited object
-	 * 
-	 * @param propertyChangesMap mapping of edited properties to their previous and new values
-	 * @return the generated text data
-	 */
-	public static String generateChangesData(Map<String, String[]> propertyChangesMap) {
-		StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-		sb.append("\n<" + NODE_CHANGES + ">");
-		for (Map.Entry<String, String[]> entry : propertyChangesMap.entrySet()) {
-			String newValue = entry.getValue()[0];
-			String previousValue = entry.getValue()[1];
-			//we shouldn't even be here since this is not a change
-			if (previousValue == null && newValue == null)
-				continue;
-			
-			sb.append("\n<" + NODE_PROPERTY + " " + ATTRIBUTE_NAME + "=\"" + entry.getKey() + "\">");
-			//when deserializing, missing tags will be interpreted as NULL
-			if (newValue != null) {
-				sb.append("\n<" + NODE_NEW + ">");
-				sb.append("\n" + StringEscapeUtils.escapeXml(newValue));
-				sb.append("\n</" + NODE_NEW + ">");
-			}
-			if (previousValue != null) {
-				sb.append("\n<" + NODE_PREVIOUS + ">");
-				sb.append("\n" + StringEscapeUtils.escapeXml(previousValue));
-				sb.append("\n</" + NODE_PREVIOUS + ">");
-			}
-			sb.append("\n</" + NODE_PROPERTY + ">");
-		}
-		
-		sb.append("\n</" + NODE_CHANGES + ">");
-		
-		return sb.toString();
-	}
 	
 	/**
 	 * Gets the text content of a nested previous or new tag inside a property tag with a name

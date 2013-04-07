@@ -34,7 +34,6 @@ import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
-import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.util.OpenmrsUtil;
 import org.openmrs.util.Reflect;
 import org.springframework.beans.BeanUtils;
@@ -511,7 +510,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 		if (action == Action.UPDATED) {
 			Map<String, String[]> propertyValuesMap = objectChangesMap.get().get(object.getUuid());
 			if (propertyValuesMap != null) {
-				auditLog.setChangesData(AuditLogUtil.generateChangesData(propertyValuesMap));
+				auditLog.setChangesData(InterceptorUtil.generateChangesData(propertyValuesMap));
 			}
 		}
 		return auditLog;
