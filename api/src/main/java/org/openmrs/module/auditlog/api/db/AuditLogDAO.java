@@ -37,6 +37,7 @@ public interface AuditLogDAO {
 	
 	/**
 	 * Checks if the specified type is implicitly monitor
+	 * 
 	 * @should return true if a class is implicitly monitored
 	 * @should return false if a class is not implicitly monitored
 	 * @should return false if a class is also marked as monitored
@@ -53,13 +54,15 @@ public interface AuditLogDAO {
 	 *            this date
 	 * @param endDate the creation date of the log entries to return should be before or equal to
 	 *            this date
+	 * @param excludeChildAuditLogs specifies if AuditLogs for collection items should excluded or
+	 *            not
 	 * @param start index to start with (defaults to 0 if <code>null<code>)
 	 * @param length number of results to return (default to return all matching results if
 	 *            <code>null<code>)
 	 * @return list of auditlogs
 	 */
 	public List<AuditLog> getAuditLogs(String uuid, List<String> classnames, List<Action> actions, Date startDate,
-	                                   Date endDate, Integer start, Integer length);
+	                                   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length);
 	
 	/**
 	 * Saves the specified object to the database

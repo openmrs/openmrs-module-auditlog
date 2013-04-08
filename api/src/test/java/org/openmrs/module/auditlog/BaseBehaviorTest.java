@@ -81,7 +81,7 @@ public abstract class BaseBehaviorTest extends BaseModuleContextSensitiveTest {
 	 * @return a list of {@link AuditLog}s
 	 */
 	protected List<AuditLog> getAllLogs() {
-		return auditLogService.getAuditLogs(null, null, null, null, null, null);
+		return auditLogService.getAuditLogs(null, null, null, null, false, null, null);
 	}
 	
 	/**
@@ -90,6 +90,6 @@ public abstract class BaseBehaviorTest extends BaseModuleContextSensitiveTest {
 	 * @return a list of {@link AuditLog}s
 	 */
 	protected List<AuditLog> getAllLogs(String uuid, Class<? extends OpenmrsObject> clazz, List<Action> actions) {
-		return auditLogService.getAuditLogs(uuid, clazz, actions, null, null);
+		return auditLogService.getAuditLogs(uuid, clazz, actions, null, null, false);
 	}
 }

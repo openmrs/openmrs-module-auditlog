@@ -44,6 +44,6 @@ public class ViewAuditLogFormController {
 			log.debug("Fetching audit log entries...");
 		
 		model.addAttribute("auditLogs",
-		    Context.getService(AuditLogService.class).getAuditLogs(null, null, null, null, null, null));
+		    Context.getService(AuditLogService.class).getAuditLogs(null, null, null, null, true, null, null));
 	}
 }

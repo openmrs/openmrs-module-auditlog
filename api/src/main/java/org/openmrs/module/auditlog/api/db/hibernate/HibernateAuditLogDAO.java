@@ -155,13 +155,13 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	}
 	
 	/**
-	 * @see AuditLogDAO#getAuditLogs(String, List, List, Date, Date, Integer, Integer)
+	 * @see AuditLogDAO#getAuditLogs(String, List, List, Date, Date, boolean, Integer, Integer)
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	@Transactional(readOnly = true)
 	public List<AuditLog> getAuditLogs(String uuid, List<String> classnames, List<Action> actions, Date startDate,
-	                                   Date endDate, Integer start, Integer length) {
+	                                   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length) {
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(AuditLog.class);
 		if (uuid != null)
 			criteria.add(Restrictions.eq("objectUuid", uuid));
@@ -171,6 +171,9 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		
 		if (actions != null)
 			criteria.add(Restrictions.in("action", actions));
+		
+		if (excludeChildAuditLogs)
+			criteria.add(Restrictions.isNull("parentAuditLog"));
 		
 		if (startDate != null)
 			criteria.add(Restrictions.ge("dateCreated", startDate));

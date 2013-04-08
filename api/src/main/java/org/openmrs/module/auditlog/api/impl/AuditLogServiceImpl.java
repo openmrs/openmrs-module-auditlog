@@ -60,13 +60,14 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.AuditLogService#getAuditLogs(List, List, java.util.Date,
-	 *      java.util.Date, java.lang.Integer, java.lang.Integer)
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#getAuditLogs(java.util.List,
+	 *      java.util.List, java.util.Date, java.util.Date, boolean, java.lang.Integer,
+	 *      java.lang.Integer)
 	 */
 	@SuppressWarnings({ "rawtypes" })
 	@Override
 	public List<AuditLog> getAuditLogs(List<Class<? extends OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
-	                                   Date endDate, Integer start, Integer length) {
+	                                   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length) {
 		if (OpenmrsUtil.compareWithNullAsEarliest(startDate, new Date()) > 0)
 			throw new APIException(Context.getMessageSourceService().getMessage(
 			    AuditLogConstants.MODULE_ID + ".exception.startDateInFuture"));
@@ -83,7 +84,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 			}
 		}
 		
-		return dao.getAuditLogs(null, classesToMatch, actions, startDate, endDate, start, length);
+		return dao.getAuditLogs(null, classesToMatch, actions, startDate, endDate, excludeChildAuditLogs, start, length);
 	}
 	
 	/**
@@ -168,15 +169,16 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#getAuditLogs(java.lang.String,
-	 *      java.lang.Class, java.util.List, java.util.Date, java.util.Date)
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#getAuditLogs(String, Class, List, Date,
+	 *      Date, boolean)
 	 */
 	@SuppressWarnings("rawtypes")
 	@Override
 	public List<AuditLog> getAuditLogs(String uuid, Class<? extends OpenmrsObject> clazz, List<Action> actions,
-	                                   Date startDate, Date endDate) {
-		if (clazz == null)
-			throw new APIException("class cannot be null");
+	                                   Date startDate, Date endDate, boolean excludeChildAuditLogs) {
+		
+		if (StringUtils.isBlank(uuid) || clazz == null)
+			throw new APIException("class and uuid are required");
 		
 		List<String> clazzes = new ArrayList<String>();
 		clazzes.add(clazz.getName());
@@ -184,6 +186,6 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 			clazzes.add(subclass.getName());
 		}
 		
-		return dao.getAuditLogs(uuid, clazzes, actions, startDate, endDate, null, null);
+		return dao.getAuditLogs(uuid, clazzes, actions, startDate, endDate, excludeChildAuditLogs, null, null);
 	}
 }

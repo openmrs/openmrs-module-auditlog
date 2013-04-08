@@ -88,7 +88,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	public void shouldCreateAnAuditLogEntryWhenAnObjectIsDeleted() throws Exception {
 		EncounterType encounterType = encounterService.getEncounterType(6);
 		encounterService.purgeEncounterType(encounterType);
-		List<AuditLog> logs = auditLogService.getAuditLogs(encounterType.getUuid(), EncounterType.class, null, null, null);
+		List<AuditLog> logs = getAllLogs(encounterType.getUuid(), EncounterType.class, null);
 		//Should have created a log entry for deleted Encounter type
 		Assert.assertEquals(1, logs.size());
 		Assert.assertEquals(DELETED, logs.get(0).getAction());
@@ -206,15 +206,15 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		
 		List<Action> actions = new ArrayList<Action>();
 		actions.add(CREATED);//should match expected count of created log entries
-		Assert.assertEquals(25, auditLogService.getAuditLogs(null, actions, null, null, null, null).size());
+		Assert.assertEquals(25, auditLogService.getAuditLogs(null, actions, null, null, false, null, null).size());
 		
 		actions.clear();
 		actions.add(UPDATED);//should match expected count of updated log entries
-		Assert.assertEquals(24, auditLogService.getAuditLogs(null, actions, null, null, null, null).size());
+		Assert.assertEquals(24, auditLogService.getAuditLogs(null, actions, null, null, false, null, null).size());
 		
 		actions.clear();
 		actions.add(DELETED);//should match expected count of deleted log entries
-		Assert.assertEquals(1, auditLogService.getAuditLogs(null, actions, null, null, null, null).size());
+		Assert.assertEquals(1, auditLogService.getAuditLogs(null, actions, null, null, false, null, null).size());
 	}
 	
 	@Test
@@ -285,9 +285,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		Location location = new Location();
 		location.setName("new location");
 		Context.getLocationService().saveLocation(location);
-		Assert.assertEquals(1,
-		    auditLogService.getAuditLogs(location.getUuid(), Location.class, Collections.singletonList(CREATED), null, null)
-		            .size());
+		Assert.assertEquals(1, getAllLogs(location.getUuid(), Location.class, Collections.singletonList(CREATED)).size());
 	}
 	
 	@Test
@@ -316,10 +314,8 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		
 		EncounterType encounterType = encounterService.getEncounterType(6);
 		encounterService.purgeEncounterType(encounterType);
-		Assert.assertEquals(
-		    0,
-		    auditLogService.getAuditLogs(encounterType.getUuid(), EncounterType.class, Collections.singletonList(DELETED),
-		        null, null).size());
+		Assert.assertEquals(0, getAllLogs(encounterType.getUuid(), EncounterType.class, Collections.singletonList(DELETED))
+		        .size());
 	}
 	
 	@Test
@@ -336,9 +332,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		Location location = new Location();
 		location.setName("new location");
 		Context.getLocationService().saveLocation(location);
-		Assert.assertEquals(1,
-		    auditLogService.getAuditLogs(location.getUuid(), Location.class, Collections.singletonList(CREATED), null, null)
-		            .size());
+		Assert.assertEquals(1, getAllLogs(location.getUuid(), Location.class, Collections.singletonList(CREATED)).size());
 	}
 	
 	@Test
@@ -346,7 +340,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	public void shouldCreateLogForUnMonitoredTypeIfTheOwningTypeIsMonitoredAndStrategyIsAllExcept() throws Exception {
 		executeDataSet("org/openmrs/api/include/LocationServiceTest-initialData.xml");
 		LocationService ls = Context.getLocationService();
-		Assert.assertEquals(0, auditLogService.getAuditLogs(null, null, null, null, null, null).size());
+		Assert.assertEquals(0, getAllLogs().size());
 		
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
@@ -358,12 +352,8 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		LocationTag tag = loc.getTags().iterator().next();
 		tag.setDescription("new");
 		ls.saveLocation(loc);
-		Assert.assertEquals(1,
-		    auditLogService.getAuditLogs(loc.getUuid(), Location.class, Collections.singletonList(UPDATED), null, null)
-		            .size());
-		Assert.assertEquals(1,
-		    auditLogService.getAuditLogs(tag.getUuid(), LocationTag.class, Collections.singletonList(UPDATED), null, null)
-		            .size());
+		Assert.assertEquals(1, getAllLogs(loc.getUuid(), Location.class, Collections.singletonList(UPDATED)).size());
+		Assert.assertEquals(1, getAllLogs(tag.getUuid(), LocationTag.class, Collections.singletonList(UPDATED)).size());
 	}
 	
 	@Test

@@ -50,6 +50,8 @@ public interface AuditLogService extends OpenmrsService {
 	 *            this date
 	 * @param endDate the creation date of the log entries to return should be before or equal to
 	 *            this date
+	 * @param excludeChildAuditLogs specifies if AuditLogs for collection items should excluded or
+	 *            not
 	 * @param start index to start with (defaults to 0 if <code>null<code>)
 	 * @param length number of results to return (default to return all matching results if
 	 *            <code>null<code>)
@@ -64,9 +66,10 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should ignore end date it it is in the future
 	 * @should sort the logs by date of creation starting with the latest
 	 * @should include logs for subclasses when getting logs by type
+	 * @should exclude child logs if excludeChildAuditLogsis set to true
 	 */
 	public List<AuditLog> getAuditLogs(List<Class<? extends OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
-	                                   Date endDate, Integer start, Integer length);
+	                                   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length);
 	
 	/**
 	 * Fetches a saved object with the specified objectId
@@ -163,10 +166,13 @@ public interface AuditLogService extends OpenmrsService {
 	 * @param actions the actions to match against
 	 * @param startDate the start date to match against
 	 * @param endDate the end date to match against
+	 * @param excludeChildAuditLogs specifies if AuditLogs for collection items should excluded or
+	 *            not
 	 * @return a list of audit logs
 	 * @should get all logs for the object matching the specified uuid
 	 * @should include logs for subclasses when getting by type
+	 * @should exclude child logs for object if excludeChildAuditLogsis set to true
 	 */
 	public List<AuditLog> getAuditLogs(String uuid, Class<? extends OpenmrsObject> clazz, List<Action> actions,
-	                                   Date startDate, Date endDate);
+	                                   Date startDate, Date endDate, boolean excludeChildAuditLogs);
 }

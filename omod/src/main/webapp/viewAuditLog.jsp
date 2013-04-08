@@ -39,16 +39,19 @@
 		$j("#${moduleId}-changes-dialog").dialog({
 			autoOpen: false,
 			width:'1000',
-			height:'450',
+			height:'600',
 			modal: true,
 			beforeClose: function(event, ui){
 				//reset
 				$j("#${moduleId}-changes-objectId").html("");
 				$j("#${moduleId}-changes-summary").html("");
 				$j("#${moduleId}-changes-objectUuid").html("");
-				//remove all rows from previous displays except the header row
+				$j("#${moduleId}-childLogCount").html("");
+				//remove all rows from previous displays except the header rows
 				$j("#${moduleId}-changes-table tr:gt(0)").remove();
+				$j("#${moduleId}-childAuditLogDetails-table tr:gt(0)").remove();
 				$j("#${moduleId}-details .${moduleId}-changes-element").hide();
+				$j("#${moduleId}-details .${moduleId}-childAuditLogDetails-element").hide()
 			}
 		});
 	});
@@ -87,11 +90,23 @@
 				auditLogChanges = logDetails.changes;
 				$j.each(auditLogChanges, function(propertyName){
 					currentChange = auditLogChanges[propertyName];
-					$j("#${moduleId}-changes-table tr:last").after("<tr><td class=\"${moduleId}_align_text_left\" valign=\"top\">"+propertyName+"</td>"+
-					"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange[0]+"</td>"+
-					"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange[1]+"</td></tr>");
+					$j("#${moduleId}-changes-table tr:last").after(
+						"<tr><td class=\"${moduleId}_align_text_left\" valign=\"top\">"+propertyName+"</td>"+
+						"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange[0]+"</td>"+
+						"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange[1]+"</td></tr>");
 				});
 				$j("#${moduleId}-details .${moduleId}-changes-element").show();
+			}
+			
+			if(logDetails.childAuditLogDetails){
+				childAuditLogDetails = logDetails.childAuditLogDetails;
+				$j("#${moduleId}-childLogCount").html(childAuditLogDetails.length);
+				$j.each(childAuditLogDetails, function(index, detail){
+					$j("#${moduleId}-childAuditLogDetails-table tr:last").after(
+						"<tr class=\"${moduleId}_"+detail.action+" ${moduleId}_child_log\" onclick=\"${moduleId}_showDetails('"+detail.uuid+"')\">"+
+							"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+detail.classname+"</td></tr>");
+				});
+				$j("#${moduleId}-details .${moduleId}-childAuditLogDetails-element").show();
 			}
 		
 			$j("#${moduleId}-changes-dialog").dialog('open');
@@ -161,7 +176,11 @@
 			<td id="${moduleId}-changes-summary"></td>
 		</tr>
 		<tr class="${moduleId}-changes-element"><td colspan="2">&nbsp;</td></tr>
-		<tr class="${moduleId}-changes-element"><td valign="top" colspan="2" class="${moduleId}_align_text_center"><b><spring:message code="${moduleId}.changes" /></b></td></tr><tr>
+		<tr class="${moduleId}-changes-element">
+			<td valign="top" colspan="2" class="${moduleId}_align_text_center">
+				<b><spring:message code="${moduleId}.changes" /></b>
+			</td>
+		</tr>
 		<tr class="${moduleId}-changes-element">
 			<td valign="top" colspan="2" class="${moduleId}_align_text_left">
 				<table id="${moduleId}-changes-table" width="100%" cellpadding="3" cellspacing="0" border="1" bordercolor="#ADACAC">
@@ -175,6 +194,29 @@
 							</th>
 							<th class="${moduleId}_table_header ${moduleId}_align_text_center" width="37%">
 								<spring:message code="${moduleId}.previousValue" />
+							</th>
+						</tr>
+					<thead>
+				</table>
+			</td>
+		</tr>
+		<tr class="${moduleId}-childAuditLogDetails-element"><td colspan="2">&nbsp;</td></tr>
+		<tr class="${moduleId}-childAuditLogDetails-element">
+			<td valign="top" colspan="2" class="${moduleId}_align_text_center">
+				<b><spring:message code="${moduleId}.childAuditLogDetails" /> 
+					(<span id="${moduleId}-childLogCount"></span>)
+				</b> 
+				<img align="top" src="<openmrs:contextPath />/images/help.gif" border="0" 
+					title="<openmrs:message code="${moduleId}.childAuditLogDetails.help" />" />
+			</td>
+		</tr>
+		<tr class="${moduleId}-childAuditLogDetails-element">
+			<td valign="top" colspan="2" class="${moduleId}_align_text_left">
+				<table id="${moduleId}-childAuditLogDetails-table" cellpadding="3" cellspacing="0" border="1" bordercolor="#ADACAC">
+					<thead>
+						<tr>
+							<th class="${moduleId}_table_header ${moduleId}_align_text_left">
+								<spring:message code="${moduleId}.item" />
 							</th>
 						</tr>
 					<thead>

@@ -53,8 +53,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		PatientService ps = Context.getPatientService();
 		Patient patient = ps.getPatient(2);
 		ps.savePatient(patient);
-		List<AuditLog> existingUpdateLogs = auditLogService.getAuditLogs(patient.getUuid(), Patient.class,
-		    Collections.singletonList(UPDATED), null, null);
+		List<AuditLog> existingUpdateLogs = getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED));
 		Assert.assertEquals(0, existingUpdateLogs.size());
 		int originalCount = patient.getNames().size();
 		Assert.assertTrue(originalCount > 1);
@@ -72,8 +71,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		patient.removeName(nameToRemove);
 		ps.savePatient(patient);
 		Assert.assertEquals(originalCount - 1, patient.getNames().size());
-		List<AuditLog> patientLogs = auditLogService.getAuditLogs(patient.getUuid(), Patient.class,
-		    Collections.singletonList(UPDATED), null, null);
+		List<AuditLog> patientLogs = getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED));
 		Assert.assertEquals(1, patientLogs.size());
 		AuditLog al = patientLogs.get(0);
 		Assert.assertEquals(al.getObjectUuid(), patient.getUuid());
@@ -82,8 +80,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		for (PersonName name : patient.getNames()) {
 			Assert.assertTrue(al.getChanges().get("names")[1].indexOf(name.getUuid()) > -1);
 		}
-		List<AuditLog> nameLogs = auditLogService.getAuditLogs(nameUuid, PersonName.class,
-		    Collections.singletonList(DELETED), null, null);
+		List<AuditLog> nameLogs = getAllLogs(nameUuid, PersonName.class, Collections.singletonList(DELETED));
 		Assert.assertEquals(1, nameLogs.size());
 	}
 	
@@ -95,8 +92,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		//something with ConceptMaps having blank uuids and now getting set, this should have been
 		//fixed in later versions
 		conceptService.saveConcept(concept);
-		List<AuditLog> existingUpdateLogs = auditLogService.getAuditLogs(concept.getUuid(), Concept.class,
-		    Collections.singletonList(UPDATED), null, null);
+		List<AuditLog> existingUpdateLogs = getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED));
 		int originalCount = concept.getDescriptions().size();
 		Assert.assertTrue(originalCount == 1);
 		String previousDescriptionUuids = AuditLogConstants.UUID_LABEL + concept.getDescription().getUuid();
@@ -107,8 +103,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		concept.addDescription(cd1);
 		conceptService.saveConcept(concept);
 		
-		List<AuditLog> conceptLogs = auditLogService.getAuditLogs(concept.getUuid(), Concept.class,
-		    Collections.singletonList(UPDATED), null, null);
+		List<AuditLog> conceptLogs = getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED));
 		Assert.assertEquals(existingUpdateLogs.size() + 1, conceptLogs.size());
 		conceptLogs.removeAll(existingUpdateLogs);
 		Assert.assertEquals(1, conceptLogs.size());
@@ -118,8 +113,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		        + AuditLogConstants.UUID_LABEL + cd1.getUuid());
 		Assert.assertEquals(al.getChanges().get("descriptions")[1], previousDescriptionUuids);
 		
-		List<AuditLog> descriptionLogs = auditLogService.getAuditLogs(cd1.getUuid(), ConceptDescription.class,
-		    Collections.singletonList(CREATED), null, null);
+		List<AuditLog> descriptionLogs = getAllLogs(cd1.getUuid(), ConceptDescription.class,
+		    Collections.singletonList(CREATED));
 		Assert.assertEquals(1, descriptionLogs.size());
 	}
 	
@@ -129,9 +124,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	    throws Exception {
 		Assert.assertFalse(auditLogService.isMonitored(ConceptDescription.class));
 		Concept concept = conceptService.getConcept(7);
-		Assert.assertEquals(0,
-		    auditLogService.getAuditLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED), null, null)
-		            .size());
+		Assert.assertEquals(0, getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED)).size());
 		
 		int originalDescriptionCount = concept.getDescriptions().size();
 		Assert.assertTrue(originalDescriptionCount > 0);
@@ -140,9 +133,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		concept = conceptService.saveConcept(concept);
 		Assert.assertEquals(originalDescriptionCount, concept.getDescriptions().size());
 		
-		Assert.assertEquals(1,
-		    auditLogService.getAuditLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED), null, null)
-		            .size());
+		Assert.assertEquals(1, getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED)).size());
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -275,10 +266,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 			auditLogService.startMonitoring(classes);
 			patient = ps.savePatient(patient);
 			//Ensure that no log will be created unless we actually perform an update
-			Assert.assertEquals(
-			    0,
-			    auditLogService.getAuditLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED), null,
-			        null).size());
+			Assert.assertEquals(0, getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED)).size());
 			
 			int originalDescriptionCount = patient.getNames().size();
 			Assert.assertTrue(originalDescriptionCount > 3);
@@ -364,18 +352,14 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	public void shouldNotLinkTheLogsOfCollectionItemsToThatOfTheUpdatedParentIfCascadeOptionIsNotDeleteOrphan()
 	    throws Exception {
 		Concept concept = conceptService.getConcept(7);
-		Assert.assertEquals(0,
-		    auditLogService.getAuditLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED), null, null)
-		            .size());
+		Assert.assertEquals(0, getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED)).size());
 		int originalDescriptionCount = concept.getDescriptions().size();
 		Assert.assertTrue(originalDescriptionCount > 3);
 		
 		auditLogService.startMonitoring(ConceptDescription.class);
 		concept = conceptService.saveConcept(concept);
 		//Ensure that no log will be created unless we actually perform an update
-		Assert.assertEquals(0,
-		    auditLogService.getAuditLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED), null, null)
-		            .size());
+		Assert.assertEquals(0, getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED)).size());
 		try {
 			Assert.assertTrue(auditLogService.isMonitored(ConceptDescription.class));
 			Iterator<ConceptDescription> it = concept.getDescriptions().iterator();

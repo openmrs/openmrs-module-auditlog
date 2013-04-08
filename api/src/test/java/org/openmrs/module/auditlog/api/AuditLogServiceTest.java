@@ -72,7 +72,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	private List<AuditLog> getAllAuditLogs() {
-		return service.getAuditLogs(null, null, null, null, null, null);
+		return service.getAuditLogs(null, null, null, null, false, null, null);
 	}
 	
 	private void setGlobalProperty(String property, String propertyValue) throws Exception {
@@ -118,18 +118,18 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		List<Action> actions = new ArrayList<Action>();
 		actions.add(Action.CREATED);//get only inserts
-		Assert.assertEquals(3, service.getAuditLogs(null, actions, null, null, null, null).size());
+		Assert.assertEquals(3, service.getAuditLogs(null, actions, null, null, false, null, null).size());
 		
 		actions.add(Action.UPDATED);//get both insert and update logs
-		Assert.assertEquals(5, service.getAuditLogs(null, actions, null, null, null, null).size());
+		Assert.assertEquals(5, service.getAuditLogs(null, actions, null, null, false, null, null).size());
 		
 		actions.clear();
 		actions.add(Action.UPDATED);//get only updates
-		Assert.assertEquals(2, service.getAuditLogs(null, actions, null, null, null, null).size());
+		Assert.assertEquals(2, service.getAuditLogs(null, actions, null, null, false, null, null).size());
 		
 		actions.clear();
 		actions.add(Action.DELETED);//get only deletes
-		Assert.assertEquals(1, service.getAuditLogs(null, actions, null, null, null, null).size());
+		Assert.assertEquals(1, service.getAuditLogs(null, actions, null, null, false, null, null).size());
 	}
 	
 	/**
@@ -152,9 +152,9 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
 		clazzes.add(Concept.class);
-		Assert.assertEquals(3, service.getAuditLogs(clazzes, null, null, null, null, null).size());
+		Assert.assertEquals(3, service.getAuditLogs(clazzes, null, null, null, false, null, null).size());
 		clazzes.add(ConceptName.class);
-		Assert.assertEquals(4, service.getAuditLogs(clazzes, null, null, null, null, null).size());
+		Assert.assertEquals(4, service.getAuditLogs(clazzes, null, null, null, false, null, null).size());
 	}
 	
 	/**
@@ -170,7 +170,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		cal.set(2012, 3, 1, 0, 1, 0);
 		cal.set(Calendar.MILLISECOND, 0);
 		Date startDate = cal.getTime();
-		Assert.assertEquals(3, service.getAuditLogs(null, null, startDate, null, null, null).size());
+		Assert.assertEquals(3, service.getAuditLogs(null, null, startDate, null, false, null, null).size());
 	}
 	
 	/**
@@ -186,7 +186,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		cal.set(2012, 3, 1, 0, 3, 0);
 		cal.set(Calendar.MILLISECOND, 0);
 		Date endDate = cal.getTime();
-		Assert.assertEquals(5, service.getAuditLogs(null, null, null, endDate, null, null).size());
+		Assert.assertEquals(5, service.getAuditLogs(null, null, null, endDate, false, null, null).size());
 	}
 	
 	/**
@@ -204,7 +204,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		Date startDate = cal.getTime();
 		cal.set(2012, 3, 1, 0, 3, 1);
 		Date endDate = cal.getTime();
-		Assert.assertEquals(2, service.getAuditLogs(null, null, startDate, endDate, null, null).size());
+		Assert.assertEquals(2, service.getAuditLogs(null, null, startDate, endDate, false, null, null).size());
 	}
 	
 	/**
@@ -217,7 +217,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.MINUTE, 1);
 		Date startDate = cal.getTime();
-		service.getAuditLogs(null, null, startDate, null, null, null);
+		service.getAuditLogs(null, null, startDate, null, false, null, null);
 	}
 	
 	/**
@@ -232,7 +232,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.MINUTE, 1);
 		Date endDate = cal.getTime();
-		Assert.assertEquals(6, service.getAuditLogs(null, null, null, endDate, null, null).size());
+		Assert.assertEquals(6, service.getAuditLogs(null, null, null, endDate, false, null, null).size());
 	}
 	
 	/**
@@ -274,10 +274,10 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
 		clazzes.add(OpenmrsObject.class);
-		Assert.assertEquals(6, service.getAuditLogs(clazzes, null, null, null, null, null).size());
+		Assert.assertEquals(6, service.getAuditLogs(clazzes, null, null, null, false, null, null).size());
 		clazzes.clear();
 		clazzes.add(Concept.class);
-		Assert.assertEquals(3, service.getAuditLogs(clazzes, null, null, null, null, null).size());
+		Assert.assertEquals(3, service.getAuditLogs(clazzes, null, null, null, false, null, null).size());
 	}
 	
 	/**
@@ -667,15 +667,15 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link
-	 *      AuditLogService#getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date)}
+	 * @see {@link AuditLogService#getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date)}
 	 */
 	@Test
 	@Verifies(value = "should get all logs for the object matching the specified uuid", method = "getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date)")
 	public void getAuditLogs_shouldGetAllLogsForTheObjectMatchingTheSpecifiedUuid() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		Assert.assertEquals(2,
-		    service.getAuditLogs("c607c80f-1ea9-4da3-bb88-6276ce8868dd", ConceptNumeric.class, null, null, null).size());
+		    service.getAuditLogs("c607c80f-1ea9-4da3-bb88-6276ce8868dd", ConceptNumeric.class, null, null, null, false)
+		            .size());
 	}
 	
 	/**
@@ -763,7 +763,32 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	@Verifies(value = "should include logs for subclasses when getting by type", method = "getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date)")
 	public void getAuditLogs_shouldIncludeLogsForSubclassesWhenGettingByType() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
-		Assert.assertEquals(3, service.getAuditLogs(null, Concept.class, null, null, null)
-		        .size());
+		Assert.assertEquals(2,
+		    service.getAuditLogs("c607c80f-1ea9-4da3-bb88-6276ce8868dd", Concept.class, null, null, null, false).size());
+	}
+	
+	/**
+	 * @see {@link
+	 *      AuditLogService#getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,null,
+	 *      Integer,Integer)}
+	 */
+	@Test
+	@Verifies(value = "should exclude child logs if excludeChildAuditLogsis set to true", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,null,Integer,Integer)")
+	public void getAuditLogs_shouldExcludeChildLogsIfExcludeChildAuditLogsisSetToTrue() throws Exception {
+		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
+		Assert.assertEquals(4, service.getAuditLogs(null, null, null, null, true, null, null).size());
+	}
+	
+	/**
+	 * @see {@link AuditLogService#getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date,
+	 *      null)}
+	 */
+	@Test
+	@Verifies(value = "should exclude child logs for object if excludeChildAuditLogsis set to true", method = "getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date,null)")
+	public void getAuditLogs_shouldExcludeChildLogsForObjectIfExcludeChildAuditLogsisSetToTrue() throws Exception {
+		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
+		Assert.assertEquals(0,
+		    service.getAuditLogs("d607c80f-1ea9-4da3-bb88-6276ce8868de", ConceptDescription.class, null, null, null, true)
+		            .size());
 	}
 }

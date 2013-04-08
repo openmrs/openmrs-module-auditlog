@@ -172,8 +172,19 @@ public class DWRAuditLogService {
 						log.error("Cannot log class:" + auditLog.getClassName());
 					}
 				}
-				return new AuditLogDetails(displayString, auditLog.getObjectUuid(), auditLog.getClassName(), auditLog
-				        .getAction().name(), objectId, objectExists, propertyNameChangesMap);
+				
+				AuditLogDetails details = new AuditLogDetails(displayString, auditLog.getObjectUuid(),
+				        auditLog.getClassName(), auditLog.getAction().name(), objectId, objectExists, propertyNameChangesMap);
+				if (!auditLog.getChildAuditLogs().isEmpty()) {
+					List<AuditLogDetails> childDetails = new ArrayList<AuditLogDetails>();
+					for (AuditLog childLog : auditLog.getChildAuditLogs()) {
+						childDetails.add(new AuditLogDetails(null, childLog.getUuid(), childLog.getSimpleClassname(), childLog
+						        .getAction().name(), null, false, null));
+					}
+					details.setChildAuditLogDetails(childDetails);
+				}
+				
+				return details;
 			}
 		}
 		return null;

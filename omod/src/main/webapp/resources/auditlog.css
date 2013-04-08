@@ -38,10 +38,14 @@ table#auditlog tr:hover{
     background-color: #97B9F7; cursor: pointer; color: #FFFFFF; font-weight: bold;
 }
 
-.auditlog-changes-element{
+.auditlog-changes-element,.auditlog-childAuditLogDetails-element{
 	display: none;
 }
 
 .auditlog_action_image{
 	border: none;
+}
+
+.auditlog_child_log{
+	cursor: pointer; text-decoration: underline; width: 300px
 }

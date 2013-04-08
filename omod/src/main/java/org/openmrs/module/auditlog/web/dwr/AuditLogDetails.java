@@ -13,6 +13,7 @@
  */
 package org.openmrs.module.auditlog.web.dwr;
 
+import java.util.List;
 import java.util.Map;
 
 import org.openmrs.OpenmrsObject;
@@ -45,6 +46,8 @@ public class AuditLogDetails {
 	
 	//Mappings of edited property names to their new(index 0) and previous(index 1) values' array
 	private Map<String, String[]> changes;
+	
+	private List<AuditLogDetails> childAuditLogDetails;
 	
 	/**
 	 * Convenience constructor that created an {@link AuditLogDetails} from an {@link AuditLog}
@@ -156,5 +159,19 @@ public class AuditLogDetails {
 	 */
 	public void setChanges(Map<String, String[]> changes) {
 		this.changes = changes;
+	}
+	
+	/**
+	 * @return the childAuditLogDetails
+	 */
+	public List<AuditLogDetails> getChildAuditLogDetails() {
+		return childAuditLogDetails;
+	}
+	
+	/**
+	 * @param childAuditLogDetails the childAuditLogDetails to set
+	 */
+	public void setChildAuditLogDetails(List<AuditLogDetails> childAuditLogDetails) {
+		this.childAuditLogDetails = childAuditLogDetails;
 	}
 }
