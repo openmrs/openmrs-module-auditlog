@@ -171,7 +171,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @return a list of audit logs
 	 * @should get all logs for the object matching the specified uuid
 	 * @should include logs for subclasses when getting by type
-	 * @should exclude child logs for object if excludeChildAuditLogsis set to true
+	 * @should exclude child logs for object if excludeChildAuditLogs is set to true
 	 */
 	public List<AuditLog> getAuditLogs(String uuid, Class<? extends OpenmrsObject> clazz, List<Action> actions,
 	                                   Date startDate, Date endDate, boolean excludeChildAuditLogs);

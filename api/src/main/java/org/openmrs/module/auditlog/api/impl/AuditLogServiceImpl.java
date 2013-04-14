@@ -178,7 +178,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	                                   Date startDate, Date endDate, boolean excludeChildAuditLogs) {
 		
 		if (StringUtils.isBlank(uuid) || clazz == null)
-			throw new APIException("class and uuid are required");
+			throw new APIException("class and uuid are required when fetching AuditLogs for an object");
 		
 		List<String> clazzes = new ArrayList<String>();
 		clazzes.add(clazz.getName());
