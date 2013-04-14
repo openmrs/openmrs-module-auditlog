@@ -35,7 +35,7 @@
 		
 		<many-to-one name="parentAuditLog" class="AuditLog" column="parent_auditlog_id" />
 		
-		<set name="childAuditLogs" cascade="save-update">
+		<set name="childAuditLogs" inverse="true" cascade="none">
 			<key column="parent_auditlog_id" />
 			<one-to-many class="AuditLog" />
 		</set>

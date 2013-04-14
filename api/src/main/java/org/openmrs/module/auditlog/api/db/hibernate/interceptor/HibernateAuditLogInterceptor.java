@@ -486,14 +486,15 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 		AuditLog auditLog = childbjectUuidAuditLogMap.get().get(object.getUuid());
 		if (auditLog == null) {
 			auditLog = instantiateAuditLog(object, action);
+			getAuditLogDao().save(auditLog);
 		}
 		
 		if ((ownerUuidChildLogsMap != null && ownerUuidChildLogsMap.get().containsKey(object.getUuid()))) {
 			for (AuditLog al : ownerUuidChildLogsMap.get().get(object.getUuid())) {
-				auditLog.addChildAuditLog(al);
+				al.setParentAuditLog(auditLog);
+				getAuditLogDao().save(al);
 			}
 		}
-		getAuditLogDao().save(auditLog);
 	}
 	
 	/**

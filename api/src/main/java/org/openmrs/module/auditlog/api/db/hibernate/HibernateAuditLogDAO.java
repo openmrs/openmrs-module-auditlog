@@ -199,7 +199,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	@Override
 	@Transactional
 	public <T> T save(T object) {
-		sessionFactory.getCurrentSession().save(object);
+		sessionFactory.getCurrentSession().saveOrUpdate(object);
 		return object;
 	}
 	
