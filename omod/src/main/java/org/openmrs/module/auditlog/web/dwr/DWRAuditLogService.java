@@ -283,7 +283,7 @@ public class DWRAuditLogService {
 			Concept concept = (Concept) obj;
 			displayString += ((concept.getName() != null) ? concept.getName().getName() : "");
 		} else if (Person.class.isAssignableFrom(obj.getClass())) {
-			Person person = (Patient) obj;
+			Person person = (Person) obj;
 			displayString += ((person.getPersonName() != null) ? person.getPersonName().getFullName() : "");
 		} else if (Obs.class.isAssignableFrom(obj.getClass())) {
 			Obs obs = (Obs) obj;
