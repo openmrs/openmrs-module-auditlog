@@ -38,8 +38,8 @@
 		//set the dialog to display update changes for each row
 		$j("#${moduleId}-changes-dialog").dialog({
 			autoOpen: false,
-			width:'1000',
-			height:'600',
+			width:'1040px',
+			height:'640',
 			modal: true,
 			beforeClose: function(event, ui){
 				//reset
@@ -177,7 +177,7 @@
 		</tr>
 		<tr class="${moduleId}-changes-element"><td colspan="2">&nbsp;</td></tr>
 		<tr class="${moduleId}-changes-element">
-			<td valign="top" colspan="2" class="${moduleId}_align_text_center">
+			<td valign="top" colspan="2">
 				<b><spring:message code="${moduleId}.changes" /></b>
 			</td>
 		</tr>
@@ -186,15 +186,15 @@
 				<table id="${moduleId}-changes-table" width="100%" cellpadding="3" cellspacing="0" border="1" bordercolor="#ADACAC">
 					<thead>
 						<tr>
-							<th class="${moduleId}_table_header ${moduleId}_align_text_center" width="26%">
+							<td class="${moduleId}_table_header ${moduleId}_align_text_center" width="26%">
 								<spring:message code="${moduleId}.propertyName" />
-							</th>
-							<th class="${moduleId}_table_header ${moduleId}_align_text_center" width="37%">
+							</td>
+							<td class="${moduleId}_table_header ${moduleId}_align_text_center" width="37%">
 								<spring:message code="${moduleId}.newValue" />
-							</th>
-							<th class="${moduleId}_table_header ${moduleId}_align_text_center" width="37%">
+							</td>
+							<td class="${moduleId}_table_header ${moduleId}_align_text_center" width="37%">
 								<spring:message code="${moduleId}.previousValue" />
-							</th>
+							</td>
 						</tr>
 					<thead>
 				</table>
@@ -202,10 +202,10 @@
 		</tr>
 		<tr class="${moduleId}-childAuditLogDetails-element"><td colspan="2">&nbsp;</td></tr>
 		<tr class="${moduleId}-childAuditLogDetails-element">
-			<td valign="top" colspan="2" class="${moduleId}_align_text_center">
-				<b><spring:message code="${moduleId}.childAuditLogDetails" /> 
+			<td valign="top" colspan="2">
+				<b><spring:message code="${moduleId}.childAuditLogDetails" />
 					(<span id="${moduleId}-childLogCount"></span>)
-				</b> 
+				</b>
 				<img align="top" src="<openmrs:contextPath />/images/help.gif" border="0" 
 					title="<openmrs:message code="${moduleId}.childAuditLogDetails.help" />" />
 			</td>
@@ -215,9 +215,9 @@
 				<table id="${moduleId}-childAuditLogDetails-table" cellpadding="3" cellspacing="0" border="1" bordercolor="#ADACAC">
 					<thead>
 						<tr>
-							<th class="${moduleId}_table_header ${moduleId}_align_text_left">
+							<td class="${moduleId}_table_header ${moduleId}_align_text_left">
 								<spring:message code="${moduleId}.item" />
-							</th>
+							</td>
 						</tr>
 					<thead>
 				</table>
