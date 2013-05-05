@@ -268,51 +268,53 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public void onCollectionUpdate(Object collection, Serializable key) throws CallbackException {
-		if (collection != null && Collection.class.isAssignableFrom(collection.getClass())) {
-			PersistentCollection persistentColl = ((PersistentCollection) collection);
-			Object owningObject = persistentColl.getOwner();
-			if (isAuditable(owningObject)) {
-				Collection currentColl = (Collection) collection;
-				Map previousMap = (Map) persistentColl.getStoredSnapshot();
-				
-				String propertyName = persistentColl.getRole().substring(persistentColl.getRole().lastIndexOf('.') + 1);
-				String ownerUuid = ((OpenmrsObject) owningObject).getUuid();
-				if (objectChangesMap.get().get(ownerUuid) == null) {
-					objectChangesMap.get().put(ownerUuid, new HashMap<String, String[]>());
-				}
-				objectChangesMap
-				        .get()
-				        .get(ownerUuid)
-				        .put(propertyName,
-				            new String[] { getItemUuidsOrIds(currentColl), getItemUuidsOrIds(previousMap.values()) });
-				
-				//Track removed items so that when we create logs for them, 
-				//and link them to the parent's log
-				Set<Object> removedItems = new HashSet<Object>();
-				removedItems.addAll(CollectionUtils.subtract(previousMap.values(), currentColl));
-				if (!removedItems.isEmpty()) {
-					Class<?> elementClass = removedItems.iterator().next().getClass();
-					if (OpenmrsObject.class.isAssignableFrom(elementClass)) {
-						OpenmrsObject o = (OpenmrsObject) owningObject;
-						if (entityRemovedChildrenMap.get().get(o) == null) {
-							entityRemovedChildrenMap.get().put(o, new HashSet<OpenmrsObject>());
-						}
-						for (Object removedItem : removedItems) {
-							OpenmrsObject removed = (OpenmrsObject) removedItem;
-							entityRemovedChildrenMap.get().get(o).add(removed);
+		if (collection != null) {
+			if (Collection.class.isAssignableFrom(collection.getClass())) {
+				PersistentCollection persistentColl = ((PersistentCollection) collection);
+				Object owningObject = persistentColl.getOwner();
+				if (isAuditable(owningObject)) {
+					Collection currentColl = (Collection) collection;
+					Map previousMap = (Map) persistentColl.getStoredSnapshot();
+					
+					String propertyName = persistentColl.getRole().substring(persistentColl.getRole().lastIndexOf('.') + 1);
+					String ownerUuid = ((OpenmrsObject) owningObject).getUuid();
+					if (objectChangesMap.get().get(ownerUuid) == null) {
+						objectChangesMap.get().put(ownerUuid, new HashMap<String, String[]>());
+					}
+					objectChangesMap
+					        .get()
+					        .get(ownerUuid)
+					        .put(propertyName,
+					            new String[] { getItemUuidsOrIds(currentColl), getItemUuidsOrIds(previousMap.values()) });
+					
+					//Track removed items so that when we create logs for them,
+					//and link them to the parent's log
+					Set<Object> removedItems = new HashSet<Object>();
+					removedItems.addAll(CollectionUtils.subtract(previousMap.values(), currentColl));
+					if (!removedItems.isEmpty()) {
+						Class<?> elementClass = removedItems.iterator().next().getClass();
+						if (OpenmrsObject.class.isAssignableFrom(elementClass)) {
+							OpenmrsObject o = (OpenmrsObject) owningObject;
+							if (entityRemovedChildrenMap.get().get(o) == null) {
+								entityRemovedChildrenMap.get().put(o, new HashSet<OpenmrsObject>());
+							}
+							for (Object removedItem : removedItems) {
+								OpenmrsObject removed = (OpenmrsObject) removedItem;
+								entityRemovedChildrenMap.get().get(o).add(removed);
+							}
 						}
 					}
+					
+					updates.get().add((OpenmrsObject) owningObject);
 				}
-				
-				updates.get().add((OpenmrsObject) owningObject);
-			}
-		} else if (collection != null) {
-			//TODO Handle persistent maps
-			PersistentMap persistentMap = (PersistentMap) collection;
-			Object owningObject = persistentMap.getOwner();
-			if (getAuditLogDao().isMonitored(owningObject.getClass())) {
-				log.error("PersistentMaps not supported: Can't create log entry for updated map:" + persistentMap.getRole()
-				        + " in class:" + persistentMap.getOwner().getClass());
+			} else {
+				//TODO Handle persistent maps
+				PersistentMap persistentMap = (PersistentMap) collection;
+				Object owningObject = persistentMap.getOwner();
+				if (getAuditLogDao().isMonitored(owningObject.getClass())) {
+					log.error("PersistentMaps not supported: Can't create log entry for updated map:"
+					        + persistentMap.getRole() + " in class:" + persistentMap.getOwner().getClass());
+				}
 			}
 		}
 	}
