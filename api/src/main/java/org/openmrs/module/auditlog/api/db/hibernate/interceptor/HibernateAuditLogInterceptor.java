@@ -23,7 +23,6 @@ import org.hibernate.EntityMode;
 import org.hibernate.Interceptor;
 import org.hibernate.Transaction;
 import org.hibernate.collection.PersistentCollection;
-import org.hibernate.collection.PersistentMap;
 import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.type.StringType;
 import org.hibernate.type.TextType;
@@ -269,18 +268,17 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	@Override
 	public void onCollectionUpdate(Object collection, Serializable key) throws CallbackException {
 		if (collection != null) {
-			if (Collection.class.isAssignableFrom(collection.getClass())) {
-				PersistentCollection persistentColl = ((PersistentCollection) collection);
-				Object owningObject = persistentColl.getOwner();
-				if (isAuditable(owningObject)) {
+			PersistentCollection persistentColl = ((PersistentCollection) collection);
+			Object owningObject = persistentColl.getOwner();
+			if (isAuditable(owningObject)) {
+				Map previousMap = (Map) persistentColl.getStoredSnapshot();
+				String ownerUuid = ((OpenmrsObject) owningObject).getUuid();
+				String propertyName = persistentColl.getRole().substring(persistentColl.getRole().lastIndexOf('.') + 1);
+				if (objectChangesMap.get().get(ownerUuid) == null) {
+					objectChangesMap.get().put(ownerUuid, new HashMap<String, String[]>());
+				}
+				if (Collection.class.isAssignableFrom(collection.getClass())) {
 					Collection currentColl = (Collection) collection;
-					Map previousMap = (Map) persistentColl.getStoredSnapshot();
-					
-					String propertyName = persistentColl.getRole().substring(persistentColl.getRole().lastIndexOf('.') + 1);
-					String ownerUuid = ((OpenmrsObject) owningObject).getUuid();
-					if (objectChangesMap.get().get(ownerUuid) == null) {
-						objectChangesMap.get().put(ownerUuid, new HashMap<String, String[]>());
-					}
 					objectChangesMap
 					        .get()
 					        .get(ownerUuid)
@@ -306,14 +304,12 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					}
 					
 					updates.get().add((OpenmrsObject) owningObject);
-				}
-			} else {
-				//TODO Handle persistent maps
-				PersistentMap persistentMap = (PersistentMap) collection;
-				Object owningObject = persistentMap.getOwner();
-				if (getAuditLogDao().isMonitored(owningObject.getClass())) {
-					log.error("PersistentMaps not supported: Can't create log entry for updated map:"
-					        + persistentMap.getRole() + " in class:" + persistentMap.getOwner().getClass());
+				} else {
+					//TODO Handle persistent maps
+					if (getAuditLogDao().isMonitored(owningObject.getClass())) {
+						log.error("PersistentMaps not supported: Can't create log entry for updated map:"
+						        + persistentColl.getRole() + " in class:" + owningObject.getClass());
+					}
 				}
 			}
 		}
