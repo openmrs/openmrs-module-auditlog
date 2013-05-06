@@ -12,3 +12,6 @@ target
 # IntelliJ specific files #
 *.iml
 .idea
+
+# OSX specific files #
+.DS_Store
