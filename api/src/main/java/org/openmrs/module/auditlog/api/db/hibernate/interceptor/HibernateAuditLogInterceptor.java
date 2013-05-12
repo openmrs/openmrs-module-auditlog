@@ -440,17 +440,17 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				entityRemovedChildrenMap.remove();
 				
 				for (OpenmrsObject insert : inserts.get()) {
-					createAuditLog(insert, Action.CREATED);
+                    createIfNecessaryAndSaveAuditLog(insert, Action.CREATED);
 				}
 				inserts.remove();
 				
 				for (OpenmrsObject delete : deletes.get()) {
-					createAuditLog(delete, Action.DELETED);
+                    createIfNecessaryAndSaveAuditLog(delete, Action.DELETED);
 				}
 				deletes.remove();
 				
 				for (OpenmrsObject update : updates.get()) {
-					createAuditLog(update, Action.UPDATED);
+                    createIfNecessaryAndSaveAuditLog(update, Action.UPDATED);
 				}
 				updates.remove();
 			}
@@ -474,12 +474,12 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	}
 	
 	/**
-	 * Creates and saves an auditLog in the DB for the specified object
+	 * Creates if necessary and saves an auditLog in the DB for the specified object
 	 * 
 	 * @param object the object to create for the AuditLog
 	 * @param action see {@link Action}
 	 */
-	private void createAuditLog(OpenmrsObject object, Action action) {
+	private void createIfNecessaryAndSaveAuditLog(OpenmrsObject object, Action action) {
 		//If this is a collection element, we already created a log for it
 		AuditLog auditLog = childbjectUuidAuditLogMap.get().get(object.getUuid());
 		if (auditLog == null) {
