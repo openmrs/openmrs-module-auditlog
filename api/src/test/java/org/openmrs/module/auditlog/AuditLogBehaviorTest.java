@@ -14,7 +14,10 @@
 package org.openmrs.module.auditlog;
 
 import static junit.framework.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertTrue;
 import static org.openmrs.module.auditlog.AuditLog.Action.CREATED;
 import static org.openmrs.module.auditlog.AuditLog.Action.DELETED;
 import static org.openmrs.module.auditlog.AuditLog.Action.UPDATED;
@@ -28,8 +31,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-
-import junit.framework.Assert;
 
 import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
@@ -75,12 +76,12 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		concept.setConceptClass(conceptService.getConceptClass(4));
 		conceptService.saveConcept(concept);
 		List<AuditLog> logs = getAllLogs();
-		Assert.assertNotNull(concept.getConceptId());
+		assertNotNull(concept.getConceptId());
 		//Should have created an entry for the concept and concept name
-		Assert.assertEquals(2, logs.size());
+		assertEquals(2, logs.size());
 		//The latest logs come first
-		Assert.assertEquals(CREATED, logs.get(0).getAction());
-		Assert.assertEquals(CREATED, logs.get(1).getAction());
+		assertEquals(CREATED, logs.get(0).getAction());
+		assertEquals(CREATED, logs.get(1).getAction());
 	}
 	
 	@Test
@@ -90,8 +91,8 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		encounterService.purgeEncounterType(encounterType);
 		List<AuditLog> logs = getAllLogs(encounterType.getUuid(), EncounterType.class, null);
 		//Should have created a log entry for deleted Encounter type
-		Assert.assertEquals(1, logs.size());
-		Assert.assertEquals(DELETED, logs.get(0).getAction());
+		assertEquals(1, logs.size());
+		assertEquals(DELETED, logs.get(0).getAction());
 	}
 	
 	@Test
@@ -104,9 +105,9 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		ConceptDatatype dt = conceptService.getConceptDatatype(3);
 		String oldVersion = concept.getVersion();
 		String newVersion = "1.11";
-		Assert.assertFalse(cc.equals(concept.getConceptClass()));
-		Assert.assertFalse(dt.equals(concept.getDatatype()));
-		Assert.assertFalse(newVersion.equalsIgnoreCase(oldVersion));
+		assertFalse(cc.equals(concept.getConceptClass()));
+		assertFalse(dt.equals(concept.getDatatype()));
+		assertFalse(newVersion.equalsIgnoreCase(oldVersion));
 		
 		concept.setConceptClass(cc);
 		concept.setDatatype(dt);
@@ -115,21 +116,21 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		
 		List<AuditLog> logs = getAllLogs();
 		//Should have created a log entry for edited concept
-		Assert.assertEquals(1, logs.size());
+		assertEquals(1, logs.size());
 		AuditLog auditLog = logs.get(0);
 		
 		//Should have created entries for the changes properties and their old values
-		Assert.assertEquals(UPDATED, auditLog.getAction());
+		assertEquals(UPDATED, auditLog.getAction());
 		//Check that there 3 property tag entries
 		Map<String, String[]> changes = auditLog.getChanges();
-		Assert.assertEquals(3, changes.size());
-		Assert.assertEquals(AuditLogConstants.UUID_LABEL + oldConceptClassUuid, changes.get("conceptClass")[1]);
-		Assert.assertEquals(AuditLogConstants.UUID_LABEL + oldDatatypeUuid, changes.get("datatype")[1]);
-		Assert.assertEquals(oldVersion, changes.get("version")[1]);
+		assertEquals(3, changes.size());
+		assertEquals(AuditLogConstants.UUID_LABEL + oldConceptClassUuid, changes.get("conceptClass")[1]);
+		assertEquals(AuditLogConstants.UUID_LABEL + oldDatatypeUuid, changes.get("datatype")[1]);
+		assertEquals(oldVersion, changes.get("version")[1]);
 		
-		Assert.assertEquals(AuditLogConstants.UUID_LABEL + cc.getUuid(), changes.get("conceptClass")[0]);
-		Assert.assertEquals(AuditLogConstants.UUID_LABEL + dt.getUuid(), changes.get("datatype")[0]);
-		Assert.assertEquals(newVersion, changes.get("version")[0]);
+		assertEquals(AuditLogConstants.UUID_LABEL + cc.getUuid(), changes.get("conceptClass")[0]);
+		assertEquals(AuditLogConstants.UUID_LABEL + dt.getUuid(), changes.get("datatype")[0]);
+		assertEquals(newVersion, changes.get("version")[0]);
 	}
 	
 	@Test
@@ -137,7 +138,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	public void shouldCreateNoLogEntryIfNoChangesAreMadeToAnExistingObject() throws Exception {
 		EncounterType encounterType = encounterService.getEncounterType(2);
 		encounterService.saveEncounterType(encounterType);
-		Assert.assertTrue(getAllLogs().isEmpty());
+		assertTrue(getAllLogs().isEmpty());
 	}
 	
 	@Test
@@ -145,12 +146,12 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	public void shouldIgnoreDateChangedAndCreatedFields() throws Exception {
 		Concept concept = conceptService.getConcept(3);
 		//sanity checks
-		Assert.assertNull(concept.getDateChanged());
-		Assert.assertNull(concept.getChangedBy());
+		assertNull(concept.getDateChanged());
+		assertNull(concept.getChangedBy());
 		concept.setDateChanged(new Date());
 		concept.setChangedBy(Context.getAuthenticatedUser());
 		conceptService.saveConcept(concept);
-		Assert.assertTrue(getAllLogs().isEmpty());
+		assertTrue(getAllLogs().isEmpty());
 	}
 	
 	@Test
@@ -172,10 +173,10 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 						if (index == 0) {
 							//Let's have a delete
 							EncounterType existingEncounterType = es.getEncounterType(6);
-							Assert.assertNotNull(existingEncounterType);
+							assertNotNull(existingEncounterType);
 							es.purgeEncounterType(existingEncounterType);
 						} else {
-							EncounterType encounterType = null;
+							EncounterType encounterType;
 							if (index % 2 == 0) {
 								//And some updates
 								encounterType = es.getEncounterType(2);
@@ -191,7 +192,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 						Context.closeSession();
 					}
 				}
-			}, new Integer(i).toString()));
+			}, Integer.toString(i)));
 		}
 		
 		for (Thread thread : threads) {
@@ -202,32 +203,32 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 			thread.join();
 		}
 		
-		Assert.assertEquals(N, getAllLogs().size());
+		assertEquals(N, getAllLogs().size());
 		
 		List<Action> actions = new ArrayList<Action>();
 		actions.add(CREATED);//should match expected count of created log entries
-		Assert.assertEquals(25, auditLogService.getAuditLogs(null, actions, null, null, false, null, null).size());
+		assertEquals(25, auditLogService.getAuditLogs(null, actions, null, null, false, null, null).size());
 		
 		actions.clear();
 		actions.add(UPDATED);//should match expected count of updated log entries
-		Assert.assertEquals(24, auditLogService.getAuditLogs(null, actions, null, null, false, null, null).size());
+		assertEquals(24, auditLogService.getAuditLogs(null, actions, null, null, false, null, null).size());
 		
 		actions.clear();
 		actions.add(DELETED);//should match expected count of deleted log entries
-		Assert.assertEquals(1, auditLogService.getAuditLogs(null, actions, null, null, false, null, null).size());
+		assertEquals(1, auditLogService.getAuditLogs(null, actions, null, null, false, null, null).size());
 	}
 	
 	@Test
 	@NotTransactional
 	public void shouldNotCreateAuditLogsForUnMonitoredObjects() {
-		Assert.assertFalse(auditLogService.isMonitored(Location.class));
+		assertFalse(auditLogService.isMonitored(Location.class));
 		Location location = new Location();
 		location.setName("najja");
 		location.setAddress1("test address");
 		Location savedLocation = Context.getLocationService().saveLocation(location);
-		Assert.assertNotNull(savedLocation.getLocationId());//sanity check that it was actually created
+		assertNotNull(savedLocation.getLocationId());//sanity check that it was actually created
 		//Should not have created any logs
-		Assert.assertTrue(getAllLogs().isEmpty());
+		assertTrue(getAllLogs().isEmpty());
 	}
 	
 	@Test
@@ -241,7 +242,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		int originalLogCount = getAllLogs().size();
 		idType.setFormat("");
 		ps.savePatientIdentifierType(idType);
-		Assert.assertEquals(originalLogCount, getAllLogs().size());
+		assertEquals(originalLogCount, getAllLogs().size());
 	}
 	
 	@Test
@@ -252,12 +253,12 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		idType.setFormat("");
 		idType = ps.savePatientIdentifierType(idType);
 		//this will fail when required version is 1.9 since it converts blanks to null
-		Assert.assertEquals("", idType.getFormat());
+		assertEquals("", idType.getFormat());
 		
 		int originalLogCount = getAllLogs().size();
 		idType.setFormat(null);
 		ps.savePatientIdentifierType(idType);
-		Assert.assertEquals(originalLogCount, getAllLogs().size());
+		assertEquals(originalLogCount, getAllLogs().size());
 	}
 	
 	@Test
@@ -271,13 +272,13 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		int originalLogCount = getAllLogs().size();
 		idType.setFormat("TEST");
 		ps.savePatientIdentifierType(idType);
-		Assert.assertEquals(originalLogCount, getAllLogs().size());
+		assertEquals(originalLogCount, getAllLogs().size());
 	}
 	
 	@Test
 	@NotTransactional
 	public void shouldMonitorAnyOpenmrsObjectWhenStrateyIsSetToAll() throws Exception {
-		Assert.assertFalse(auditLogService.isMonitored(Location.class));
+		assertFalse(auditLogService.isMonitored(Location.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
 		gp.setPropertyValue(MonitoringStrategy.ALL.name());
@@ -285,20 +286,20 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		Location location = new Location();
 		location.setName("new location");
 		Context.getLocationService().saveLocation(location);
-		Assert.assertEquals(1, getAllLogs(location.getUuid(), Location.class, Collections.singletonList(CREATED)).size());
+		assertEquals(1, getAllLogs(location.getUuid(), Location.class, Collections.singletonList(CREATED)).size());
 	}
 	
 	@Test
 	@NotTransactional
 	public void shouldNotMonitorAnyObjectWhenStrateyIsSetToNone() throws Exception {
-		Assert.assertTrue(auditLogService.isMonitored(EncounterType.class));
+		assertTrue(auditLogService.isMonitored(EncounterType.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
 		gp.setPropertyValue(MonitoringStrategy.NONE.name());
 		as.saveGlobalProperty(gp);
 		EncounterType encounterType = encounterService.getEncounterType(6);
 		encounterService.purgeEncounterType(encounterType);
-		Assert.assertEquals(0, getAllLogs().size());
+		assertEquals(0, getAllLogs().size());
 	}
 	
 	@Test
@@ -307,15 +308,14 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		AdministrationService as = Context.getAdministrationService();
 		//sanity check
 		GlobalProperty monitoredGP = as.getGlobalPropertyObject(AuditLogConstants.GP_UN_MONITORED_CLASSES);
-		Assert.assertTrue(monitoredGP.getPropertyValue().indexOf(EncounterType.class.getName()) > -1);
+		assertTrue(monitoredGP.getPropertyValue().indexOf(EncounterType.class.getName()) > -1);
 		GlobalProperty strategyGP = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
 		strategyGP.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
 		as.saveGlobalProperty(strategyGP);
 		
 		EncounterType encounterType = encounterService.getEncounterType(6);
 		encounterService.purgeEncounterType(encounterType);
-		Assert.assertEquals(0, getAllLogs(encounterType.getUuid(), EncounterType.class, Collections.singletonList(DELETED))
-		        .size());
+		assertEquals(0, getAllLogs(encounterType.getUuid(), EncounterType.class, Collections.singletonList(DELETED)).size());
 	}
 	
 	@Test
@@ -324,7 +324,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		AdministrationService as = Context.getAdministrationService();
 		//sanity check
 		GlobalProperty monitoredGP = as.getGlobalPropertyObject(AuditLogConstants.GP_UN_MONITORED_CLASSES);
-		Assert.assertTrue(monitoredGP.getPropertyValue().indexOf(EncounterType.class.getName()) > -1);
+		assertTrue(monitoredGP.getPropertyValue().indexOf(EncounterType.class.getName()) > -1);
 		GlobalProperty strategyGP = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
 		strategyGP.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
 		as.saveGlobalProperty(strategyGP);
@@ -332,7 +332,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		Location location = new Location();
 		location.setName("new location");
 		Context.getLocationService().saveLocation(location);
-		Assert.assertEquals(1, getAllLogs(location.getUuid(), Location.class, Collections.singletonList(CREATED)).size());
+		assertEquals(1, getAllLogs(location.getUuid(), Location.class, Collections.singletonList(CREATED)).size());
 	}
 	
 	@Test
@@ -340,7 +340,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	public void shouldCreateLogForUnMonitoredTypeIfTheOwningTypeIsMonitoredAndStrategyIsAllExcept() throws Exception {
 		executeDataSet("org/openmrs/api/include/LocationServiceTest-initialData.xml");
 		LocationService ls = Context.getLocationService();
-		Assert.assertEquals(0, getAllLogs().size());
+		assertEquals(0, getAllLogs().size());
 		
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
@@ -352,15 +352,15 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		LocationTag tag = loc.getTags().iterator().next();
 		tag.setDescription("new");
 		ls.saveLocation(loc);
-		Assert.assertEquals(1, getAllLogs(loc.getUuid(), Location.class, Collections.singletonList(UPDATED)).size());
-		Assert.assertEquals(1, getAllLogs(tag.getUuid(), LocationTag.class, Collections.singletonList(UPDATED)).size());
+		assertEquals(1, getAllLogs(loc.getUuid(), Location.class, Collections.singletonList(UPDATED)).size());
+		assertEquals(1, getAllLogs(tag.getUuid(), LocationTag.class, Collections.singletonList(UPDATED)).size());
 	}
 	
 	@Test
 	public void shouldUpdateTheMonitoredClassCacheWhenTheMonitoredClassGlobalPropertyIsUpdatedWithAnAddition()
 	    throws Exception {
-		Assert.assertFalse(auditLogService.isMonitored(Order.class));
-		Assert.assertFalse(auditLogService.isMonitored(DrugOrder.class));
+		assertFalse(auditLogService.isMonitored(Order.class));
+		assertFalse(auditLogService.isMonitored(DrugOrder.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORED_CLASSES);
 		Set<Class<?>> monitoredClasses = new HashSet<Class<?>>();
@@ -368,16 +368,16 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		monitoredClasses.add(Order.class);
 		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), ","));
 		as.saveGlobalProperty(gp);
-		Assert.assertTrue(auditLogService.isMonitored(Order.class));
-		Assert.assertTrue(auditLogService.isMonitored(DrugOrder.class));
+		assertTrue(auditLogService.isMonitored(Order.class));
+		assertTrue(auditLogService.isMonitored(DrugOrder.class));
 	}
 	
 	@Test
 	public void shouldUpdateTheMonitoredClassCacheWhenTheMonitoredClassGlobalPropertyIsUpdatedWithARemoval()
 	    throws Exception {
-		Assert.assertTrue(auditLogService.isMonitored(Concept.class));
-		Assert.assertTrue(auditLogService.isMonitored(ConceptNumeric.class));
-		Assert.assertTrue(auditLogService.isMonitored(ConceptComplex.class));
+		assertTrue(auditLogService.isMonitored(Concept.class));
+		assertTrue(auditLogService.isMonitored(ConceptNumeric.class));
+		assertTrue(auditLogService.isMonitored(ConceptComplex.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORED_CLASSES);
 		Set<Class<?>> monitoredClasses = new HashSet<Class<?>>();
@@ -385,9 +385,9 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		monitoredClasses.remove(Concept.class);
 		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), ","));
 		as.saveGlobalProperty(gp);
-		Assert.assertFalse(auditLogService.isMonitored(Concept.class));
-		Assert.assertTrue(auditLogService.isMonitored(ConceptNumeric.class));
-		Assert.assertTrue(auditLogService.isMonitored(ConceptComplex.class));
+		assertFalse(auditLogService.isMonitored(Concept.class));
+		assertTrue(auditLogService.isMonitored(ConceptNumeric.class));
+		assertTrue(auditLogService.isMonitored(ConceptComplex.class));
 	}
 	
 	@Test

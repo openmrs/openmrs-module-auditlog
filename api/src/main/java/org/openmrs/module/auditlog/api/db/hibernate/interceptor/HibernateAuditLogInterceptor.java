@@ -381,7 +381,9 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 									break;
 								}
 							}
-							if (isInsert || updates.get().contains(obj)) {
+
+                            //noinspection SuspiciousMethodCalls
+                            if (isInsert || updates.get().contains(obj)) {
 								OpenmrsObject owner = (OpenmrsObject) entry.getKey();
 								if (updates.get().contains(owner)) {
 									if (log.isDebugEnabled())
@@ -440,17 +442,17 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				entityRemovedChildrenMap.remove();
 				
 				for (OpenmrsObject insert : inserts.get()) {
-                    createIfNecessaryAndSaveAuditLog(insert, Action.CREATED);
+					createIfNecessaryAndSaveAuditLog(insert, Action.CREATED);
 				}
 				inserts.remove();
 				
 				for (OpenmrsObject delete : deletes.get()) {
-                    createIfNecessaryAndSaveAuditLog(delete, Action.DELETED);
+					createIfNecessaryAndSaveAuditLog(delete, Action.DELETED);
 				}
 				deletes.remove();
 				
 				for (OpenmrsObject update : updates.get()) {
-                    createIfNecessaryAndSaveAuditLog(update, Action.UPDATED);
+					createIfNecessaryAndSaveAuditLog(update, Action.UPDATED);
 				}
 				updates.remove();
 			}
@@ -521,16 +523,16 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	/**
 	 * Checks if a class is marked as monitored or is explicitly monitored
 	 * 
-	 * @param entity
-	 * @return
+	 * @param entity the entity to check
+	 * @return true if is auditable otherwise false
 	 */
 	private boolean isAuditable(Object entity) {
 		return getAuditLogDao().isMonitored(entity.getClass()) || getAuditLogDao().isImplicitlyMonitored(entity.getClass());
 	}
 	
 	/**
-	 * @param collection
-	 * @return
+	 * @param collection the collection object
+	 * @return a comma delimited string of uuids or ids for the collection elements
 	 */
 	private String getItemUuidsOrIds(Collection<?> collection) {
 		String currElementUuidsOrIds = "";

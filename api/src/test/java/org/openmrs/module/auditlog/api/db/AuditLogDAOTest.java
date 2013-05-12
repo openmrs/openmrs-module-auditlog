@@ -13,11 +13,13 @@
  */
 package org.openmrs.module.auditlog.api.db;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Set;
-
-import junit.framework.Assert;
 
 import org.junit.Test;
 import org.openmrs.Concept;
@@ -50,28 +52,28 @@ public class AuditLogDAOTest extends BaseModuleContextSensitiveTest {
 	private AuditLogDAO dao;
 	
 	/**
-	 * @see {@link AuditLogDAO#getPersistentConcreteSubclasses(Class<*>)}
+	 * @see {@link AuditLogDAO#getPersistentConcreteSubclasses(Class)}
 	 */
 	@Test
 	@Verifies(value = "should return a list of subclasses for the specified type", method = "getPersistentConcreteSubclasses(Class<*>)")
 	public void getPersistentConcreteSubclasses_shouldReturnAListOfSubclassesForTheSpecifiedType() throws Exception {
 		Set<Class<?>> subclasses = dao.getPersistentConcreteSubclasses(Concept.class);
-		Assert.assertEquals(2, subclasses.size());
-		Assert.assertTrue(subclasses.contains(ConceptNumeric.class));
-		Assert.assertTrue(subclasses.contains(ConceptComplex.class));
+		assertEquals(2, subclasses.size());
+		assertTrue(subclasses.contains(ConceptNumeric.class));
+		assertTrue(subclasses.contains(ConceptComplex.class));
 	}
 	
 	/**
-	 * @see {@link AuditLogDAO#getPersistentConcreteSubclasses(Class<*>)}
+	 * @see {@link AuditLogDAO#getPersistentConcreteSubclasses(Class)}
 	 */
 	@Test
 	@Verifies(value = "should exclude interfaces and abstract classes", method = "getPersistentConcreteSubclasses(Class<*>)")
 	public void getPersistentConcreteSubclasses_shouldExcludeInterfacesAndAbstractClasses() throws Exception {
 		Set<Class<?>> subclasses = dao.getPersistentConcreteSubclasses(OpenmrsObject.class);
 		for (Class<?> clazz : subclasses) {
-			Assert.assertFalse("Found interface:" + clazz.getName() + ", interfaces should be excluded",
+			assertFalse("Found interface:" + clazz.getName() + ", interfaces should be excluded",
 			    Modifier.isInterface(clazz.getModifiers()));
-			Assert.assertFalse("Found abstract class:" + clazz.getName() + ", abstract classes should be excluded",
+			assertFalse("Found abstract class:" + clazz.getName() + ", abstract classes should be excluded",
 			    Modifier.isAbstract(clazz.getModifiers()));
 		}
 	}
@@ -89,27 +91,27 @@ public class AuditLogDAOTest extends BaseModuleContextSensitiveTest {
 		classes.add(Concept.class);
 		dao.startMonitoring(classes);
 		Set<Class<?>> implicitlyMonitoredClasses = dao.getImplicitlyMonitoredClasses();
-		Assert.assertEquals(6, implicitlyMonitoredClasses.size());
-		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptName.class));
-		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptDescription.class));
-		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptMap.class));
-		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptSet.class));
-		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptAnswer.class));
-		Assert.assertTrue(implicitlyMonitoredClasses.contains(ConceptNameTag.class));
+		assertEquals(6, implicitlyMonitoredClasses.size());
+		assertTrue(implicitlyMonitoredClasses.contains(ConceptName.class));
+		assertTrue(implicitlyMonitoredClasses.contains(ConceptDescription.class));
+		assertTrue(implicitlyMonitoredClasses.contains(ConceptMap.class));
+		assertTrue(implicitlyMonitoredClasses.contains(ConceptSet.class));
+		assertTrue(implicitlyMonitoredClasses.contains(ConceptAnswer.class));
+		assertTrue(implicitlyMonitoredClasses.contains(ConceptNameTag.class));
 	}
 	
 	/**
-	 * @see {@link AuditLogDAO#isImplicitlyMonitored(Class<*>)}
+	 * @see {@link AuditLogDAO#isImplicitlyMonitored(Class)}
 	 */
 	@Test
 	@Verifies(value = "should return true if a class is implicitly monitored", method = "isImplicitlyMonitored(Class<*>)")
 	public void isImplicitlyMonitored_shouldReturnTrueIfAClassIsImplicitlyMonitored() throws Exception {
-		Assert.assertFalse(dao.isMonitored(ConceptName.class));//sanity check
-		Assert.assertTrue(dao.isImplicitlyMonitored(ConceptName.class));
+		assertFalse(dao.isMonitored(ConceptName.class));//sanity check
+		assertTrue(dao.isImplicitlyMonitored(ConceptName.class));
 	}
 	
 	/**
-	 * @see {@link AuditLogDAO#isImplicitlyMonitored(Class<*>)}
+	 * @see {@link AuditLogDAO#isImplicitlyMonitored(Class)}
 	 */
 	@Test
 	@Verifies(value = "should return false if a class is also marked as monitored", method = "isImplicitlyMonitored(Class<*>)")
@@ -121,18 +123,18 @@ public class AuditLogDAOTest extends BaseModuleContextSensitiveTest {
 		as.saveGlobalProperty(strategyGP);
 		
 		Context.getService(AuditLogService.class).startMonitoring(Location.class);
-		Assert.assertTrue(dao.isMonitored(Location.class));//sanity check
-		Assert.assertFalse(dao.isImplicitlyMonitored(Location.class));
+		assertTrue(dao.isMonitored(Location.class));//sanity check
+		assertFalse(dao.isImplicitlyMonitored(Location.class));
 	}
 	
 	/**
-	 * @see {@link AuditLogDAO#isImplicitlyMonitored(Class<*>)}
+	 * @see {@link AuditLogDAO#isImplicitlyMonitored(Class)}
 	 */
 	@Test
 	@Verifies(value = "should return false if a class is not implicitly monitored", method = "isImplicitlyMonitored(Class<*>)")
 	public void isImplicitlyMonitored_shouldReturnFalseIfAClassIsNotImplicitlyMonitored() throws Exception {
-		Assert.assertFalse(dao.isMonitored(PersonName.class));//sanity check
-		Assert.assertFalse(dao.isImplicitlyMonitored(PersonName.class));
+		assertFalse(dao.isMonitored(PersonName.class));//sanity check
+		assertFalse(dao.isImplicitlyMonitored(PersonName.class));
 	}
 	
 }

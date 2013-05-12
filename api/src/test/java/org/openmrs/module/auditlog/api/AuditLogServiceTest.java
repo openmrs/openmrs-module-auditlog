@@ -27,7 +27,6 @@ import junit.framework.Assert;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.openmrs.Cohort;
 import org.openmrs.Concept;
@@ -87,7 +86,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#get(Class<T>,Integer)}
+	 * @see {@link AuditLogService#getObjectById(Class, Integer)}
 	 */
 	@Test
 	@Verifies(value = "should get the saved object matching the specified arguments", method = "get(Class<T>,Integer)")
@@ -110,7 +109,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#getAuditLogs(Class<*>,List<Action>,Date,Date,Integer,Integer)}
+	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
 	@Verifies(value = "should match on the specified audit log actions", method = "getAuditLogs(Class<*>,List<Action>,Date,Date,Integer,Integer)")
@@ -133,7 +132,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#getAuditLogs(Class<*>,List<Action>,Date,Date,Integer,Integer)}
+	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
 	@Verifies(value = "should return all audit logs in the database if all args are null", method = "getAuditLogs(Class<*>,List<Action>,Date,Date,Integer,Integer)")
@@ -143,8 +142,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,
-	 *      Integer,Integer)}
+	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
 	@Verifies(value = "should match on the specified classes", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
@@ -158,41 +156,35 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link
-	 *      AuditLogService#getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,
-	 *      Integer)}
+	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
 	@Verifies(value = "should return logs created on or after the specified startDate", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
 	public void getAuditLogs_shouldReturnLogsCreatedOnOrAfterTheSpecifiedStartDate() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		Calendar cal = Calendar.getInstance();
-		cal.set(2012, 3, 1, 0, 1, 0);
+		cal.set(2012, Calendar.APRIL, 1, 0, 1, 0);
 		cal.set(Calendar.MILLISECOND, 0);
 		Date startDate = cal.getTime();
 		Assert.assertEquals(3, service.getAuditLogs(null, null, startDate, null, false, null, null).size());
 	}
 	
 	/**
-	 * @see {@link
-	 *      AuditLogService#getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,
-	 *      Integer)}
+	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
 	@Verifies(value = "should return logs created on or before the specified endDate", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
 	public void getAuditLogs_shouldReturnLogsCreatedOnOrBeforeTheSpecifiedEndDate() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		Calendar cal = Calendar.getInstance();
-		cal.set(2012, 3, 1, 0, 3, 0);
+		cal.set(2012, Calendar.APRIL, 1, 0, 3, 0);
 		cal.set(Calendar.MILLISECOND, 0);
 		Date endDate = cal.getTime();
 		Assert.assertEquals(5, service.getAuditLogs(null, null, null, endDate, false, null, null).size());
 	}
 	
 	/**
-	 * @see {@link
-	 *      AuditLogService#getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,
-	 *      Integer)}
+	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
 	@Verifies(value = "should return logs created within the specified start and end dates", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
@@ -200,16 +192,15 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		Calendar cal = Calendar.getInstance();
 		cal.set(Calendar.MILLISECOND, 0);
-		cal.set(2012, 3, 1, 0, 0, 1);
+		cal.set(2012, Calendar.APRIL, 1, 0, 0, 1);
 		Date startDate = cal.getTime();
-		cal.set(2012, 3, 1, 0, 3, 1);
+		cal.set(2012, Calendar.APRIL, 1, 0, 3, 1);
 		Date endDate = cal.getTime();
 		Assert.assertEquals(2, service.getAuditLogs(null, null, startDate, endDate, false, null, null).size());
 	}
 	
 	/**
-	 * @see {@link AuditLogService#getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,
-	 *      Integer,Integer)}
+	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test(expected = APIException.class)
 	@Verifies(value = "should reject a start date that is in the future", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
@@ -221,9 +212,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link
-	 *      AuditLogService#getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,
-	 *      Integer)}
+	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
 	@Verifies(value = "should ignore end date it it is in the future", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
@@ -236,8 +225,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,
-	 *      Integer,Integer)}
+	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
 	@Verifies(value = "should sort the logs by date of creation starting with the latest", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
@@ -252,7 +240,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#getObjectByUuid(Class<T>,String)}
+	 * @see {@link AuditLogService#getObjectByUuid(Class, String)}
 	 */
 	@Test
 	@Verifies(value = "should get the saved object matching the specified arguments", method = "getObjectByUuid(Class<T>,String)")
@@ -265,8 +253,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,
-	 *      Integer,Integer)}
+	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
 	@Verifies(value = "should include logs for subclasses when getting logs by type", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
@@ -312,7 +299,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#startMonitoring(Set<Class<OpenmrsObject>>)}
+	 * @see {@link AuditLogService#startMonitoring(java.util.Set)}
 	 */
 	@Test
 	@Verifies(value = "should update the monitored class names global property if the strategy is none_except", method = "startMonitoring(Set<Class<OpenmrsObject>>)")
@@ -349,7 +336,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#startMonitoring(Set<Class<OpenmrsObject>>)}
+	 * @see {@link AuditLogService#startMonitoring(java.util.Set)}
 	 */
 	@Test
 	@Verifies(value = "should not update any global property if the strategy is all", method = "startMonitoring(Set<Class<OpenmrsObject>>)")
@@ -396,7 +383,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#startMonitoring(Set<Class<OpenmrsObject>>)}
+	 * @see {@link AuditLogService#startMonitoring(java.util.Set)}
 	 */
 	//@Test
 	@Verifies(value = "should not update any global property if the strategy is none", method = "startMonitoring(Set<Class<OpenmrsObject>>)")
@@ -442,7 +429,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#startMonitoring(Set<Class<OpenmrsObject>>)}
+	 * @see {@link AuditLogService#startMonitoring(java.util.Set)}
 	 */
 	@Test
 	@Verifies(value = "should update the un monitored class names global property if the strategy is all_except", method = "startMonitoring(Set<Class<OpenmrsObject>>)")
@@ -478,7 +465,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#startMonitoring(Set<Class<OpenmrsObject>>)}
+	 * @see {@link AuditLogService#startMonitoring(java.util.Set)}
 	 */
 	@Test
 	@Verifies(value = "should mark a class and its known subclasses as monitored", method = "startMonitoring(Set<Class<OpenmrsObject>>)")
@@ -496,7 +483,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#stopMonitoring(Set<Class<OpenmrsObject>>)}
+	 * @see {@link AuditLogService#stopMonitoring(java.util.Set)}
 	 */
 	@Test
 	@Verifies(value = "should update the monitored class names global property if the strategy is none_except", method = "stopMonitoring(Set<Class<OpenmrsObject>>)")
@@ -528,7 +515,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#stopMonitoring(Set<Class<OpenmrsObject>>)}
+	 * @see {@link AuditLogService#stopMonitoring(java.util.Set)}
 	 */
 	@Test
 	@Verifies(value = "should not update any global property if the strategy is all", method = "stopMonitoring(Set<Class<OpenmrsObject>>)")
@@ -574,7 +561,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#stopMonitoring(Set<Class<OpenmrsObject>>)}
+	 * @see {@link AuditLogService#stopMonitoring(java.util.Set)}
 	 */
 	//@Test
 	@Verifies(value = "should not update any global property if the strategy is none", method = "stopMonitoring(Set<Class<OpenmrsObject>>)")
@@ -619,7 +606,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#stopMonitoring(Set<Class<OpenmrsObject>>)}
+	 * @see {@link AuditLogService#stopMonitoring(java.util.Set)}
 	 */
 	@Test
 	@Verifies(value = "should update the un monitored class names global property if the strategy is all_except", method = "stopMonitoring(Set<Class<OpenmrsObject>>)")
@@ -647,7 +634,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#stopMonitoring(Set<Class<OpenmrsObject>>)}
+	 * @see {@link AuditLogService#stopMonitoring(java.util.Set)}
 	 */
 	@Test
 	@Verifies(value = "should mark a class and its known subclasses as un monitored", method = "stopMonitoring(Set<Class<OpenmrsObject>>)")
@@ -667,7 +654,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date)}
+	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
 	@Verifies(value = "should get all logs for the object matching the specified uuid", method = "getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date)")
@@ -679,7 +666,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#isMonitored(Class<*>)}
+	 * @see {@link AuditLogService#isMonitored(Class)}
 	 */
 	@Test
 	@Verifies(value = "should true if the class is monitored", method = "isMonitored(Class<*>)")
@@ -700,7 +687,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#isMonitored(Class<*>)}
+	 * @see {@link AuditLogService#isMonitored(Class)}
 	 */
 	@Test
 	@Verifies(value = "should false if the class is not monitored", method = "isMonitored(Class<*>)")
@@ -715,13 +702,11 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#startMonitoring(Set<Class<OpenmrsObject>>)}
+	 * @see {@link AuditLogService#startMonitoring(java.util.Set)}
 	 */
 	@Test
-	@Ignore
 	@Verifies(value = "should mark a class and its known subclasses as monitored for all_except strategy", method = "startMonitoring(Set<Class<OpenmrsObject>>)")
 	public void startMonitoring_shouldMarkAClassAndItsKnownSubclassesAsMonitoredForAll_exceptStrategy() throws Exception {
-		//TODO fix me
 		MonitoringStrategy newStrategy = MonitoringStrategy.ALL_EXCEPT;
 		setGlobalProperty(AuditLogConstants.GP_MONITORING_STRATEGY, newStrategy.name());
 		Assert.assertEquals(newStrategy, service.getMonitoringStrategy());
@@ -738,13 +723,11 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#stopMonitoring(Set<Class<OpenmrsObject>>)}
+	 * @see {@link AuditLogService#stopMonitoring(Class)}
 	 */
 	@Test
-	@Ignore
 	@Verifies(value = "should mark a class and its known subclasses as un monitored for all_except strategy", method = "stopMonitoring(Set<Class<OpenmrsObject>>)")
 	public void stopMonitoring_shouldMarkAClassAndItsKnownSubclassesAsUnMonitoredForAll_exceptStrategy() throws Exception {
-		//TODO Fix me
 		MonitoringStrategy newStrategy = MonitoringStrategy.ALL_EXCEPT;
 		setGlobalProperty(AuditLogConstants.GP_MONITORING_STRATEGY, newStrategy.name());
 		Assert.assertEquals(newStrategy, service.getMonitoringStrategy());
@@ -757,7 +740,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date)}
+	 * @see {@link AuditLogService#getAuditLogs(String, Class, java.util.List, java.util.Date, java.util.Date, boolean)}
 	 */
 	@Test
 	@Verifies(value = "should include logs for subclasses when getting by type", method = "getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date)")
@@ -768,9 +751,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link
-	 *      AuditLogService#getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,null,
-	 *      Integer,Integer)}
+	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
 	@Verifies(value = "should exclude child logs if excludeChildAuditLogsis set to true", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,null,Integer,Integer)")
@@ -780,8 +761,7 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date,
-	 *      null)}
+	 * @see {@link AuditLogService#getAuditLogs(String, Class, java.util.List, java.util.Date, java.util.Date, boolean)}
 	 */
 	@Test
 	@Verifies(value = "should exclude child logs for object if excludeChildAuditLogsis set to true", method = "getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date,null)")

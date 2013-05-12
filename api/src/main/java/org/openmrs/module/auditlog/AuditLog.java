@@ -95,7 +95,7 @@ public class AuditLog implements Serializable {
 	 * Convenience constructor
 	 * 
 	 * @param className the fully qualified classname of the Object type
-	 * @param objectId the id of the object
+	 * @param objectUuid the id of the object
 	 * @param action the operation performed on the object
 	 * @param user the user that triggered the operation
 	 * @param dateCreated the date when the operation was done
@@ -276,7 +276,7 @@ public class AuditLog implements Serializable {
 	 * Returns a map of changes where the key if the property name and the value is a String array
 	 * of length 2 with the new value at index 0 and the previous value at index 1
 	 * 
-	 * @return
+	 * @return a map of changes
 	 */
 	public Map<String, String[]> getChanges() {
 		if (StringUtils.isNotBlank(changesData) && changes == null)
@@ -323,17 +323,9 @@ public class AuditLog implements Serializable {
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
+		return this == obj
+		        || (obj instanceof AuditLog && getUuid() != null && ((AuditLog) obj).getUuid().equals(this.getUuid()));
 		
-		if (!(obj instanceof AuditLog))
-			return false;
-		
-		AuditLog other = (AuditLog) obj;
-		if (getUuid() == null)
-			return false;
-		
-		return other.getUuid().equals(this.getUuid());
 	}
 	
 	/**
