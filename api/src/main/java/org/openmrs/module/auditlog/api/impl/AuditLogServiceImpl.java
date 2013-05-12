@@ -88,14 +88,14 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.AuditLogService#getObjectById(java.lang.Class,
+	 * @see AuditLogService#getObjectById(java.lang.Class,
 	 *      java.lang.Integer)
 	 */
 	@Override
 	public <T> T getObjectById(Class<T> clazz, Integer id) {
 		return dao.getObjectById(clazz, id);
 	}
-	
+
 	/**
 	 * @see org.openmrs.module.auditlog.api.AuditLogService#getObjectByUuid(java.lang.Class,
 	 *      java.lang.String)

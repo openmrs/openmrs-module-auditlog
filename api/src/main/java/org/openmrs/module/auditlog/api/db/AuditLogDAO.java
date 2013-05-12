@@ -67,7 +67,7 @@ public interface AuditLogDAO {
 	/**
 	 * Saves the specified object to the database
 	 * 
-	 * @param persistentObject the object to save
+	 * @param object the object to save
 	 * @return the saved audit log
 	 */
 	public <T> T save(T object);
@@ -88,31 +88,27 @@ public interface AuditLogDAO {
 	public <T> T getObjectByUuid(Class<T> clazz, String uuid);
 	
 	/**
-	 * Marks the specified classes as monitored
-	 * 
-	 * @param clazzes
+	 *  @see AuditLogService#startMonitoring(java.util.Set)
 	 */
 	public void startMonitoring(Set<Class<? extends OpenmrsObject>> clazzes);
 	
 	/**
-	 * Un marks the specified classes as monitored
-	 * 
-	 * @param clazzes
-	 */
+	 * @see AuditLogService#stopMonitoring(java.util.Set)
+     */
 	public void stopMonitoring(Set<Class<? extends OpenmrsObject>> clazzes);
 	
 	/**
-	 * @return
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#getMonitoringStrategy()
 	 */
 	public MonitoringStrategy getMonitoringStrategy();
 	
 	/**
-	 * @return
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#getMonitoredClasses()
 	 */
 	public Set<Class<?>> getMonitoredClasses();
 	
 	/**
-	 * @return
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#getUnMonitoredClasses()
 	 */
 	public Set<Class<?>> getUnMonitoredClasses();
 	
@@ -120,7 +116,7 @@ public interface AuditLogDAO {
 	 * Gets a set of concrete subclasses for the specified class recursively, note that interfaces
 	 * and abstract classes are excluded
 	 * 
-	 * @param clazz
+	 * @param clazz the Super Class
 	 * @return a set of subclasses
 	 * @should return a list of subclasses for the specified type
 	 * @should exclude interfaces and abstract classes
@@ -132,7 +128,7 @@ public interface AuditLogDAO {
 	 * is found, then we also find its collection element types and types for fields mapped as one
 	 * to one, note that this only includes sub types of {@link OpenmrsObject}
 	 * 
-	 * @param clazz
+	 * @param clazz the Class to match against
 	 * @return a set of found class names
 	 */
 	public Set<Class<?>> getAssociationTypesToMonitor(Class<?> clazz);

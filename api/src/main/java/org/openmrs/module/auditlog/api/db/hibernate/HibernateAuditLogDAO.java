@@ -194,7 +194,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.db.AuditLogDAO#save(Object)
+	 * @see AuditLogDAO#save(Object)
 	 */
 	@Override
 	@Transactional
@@ -204,7 +204,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.db.AuditLogDAO#delete(Object)
+	 * @see AuditLogDAO#delete(Object)
 	 */
 	@Override
 	@Transactional
@@ -213,8 +213,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.db.AuditLogDAO#getObjectById(java.lang.Class,
-	 *      java.lang.Integer)
+	 * @see AuditLogDAO#getObjectById(Class, Integer)
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
@@ -441,7 +440,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 * is found, then we also find its collection element types and types for fields mapped as one
 	 * to one, note that this only includes sub types of {@link OpenmrsObject}
 	 * 
-	 * @param clazz
+	 * @param clazz the Class to match against
 	 * @param foundAssocTypes the found
 	 * @return a set of found class names
 	 */
@@ -538,10 +537,10 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 * Gets a set of concrete subclasses for the specified class recursively, note that interfaces
 	 * and abstract classes are excluded
 	 * 
-	 * @param clazz
+	 * @param clazz the Super Class
 	 * @param foundSubclasses the list of subclasses found in previous recursive calls, should be
 	 *            null for the first call
-	 * @param mappedClasses
+	 * @param mappedClasses the ClassMetadata Collection
 	 * @return a set of subclasses
 	 * @should return a list of subclasses for the specified type
 	 * @should exclude interfaces and abstract classes
@@ -570,7 +569,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	}
 	
 	/**
-	 * @param clazz
+	 * @param clazz the class whose association types to add
 	 */
 	private void addAssociationTypes(Class<?> clazz) {
 		for (Class<?> assocType : getAssociationTypesToMonitor(clazz)) {
