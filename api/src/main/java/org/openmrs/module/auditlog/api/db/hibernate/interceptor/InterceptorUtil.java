@@ -78,11 +78,10 @@ public final class InterceptorUtil {
 	}
 	
 	/**
-	 * Utility method that generated the a comma delimited string of the passed in collection's
-	 * items
+	 * Utility method that serializes the collection entries to a string
 	 * 
 	 * @param collection the Collection object
-	 * @return a comma delimited string of the serialized collection elements
+	 * @return The serialized collection elements
 	 */
 	protected static String serializeCollection(Collection<?> collection, AuditLogDAO auditLogDao) {
 		if (collection == null)
@@ -112,10 +111,10 @@ public final class InterceptorUtil {
 	}
 	
 	/**
-	 * Utility method that generated the a comma delimited string of the passed in map's entries
+	 * Utility method that serializes the map entries to a string
 	 * 
 	 * @param map the Map object
-	 * @return a comma delimited string of the serialized map entries
+	 * @return The serialized map entries
 	 */
 	protected static String serializeMap(Map<?, ?> map, AuditLogDAO auditLogDao) {
 		if (map == null)
@@ -159,7 +158,7 @@ public final class InterceptorUtil {
 	 * 
 	 * @param obj the object to serialize
 	 * @param auditLogDAO the AuditLogDAO object
-	 * @return the serialized String form
+	 * @return the serialized String form of the object
 	 */
 	protected static String serializeValue(Object obj, AuditLogDAO auditLogDAO) {
 		if (obj == null)
@@ -181,7 +180,7 @@ public final class InterceptorUtil {
 				serializedValue = AuditLogConstants.UUID_LABEL + ((OpenmrsObject) obj).getUuid();
 			}
 			catch (Exception e) {
-				//In case the object doesn't support uuids, buy why?
+				//In case the object doesn't support uuids, but why?
 			}
 		}
 		
