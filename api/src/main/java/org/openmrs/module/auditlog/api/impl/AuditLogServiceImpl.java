@@ -31,7 +31,9 @@ import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.util.OpenmrsUtil;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogService {
 	
 	//private static final Log log = LogFactory.getLog(AuditLogServiceImpl.class);
@@ -55,6 +57,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	/**
 	 * @see AuditLogService#isMonitored(Class)
 	 */
+	@Transactional(readOnly = true)
 	public boolean isMonitored(Class<?> clazz) {
 		return dao.isMonitored(clazz);
 	}
@@ -66,6 +69,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 */
 	@SuppressWarnings({ "rawtypes" })
 	@Override
+	@Transactional(readOnly = true)
 	public List<AuditLog> getAuditLogs(List<Class<? extends OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
 	                                   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length) {
 		if (OpenmrsUtil.compareWithNullAsEarliest(startDate, new Date()) > 0)
@@ -88,19 +92,20 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	}
 	
 	/**
-	 * @see AuditLogService#getObjectById(java.lang.Class,
-	 *      java.lang.Integer)
+	 * @see AuditLogService#getObjectById(java.lang.Class, java.lang.Integer)
 	 */
 	@Override
+	@Transactional(readOnly = true)
 	public <T> T getObjectById(Class<T> clazz, Integer id) {
 		return dao.getObjectById(clazz, id);
 	}
-
+	
 	/**
 	 * @see org.openmrs.module.auditlog.api.AuditLogService#getObjectByUuid(java.lang.Class,
 	 *      java.lang.String)
 	 */
 	@Override
+	@Transactional(readOnly = true)
 	public <T> T getObjectByUuid(Class<T> clazz, String uuid) {
 		if (StringUtils.isBlank(uuid))
 			return null;
@@ -148,6 +153,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 * @see org.openmrs.module.auditlog.api.AuditLogService#getMonitoringStrategy()
 	 */
 	@Override
+	@Transactional(readOnly = true)
 	public MonitoringStrategy getMonitoringStrategy() {
 		return dao.getMonitoringStrategy();
 	}
@@ -156,6 +162,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 * @see org.openmrs.module.auditlog.api.AuditLogService#getMonitoredClasses()
 	 */
 	@Override
+	@Transactional(readOnly = true)
 	public Set<Class<?>> getMonitoredClasses() {
 		return dao.getMonitoredClasses();
 	}
@@ -164,6 +171,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 * @see org.openmrs.module.auditlog.api.AuditLogService#getUnMonitoredClasses()
 	 */
 	@Override
+	@Transactional(readOnly = true)
 	public Set<Class<?>> getUnMonitoredClasses() {
 		return dao.getUnMonitoredClasses();
 	}
@@ -174,6 +182,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 */
 	@SuppressWarnings("rawtypes")
 	@Override
+	@Transactional(readOnly = true)
 	public List<AuditLog> getAuditLogs(String uuid, Class<? extends OpenmrsObject> clazz, List<Action> actions,
 	                                   Date startDate, Date endDate, boolean excludeChildAuditLogs) {
 		

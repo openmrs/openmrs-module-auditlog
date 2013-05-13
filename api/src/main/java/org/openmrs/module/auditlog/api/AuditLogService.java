@@ -20,6 +20,7 @@ import java.util.Set;
 import org.openmrs.Concept;
 import org.openmrs.GlobalProperty;
 import org.openmrs.OpenmrsObject;
+import org.openmrs.annotation.Authorized;
 import org.openmrs.api.OpenmrsService;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
@@ -39,6 +40,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should true if the class is monitored
 	 * @should false if the class is not monitored
 	 */
+	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOGS)
 	public boolean isMonitored(Class<?> clazz);
 	
 	/**
@@ -68,6 +70,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should include logs for subclasses when getting logs by type
 	 * @should exclude child logs if excludeChildAuditLogsis set to true
 	 */
+	@Authorized(AuditLogConstants.PRIV_VIEW_AUDITLOGS)
 	public List<AuditLog> getAuditLogs(List<Class<? extends OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
 	                                   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length);
 	
@@ -78,6 +81,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @return the matching saved object
 	 * @should get the saved object matching the specified arguments
 	 */
+	@Authorized(AuditLogConstants.PRIV_VIEW_ITEMS)
 	public <T> T getObjectById(Class<T> clazz, Integer id);
 	
 	/**
@@ -87,6 +91,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @return the matching saved object
 	 * @should get the saved object matching the specified arguments
 	 */
+	@Authorized(AuditLogConstants.PRIV_VIEW_ITEMS)
 	public <T> T getObjectByUuid(Class<T> clazz, String uuid);
 	
 	/**
@@ -94,6 +99,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * 
 	 * @param clazz the type to start monitoring
 	 */
+	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOGS)
 	public void startMonitoring(Class<? extends OpenmrsObject> clazz);
 	
 	/**
@@ -108,6 +114,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should mark a class and its known subclasses as monitored
 	 * @should mark a class and its known subclasses as monitored for all_except strategy
 	 */
+	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOGS)
 	public void startMonitoring(Set<Class<? extends OpenmrsObject>> clazzes);
 	
 	/**
@@ -115,6 +122,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * 
 	 * @param clazz the type to stop monitoring
 	 */
+	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOGS)
 	public void stopMonitoring(Class<? extends OpenmrsObject> clazz);
 	
 	/**
@@ -129,6 +137,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should mark a class and its known subclasses as un monitored
 	 * @should mark a class and its known subclasses as un monitored for all_except strategy
 	 */
+	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOGS)
 	public void stopMonitoring(Set<Class<? extends OpenmrsObject>> clazzes);
 	
 	/**
@@ -137,6 +146,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * 
 	 * @return the monitoringStrategy
 	 */
+	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOGS)
 	public MonitoringStrategy getMonitoringStrategy();
 	
 	/**
@@ -146,6 +156,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @return a set of monitored classes
 	 * @should return a set of monitored classes
 	 */
+	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOGS)
 	public Set<Class<?>> getMonitoredClasses();
 	
 	/**
@@ -155,6 +166,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @return a set of monitored classes
 	 * @should return a set of un monitored classes
 	 */
+	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOGS)
 	public Set<Class<?>> getUnMonitoredClasses();
 	
 	/**
@@ -173,6 +185,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should include logs for subclasses when getting by type
 	 * @should exclude child logs for object if excludeChildAuditLogs is set to true
 	 */
+	@Authorized(AuditLogConstants.PRIV_VIEW_AUDITLOGS)
 	public List<AuditLog> getAuditLogs(String uuid, Class<? extends OpenmrsObject> clazz, List<Action> actions,
 	                                   Date startDate, Date endDate, boolean excludeChildAuditLogs);
 }

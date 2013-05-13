@@ -30,9 +30,6 @@ public final class AuditLogConstants {
 	
 	public static final String ATTRIBUTE_NAME = "name";
 	
-	//Custom value to represent a null value
-	//public static final String AUDITLOG_UNDEFINED_VALUE = "AUDITLOG_UNDEFINED_VALUE";
-	
 	public static final String UUID_LABEL = "uuid:";
 	
 	public static final String ID_LABEL = "id:";
@@ -51,4 +48,12 @@ public final class AuditLogConstants {
 	
 	//Classes names for the objects not to monitor when the Monitoring strategy is set to ALL_EXCEPT
 	public static final String GP_UN_MONITORED_CLASSES = MODULE_ID + ".unMonitoredClasses";
+	
+	/* MODULE PRIVILEGES */
+	public static final String PRIV_VIEW_AUDITLOGS = "View Audit Logs";
+	
+	public static final String PRIV_MANAGE_AUDITLOGS = "Manage Audit Logs";
+	
+	public static final String PRIV_VIEW_ITEMS = "View Items";
+	
 }
