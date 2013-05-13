@@ -29,13 +29,17 @@ public final class AuditLogConstants {
 	public static final String NODE_NEW = "new";
 	
 	public static final String ATTRIBUTE_NAME = "name";
-
+	
 	//Custom value to represent a null value
 	//public static final String AUDITLOG_UNDEFINED_VALUE = "AUDITLOG_UNDEFINED_VALUE";
 	
 	public static final String UUID_LABEL = "uuid:";
 	
 	public static final String ID_LABEL = "id:";
+	
+	public static final String SEPARATOR = ",";
+	
+	public static final String MAP_KEY_VALUE_SEPARATOR = ":";
 	
 	public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 	

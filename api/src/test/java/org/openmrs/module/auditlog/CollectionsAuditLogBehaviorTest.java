@@ -21,6 +21,8 @@ import static org.junit.Assert.assertTrue;
 import static org.openmrs.module.auditlog.AuditLog.Action.CREATED;
 import static org.openmrs.module.auditlog.AuditLog.Action.DELETED;
 import static org.openmrs.module.auditlog.AuditLog.Action.UPDATED;
+import static org.openmrs.module.auditlog.util.AuditLogConstants.MAP_KEY_VALUE_SEPARATOR;
+import static org.openmrs.module.auditlog.util.AuditLogConstants.SEPARATOR;
 
 import java.util.Collections;
 import java.util.Date;
@@ -28,6 +30,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.Test;
@@ -38,8 +41,10 @@ import org.openmrs.OpenmrsObject;
 import org.openmrs.Patient;
 import org.openmrs.Person;
 import org.openmrs.PersonName;
+import org.openmrs.User;
 import org.openmrs.api.CohortService;
 import org.openmrs.api.PatientService;
+import org.openmrs.api.UserService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.springframework.test.annotation.NotTransactional;
@@ -113,8 +118,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(1, conceptLogs.size());
 		AuditLog al = conceptLogs.get(0);
 		assertEquals(al.getObjectUuid(), concept.getUuid());
-		assertEquals(al.getChanges().get("descriptions")[0], previousDescriptionUuids + ","
-                + AuditLogConstants.UUID_LABEL + cd1.getUuid());
+		assertEquals(al.getChanges().get("descriptions")[0], previousDescriptionUuids + AuditLogConstants.SEPARATOR
+		        + AuditLogConstants.UUID_LABEL + cd1.getUuid());
 		assertEquals(al.getChanges().get("descriptions")[1], previousDescriptionUuids);
 		
 		List<AuditLog> descriptionLogs = getAllLogs(cd1.getUuid(), ConceptDescription.class,
@@ -355,6 +360,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	@NotTransactional
 	public void shouldNotLinkTheLogsOfCollectionItemsToThatOfTheUpdatedParentIfCascadeOptionIsNotDeleteOrphan()
 	    throws Exception {
+		//TODO Add check that the cascade options is not delete option
 		Concept concept = conceptService.getConcept(7);
 		assertEquals(0, getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED)).size());
 		int originalDescriptionCount = concept.getDescriptions().size();
@@ -434,5 +440,66 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 			auditLogService.stopMonitoring(ConceptDescription.class);
 		}
 		assertFalse(auditLogService.isMonitored(ConceptDescription.class));
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldCreateAnAuditLogForTheParentWhenAnEntryIsAddedToAMapProperty() throws Exception {
+		executeDataSet("org/openmrs/api/include/UserServiceTest.xml");
+		UserService us = Context.getUserService();
+		User user = us.getUser(505);
+		assertEquals(1, user.getUserProperties().size());
+		Map.Entry<String, String> entry = user.getUserProperties().entrySet().iterator().next();
+		String previousUserProperties = entry.getKey() + MAP_KEY_VALUE_SEPARATOR + entry.getValue();
+		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
+		auditLogService.startMonitoring(User.class);
+		try {
+			assertEquals(true, auditLogService.isMonitored(User.class));
+			final String newPropKey1 = "locale";
+			final String newPropValue1 = "fr";
+			final String newPropKey2 = "loginAttempts";
+			final String newPropValue2 = "2";
+			user.setUserProperty(newPropKey1, newPropValue1);
+			user.setUserProperty(newPropKey2, newPropValue2);
+			us.saveUser(user, null);
+			List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, null);
+			assertEquals(1, logs.size());
+			AuditLog al = logs.get(0);
+			assertEquals(previousUserProperties, al.getChanges().get("userProperties")[1], previousUserProperties);
+			String expectedNewUserProperties = previousUserProperties + SEPARATOR + newPropKey1 + MAP_KEY_VALUE_SEPARATOR
+			        + newPropValue1 + SEPARATOR + newPropKey2 + MAP_KEY_VALUE_SEPARATOR + newPropValue2;
+			assertEquals(expectedNewUserProperties, al.getChanges().get("userProperties")[0]);
+		}
+		finally {
+			auditLogService.stopMonitoring(User.class);
+		}
+		assertEquals(false, auditLogService.isMonitored(User.class));
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldCreateAnAuditLogForTheParentWhenAnEntryIsRemovedFromAMapProperty() throws Exception {
+		executeDataSet("org/openmrs/api/include/UserServiceTest.xml");
+		UserService us = Context.getUserService();
+		User user = us.getUser(505);
+		assertEquals(1, user.getUserProperties().size());
+		Map.Entry<String, String> entry = user.getUserProperties().entrySet().iterator().next();
+		String previousUserProperties = entry.getKey() + MAP_KEY_VALUE_SEPARATOR + entry.getValue();
+		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
+		auditLogService.startMonitoring(User.class);
+		try {
+			assertEquals(true, auditLogService.isMonitored(User.class));
+			user.getUserProperties().clear();//since it is 1, just clear
+			us.saveUser(user, null);
+			List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, null);
+			assertEquals(1, logs.size());
+			AuditLog al = logs.get(0);
+			assertEquals(previousUserProperties, al.getChanges().get("userProperties")[1], previousUserProperties);
+			assertNull(al.getChanges().get("userProperties")[0]);
+		}
+		finally {
+			auditLogService.stopMonitoring(User.class);
+		}
+		assertEquals(false, auditLogService.isMonitored(User.class));
 	}
 }

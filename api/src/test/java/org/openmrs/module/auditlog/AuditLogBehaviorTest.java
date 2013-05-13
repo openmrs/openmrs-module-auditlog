@@ -21,6 +21,7 @@ import static junit.framework.Assert.assertTrue;
 import static org.openmrs.module.auditlog.AuditLog.Action.CREATED;
 import static org.openmrs.module.auditlog.AuditLog.Action.DELETED;
 import static org.openmrs.module.auditlog.AuditLog.Action.UPDATED;
+import static org.openmrs.module.auditlog.util.AuditLogConstants.SEPARATOR;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -366,7 +367,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		Set<Class<?>> monitoredClasses = new HashSet<Class<?>>();
 		monitoredClasses.addAll(auditLogService.getMonitoredClasses());
 		monitoredClasses.add(Order.class);
-		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), ","));
+		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), SEPARATOR));
 		as.saveGlobalProperty(gp);
 		assertTrue(auditLogService.isMonitored(Order.class));
 		assertTrue(auditLogService.isMonitored(DrugOrder.class));
@@ -383,7 +384,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		Set<Class<?>> monitoredClasses = new HashSet<Class<?>>();
 		monitoredClasses.addAll(auditLogService.getMonitoredClasses());
 		monitoredClasses.remove(Concept.class);
-		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), ","));
+		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), SEPARATOR));
 		as.saveGlobalProperty(gp);
 		assertFalse(auditLogService.isMonitored(Concept.class));
 		assertTrue(auditLogService.isMonitored(ConceptNumeric.class));

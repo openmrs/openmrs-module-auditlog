@@ -1,7 +1,6 @@
 package org.openmrs.module.auditlog.api.db.hibernate.interceptor;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -19,11 +18,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.CallbackException;
 import org.hibernate.EmptyInterceptor;
-import org.hibernate.EntityMode;
 import org.hibernate.Interceptor;
 import org.hibernate.Transaction;
 import org.hibernate.collection.PersistentCollection;
-import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.type.StringType;
 import org.hibernate.type.TextType;
 import org.hibernate.type.Type;
@@ -32,10 +29,7 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
-import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.util.OpenmrsUtil;
-import org.openmrs.util.Reflect;
-import org.springframework.beans.BeanUtils;
 
 /**
  * A hibernate {@link Interceptor} implementation, intercepts any database inserts, updates and
@@ -144,9 +138,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				
 				Object previousValue = (previousState != null) ? previousState[i] : null;
 				Object currentValue = (currentState != null) ? currentState[i] : null;
-				Class<?> propertyType = types[i].getReturnedClass();
-				//TODO We need to handle time zones issues better
-				if (!Reflect.isCollection(propertyType) && !OpenmrsUtil.nullSafeEquals(currentValue, previousValue)) {
+				if (!types[i].isCollectionType() && !OpenmrsUtil.nullSafeEquals(currentValue, previousValue)) {
 					//For string properties, ignore changes from null to blank and vice versa
 					//TODO This should be user configurable via a module GP
 					if (StringType.class.getName().equals(types[i].getClass().getName())
@@ -167,67 +159,11 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					if (propertyChangesMap == null)
 						propertyChangesMap = new HashMap<String, String[]>();
 					
-					String flattenedPreviousValue = "";
-					String flattenedCurrentValue = "";
+					String serializedPreviousValue = InterceptorUtil.serializeValue(previousValue, getAuditLogDao());
+					String serializedCurrentValue = InterceptorUtil.serializeValue(currentValue, getAuditLogDao());
 					
-					if (BeanUtils.isSimpleValueType(propertyType)) {
-						if (Date.class.isAssignableFrom(propertyType)) {
-							if (previousValue != null) {
-								flattenedPreviousValue = new SimpleDateFormat(AuditLogConstants.DATE_FORMAT)
-								        .format(previousValue);
-							}
-							if (currentValue != null) {
-								flattenedCurrentValue = new SimpleDateFormat(AuditLogConstants.DATE_FORMAT)
-								        .format(currentValue);
-							}
-						} else if (Enum.class.isAssignableFrom(propertyType)) {
-							//Use value.name() over value.toString() to ensure we always get back the enum 
-							//constant value and not the value returned by the implementation of value.toString()
-							if (previousValue != null)
-								flattenedPreviousValue = ((Enum<?>) previousValue).name();
-							if (currentValue != null)
-								flattenedCurrentValue = ((Enum<?>) currentValue).name();
-						} else if (Class.class.isAssignableFrom(propertyType)) {
-							if (previousValue != null)
-								flattenedPreviousValue = ((Class<?>) previousValue).getName();
-							if (currentValue != null)
-								flattenedCurrentValue = ((Class<?>) currentValue).getName();
-						} else {
-							if (previousValue != null)
-								flattenedPreviousValue = previousValue.toString();
-							if (currentValue != null)
-								flattenedCurrentValue = currentValue.toString();
-						}
-					} else if (types[i].isAssociationType() && !types[i].isCollectionType()) {
-						//this is an association, store the primary key value
-						if (OpenmrsObject.class.isAssignableFrom(propertyType)) {
-							if (previousValue != null) {
-								flattenedPreviousValue = AuditLogConstants.UUID_LABEL
-								        + ((OpenmrsObject) previousValue).getUuid();
-							}
-							if (currentValue != null) {
-								flattenedCurrentValue = AuditLogConstants.UUID_LABEL
-								        + ((OpenmrsObject) currentValue).getUuid();
-							}
-						} else {
-							ClassMetadata metadata = getAuditLogDao().getClassMetadata(propertyType);
-							if (previousValue != null && metadata.getIdentifier(previousValue, EntityMode.POJO) != null) {
-								flattenedPreviousValue = AuditLogConstants.ID_LABEL
-								        + metadata.getIdentifier(previousValue, EntityMode.POJO).toString();
-							}
-							if (currentValue != null && metadata.getIdentifier(currentValue, EntityMode.POJO) != null) {
-								flattenedCurrentValue = AuditLogConstants.ID_LABEL
-								        + metadata.getIdentifier(currentValue, EntityMode.POJO).toString();
-							}
-						}
-					} else if (types[i].isComponentType()) {
-						//TODO Handle component types properly if necessary
-					} else if (!types[i].isCollectionType()) {
-						//TODO take care of other types, composite primary keys etc
-						log.info("Audit log module doesn't currently store changes in items of type:" + types[i]);
-					}
-					
-					propertyChangesMap.put(propertyNames[i], new String[] { flattenedCurrentValue, flattenedPreviousValue });
+					propertyChangesMap.put(propertyNames[i],
+					    new String[] { serializedCurrentValue, serializedPreviousValue });
 				}
 			}
 			
@@ -269,26 +205,29 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	public void onCollectionUpdate(Object collection, Serializable key) throws CallbackException {
 		if (collection != null) {
 			PersistentCollection persistentColl = ((PersistentCollection) collection);
-			Object owningObject = persistentColl.getOwner();
-			if (isAuditable(owningObject)) {
-				Map previousMap = (Map) persistentColl.getStoredSnapshot();
-				String ownerUuid = ((OpenmrsObject) owningObject).getUuid();
+			if (isAuditable(persistentColl.getOwner())) {
+				OpenmrsObject owningObject = (OpenmrsObject) persistentColl.getOwner();
+				updates.get().add(owningObject);
+				Map previousStoredSnapshotMap = (Map) persistentColl.getStoredSnapshot();
+				String ownerUuid = owningObject.getUuid();
 				String propertyName = persistentColl.getRole().substring(persistentColl.getRole().lastIndexOf('.') + 1);
+				
 				if (objectChangesMap.get().get(ownerUuid) == null) {
 					objectChangesMap.get().put(ownerUuid, new HashMap<String, String[]>());
 				}
+				
+				String previousSerializedItems = null;
+				String newSerializedItems = null;
 				if (Collection.class.isAssignableFrom(collection.getClass())) {
 					Collection currentColl = (Collection) collection;
-					objectChangesMap
-					        .get()
-					        .get(ownerUuid)
-					        .put(propertyName,
-					            new String[] { getItemUuidsOrIds(currentColl), getItemUuidsOrIds(previousMap.values()) });
+					previousSerializedItems = InterceptorUtil.serializeCollection(previousStoredSnapshotMap.values(),
+					    getAuditLogDao());
+					newSerializedItems = InterceptorUtil.serializeCollection(currentColl, getAuditLogDao());
 					
 					//Track removed items so that when we create logs for them,
 					//and link them to the parent's log
 					Set<Object> removedItems = new HashSet<Object>();
-					removedItems.addAll(CollectionUtils.subtract(previousMap.values(), currentColl));
+					removedItems.addAll(CollectionUtils.subtract(previousStoredSnapshotMap.values(), currentColl));
 					if (!removedItems.isEmpty()) {
 						Class<?> elementClass = removedItems.iterator().next().getClass();
 						if (OpenmrsObject.class.isAssignableFrom(elementClass)) {
@@ -302,21 +241,20 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 							}
 						}
 					}
-					
-					updates.get().add((OpenmrsObject) owningObject);
-				} else {
-					//TODO Handle persistent maps
-					if (getAuditLogDao().isMonitored(owningObject.getClass())) {
-						log.error("PersistentMaps not supported: Can't create log entry for updated map:"
-						        + persistentColl.getRole() + " in class:" + owningObject.getClass());
-					}
+				} else if (Map.class.isAssignableFrom(collection.getClass())) {
+					previousSerializedItems = InterceptorUtil.serializeMap(previousStoredSnapshotMap, getAuditLogDao());
+					newSerializedItems = InterceptorUtil.serializeMap((Map) collection, getAuditLogDao());
 				}
+				
+				objectChangesMap.get().get(ownerUuid)
+				        .put(propertyName, new String[] { newSerializedItems, previousSerializedItems });
 			}
 		}
 	}
 	
 	/**
-	 * This is a hacky way to find all loaded classes in this session that have collections
+	 * This is a hacky way to find all loaded persistent objects in this session that have
+	 * collections
 	 * 
 	 * @see org.hibernate.EmptyInterceptor#findDirty(java.lang.Object, java.io.Serializable,
 	 *      java.lang.Object[], java.lang.Object[], java.lang.String[], org.hibernate.type.Type[])
@@ -381,9 +319,9 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 									break;
 								}
 							}
-
-                            //noinspection SuspiciousMethodCalls
-                            if (isInsert || updates.get().contains(obj)) {
+							
+							//noinspection SuspiciousMethodCalls
+							if (isInsert || updates.get().contains(obj)) {
 								OpenmrsObject owner = (OpenmrsObject) entry.getKey();
 								if (updates.get().contains(owner)) {
 									if (log.isDebugEnabled())
@@ -528,66 +466,5 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	 */
 	private boolean isAuditable(Object entity) {
 		return getAuditLogDao().isMonitored(entity.getClass()) || getAuditLogDao().isImplicitlyMonitored(entity.getClass());
-	}
-	
-	/**
-	 * @param collection the collection object
-	 * @return a comma delimited string of uuids or ids for the collection elements
-	 */
-	private String getItemUuidsOrIds(Collection<?> collection) {
-		String currElementUuidsOrIds = "";
-		boolean isFirst = true;
-		Class<?> elementClass = null;
-		for (Object currItem : collection) {
-			if (currItem == null)
-				continue;
-			
-			String uuidOrId = "";
-			if (elementClass == null)
-				elementClass = currItem.getClass();
-			if (OpenmrsObject.class.isAssignableFrom(elementClass)) {
-				try {
-					uuidOrId += ((OpenmrsObject) currItem).getUuid();
-				}
-				catch (Exception e) {
-					//ignore, some classes don't support getUuid
-				}
-			}
-			if (StringUtils.isBlank(uuidOrId)) {
-				ClassMetadata metadata = getAuditLogDao().getClassMetadata(elementClass);
-				if (metadata != null) {
-					if (metadata.getIdentifier(currItem, EntityMode.POJO) != null) {
-						uuidOrId = metadata.getIdentifier(currItem, EntityMode.POJO).toString();
-					}
-					if (StringUtils.isNotBlank(uuidOrId))
-						uuidOrId = AuditLogConstants.ID_LABEL + uuidOrId;
-				} else {
-					//This is none persistent type e.g Integer in case of cohort members
-					if (Date.class.isAssignableFrom(elementClass)) {
-						uuidOrId = new SimpleDateFormat(AuditLogConstants.DATE_FORMAT).format(currItem);
-					} else if (Enum.class.isAssignableFrom(elementClass)) {
-						uuidOrId = ((Enum<?>) currItem).name();
-					} else if (Class.class.isAssignableFrom(elementClass)) {
-						uuidOrId = ((Class<?>) currItem).getName();
-					} else {
-						uuidOrId = currItem.toString();
-					}
-				}
-			} else {
-				uuidOrId = AuditLogConstants.UUID_LABEL + uuidOrId;
-			}
-			if (StringUtils.isNotBlank(uuidOrId)) {
-				if (isFirst) {
-					currElementUuidsOrIds += uuidOrId;
-					isFirst = false;
-				} else {
-					currElementUuidsOrIds += "," + uuidOrId;
-				}
-			}
-		}
-		if (StringUtils.isBlank(currElementUuidsOrIds))
-			currElementUuidsOrIds = null;
-		
-		return currElementUuidsOrIds;
 	}
 }
