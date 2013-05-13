@@ -50,9 +50,11 @@ public final class AuditLogConstants {
 	public static final String GP_UN_MONITORED_CLASSES = MODULE_ID + ".unMonitoredClasses";
 	
 	/* MODULE PRIVILEGES */
-	public static final String PRIV_VIEW_AUDITLOGS = "View Audit Logs";
+	public static final String PRIV_GET_AUDITLOGS = "Get Audit Logs";
 	
-	public static final String PRIV_MANAGE_AUDITLOGS = "Manage Audit Logs";
+	public static final String PRIV_VIEW_AUDITLOG = "View Audit Log";
+	
+	public static final String PRIV_MANAGE_AUDITLOG = "Manage Audit Log";
 	
 	public static final String PRIV_VIEW_ITEMS = "View Items";
 	

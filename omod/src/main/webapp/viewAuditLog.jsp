@@ -4,6 +4,9 @@
 
 <%@ include file="/WEB-INF/view/module/auditlog/include.jsp"%>
 
+<openmrs:require privilege="View Audit Log" otherwise="/login.htm"
+                 redirect="/module/${moduleId}/viewAuditLog.htm"/>
+
 <%@ include file="template/localHeader.jsp"%>
 
 <openmrs:htmlInclude file="/scripts/jquery/dataTables/css/dataTables_jui.css"/>
