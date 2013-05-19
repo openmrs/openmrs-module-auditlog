@@ -28,8 +28,10 @@
 		<property name="changesData" type="string" column="changes_data" access="field" lazy="true" length="16777215"  />
 		
 		<property name="dateCreated" type="java.util.Date" column="date_created" length="19" not-null="true" />
-		
-		<many-to-one name="user" class="org.openmrs.User" column="user_id" />
+
+        <property name="openmrsVersion" type="string" column="openmrs_version" length="50" not-null="true" />
+
+        <many-to-one name="user" class="org.openmrs.User" column="user_id" />
 		
 		<property name="uuid" type="string" length="38" unique="true" not-null="true" />
 		

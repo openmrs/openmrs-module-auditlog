@@ -27,6 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.openmrs.User;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
+import org.openmrs.util.OpenmrsConstants;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -56,6 +57,8 @@ public class AuditLog implements Serializable {
 	private User user;
 	
 	private Date dateCreated;
+	
+	private String openmrsVersion;
 	
 	private AuditLog parentAuditLog;
 	
@@ -89,6 +92,7 @@ public class AuditLog implements Serializable {
 	 * Default constructor
 	 */
 	public AuditLog() {
+		openmrsVersion = OpenmrsConstants.OPENMRS_VERSION_SHORT;
 	}
 	
 	/**
@@ -101,6 +105,7 @@ public class AuditLog implements Serializable {
 	 * @param dateCreated the date when the operation was done
 	 */
 	public AuditLog(String className, String objectUuid, Action action, User user, Date dateCreated) {
+		this();
 		this.className = className;
 		this.objectUuid = objectUuid;
 		this.action = action;
@@ -190,6 +195,20 @@ public class AuditLog implements Serializable {
 	 */
 	public void setDateCreated(Date dateCreated) {
 		this.dateCreated = dateCreated;
+	}
+	
+	/**
+	 * @return the openmrsVersion
+	 */
+	public String getOpenmrsVersion() {
+		return openmrsVersion;
+	}
+	
+	/**
+	 * @param openmrsVersion the openmrsVersion to set to
+	 */
+	public void setOpenmrsVersion(String openmrsVersion) {
+		this.openmrsVersion = openmrsVersion;
 	}
 	
 	/**
