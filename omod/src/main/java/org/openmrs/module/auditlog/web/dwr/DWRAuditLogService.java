@@ -31,7 +31,6 @@ import org.openmrs.GlobalProperty;
 import org.openmrs.Obs;
 import org.openmrs.OpenmrsMetadata;
 import org.openmrs.OpenmrsObject;
-import org.openmrs.Patient;
 import org.openmrs.Person;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
@@ -64,6 +63,9 @@ public class DWRAuditLogService {
 	 */
 	@SuppressWarnings("unchecked")
 	public AuditLogDetails getAuditLogDetails(String auditLogUuid) {
+		
+		Context.requirePrivilege(AuditLogConstants.PRIV_VIEW_AUDITLOG);
+		
 		if (StringUtils.isNotBlank(auditLogUuid)) {
 			AuditLog auditLog = getService().getObjectByUuid(AuditLog.class, auditLogUuid);
 			if (auditLog != null) {
@@ -178,8 +180,8 @@ public class DWRAuditLogService {
 				if (!auditLog.getChildAuditLogs().isEmpty()) {
 					List<AuditLogDetails> childDetails = new ArrayList<AuditLogDetails>();
 					for (AuditLog childLog : auditLog.getChildAuditLogs()) {
-						childDetails.add(new AuditLogDetails(null, childLog.getUuid(), childLog.getSimpleClassname(), childLog
-						        .getAction().name(), null, false, null));
+						childDetails.add(new AuditLogDetails(null, childLog.getUuid(), childLog.getSimpleClassname(),
+						        childLog.getAction().name(), null, false, null));
 					}
 					details.setChildAuditLogDetails(childDetails);
 				}
