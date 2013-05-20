@@ -287,7 +287,7 @@ public class AuditLog implements Serializable {
 				changes = new ObjectMapper().readValue(changesData, Map.class);
 			}
 			catch (Exception e) {
-				log.warn("Failed to convert changes data map", e);
+				log.warn("Failed to convert changes data to a map", e);
 			}
 		}
 		
@@ -301,11 +301,11 @@ public class AuditLog implements Serializable {
 	 * Gets the new property value for the specified property
 	 * 
 	 * @param propertyName
-	 * @return the new property value if any
+	 * @return the new property value if found
 	 */
 	public String getNewValue(String propertyName) {
 		if (getChanges().get(propertyName) != null)
-			return ((List<String>) changes.get(propertyName)).get(0);
+			return ((List<String>) getChanges().get(propertyName)).get(0);
 		
 		return null;
 	}
@@ -314,11 +314,11 @@ public class AuditLog implements Serializable {
 	 * Gets the old property value for the specified property
 	 * 
 	 * @param propertyName
-	 * @return the old property value if any
+	 * @return the old property value if found
 	 */
 	public String getPreviousValue(String propertyName) {
 		if (getChanges().get(propertyName) != null)
-			return ((List<String>) changes.get(propertyName)).get(1);
+			return ((List<String>) getChanges().get(propertyName)).get(1);
 		
 		return null;
 	}

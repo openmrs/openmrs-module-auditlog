@@ -49,7 +49,6 @@ public final class InterceptorUtil {
 		String json = null;
 		try {
 			json = mapper.writeValueAsString(propertyChangesMap);
-			//System.out.println(json);
 		}
 		catch (Exception e) {
 			log.error("Failed to generate changes data", e);
