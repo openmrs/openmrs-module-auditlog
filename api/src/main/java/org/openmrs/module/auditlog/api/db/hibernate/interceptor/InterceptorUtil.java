@@ -13,12 +13,7 @@
  */
 package org.openmrs.module.auditlog.api.db.hibernate.interceptor;
 
-import static org.openmrs.module.auditlog.util.AuditLogConstants.ATTRIBUTE_NAME;
 import static org.openmrs.module.auditlog.util.AuditLogConstants.MAP_KEY_VALUE_SEPARATOR;
-import static org.openmrs.module.auditlog.util.AuditLogConstants.NODE_CHANGES;
-import static org.openmrs.module.auditlog.util.AuditLogConstants.NODE_NEW;
-import static org.openmrs.module.auditlog.util.AuditLogConstants.NODE_PREVIOUS;
-import static org.openmrs.module.auditlog.util.AuditLogConstants.NODE_PROPERTY;
 
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
@@ -26,7 +21,9 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.hibernate.EntityMode;
 import org.hibernate.metadata.ClassMetadata;
 import org.openmrs.OpenmrsObject;
@@ -38,7 +35,7 @@ import org.openmrs.module.auditlog.util.AuditLogConstants;
  */
 public final class InterceptorUtil {
 	
-	//private static final Log log = LogFactory.getLog(InterceptorUtil.class);
+	private static final Log log = LogFactory.getLog(InterceptorUtil.class);
 	
 	/**
 	 * Utility method that generates the data for edited properties including their previous and new
@@ -48,33 +45,16 @@ public final class InterceptorUtil {
 	 * @return the generated text data
 	 */
 	protected static String generateChangesData(Map<String, String[]> propertyChangesMap) {
-		StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-		sb.append("\n<" + NODE_CHANGES + ">");
-		for (Map.Entry<String, String[]> entry : propertyChangesMap.entrySet()) {
-			String newValue = entry.getValue()[0];
-			String previousValue = entry.getValue()[1];
-			//we shouldn't even be here since this is not a change
-			if (previousValue == null && newValue == null)
-				continue;
-			
-			sb.append("\n<" + NODE_PROPERTY + " " + ATTRIBUTE_NAME + "=\"").append(entry.getKey()).append("\">");
-			//when deserializing, missing tags will be interpreted as NULL
-			if (newValue != null) {
-				sb.append("\n<" + NODE_NEW + ">");
-				sb.append("\n").append(StringEscapeUtils.escapeXml(newValue));
-				sb.append("\n</" + NODE_NEW + ">");
-			}
-			if (previousValue != null) {
-				sb.append("\n<" + NODE_PREVIOUS + ">");
-				sb.append("\n").append(StringEscapeUtils.escapeXml(previousValue));
-				sb.append("\n</" + NODE_PREVIOUS + ">");
-			}
-			sb.append("\n</" + NODE_PROPERTY + ">");
+		ObjectMapper mapper = new ObjectMapper();
+		String json = null;
+		try {
+			json = mapper.writeValueAsString(propertyChangesMap);
+			//System.out.println(json);
 		}
-		
-		sb.append("\n</" + NODE_CHANGES + ">");
-		
-		return sb.toString();
+		catch (Exception e) {
+			log.error("Failed to generate changes data", e);
+		}
+		return json;
 	}
 	
 	/**

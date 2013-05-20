@@ -17,6 +17,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -24,13 +25,9 @@ import java.util.UUID;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.User;
-import org.openmrs.module.auditlog.util.AuditLogConstants;
-import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.util.OpenmrsConstants;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 /**
  * Encapsulates data for a single audit log entry
@@ -64,22 +61,10 @@ public class AuditLog implements Serializable {
 	
 	private Set<AuditLog> childAuditLogs;
 	
-	private transient Map<String, String[]> changes;
+	private transient Map<String, List> changes;
 	
 	/**
-	 * Xml for new and old values in case of edited fields
-	 * 
-	 * <pre>
-	 * 		<changes>
-	 * 			<property name="property_name">
-	 * 				<new>....</new>
-	 * 				<previous>.....</previous>
-	 * 			</property>
-	 * 
-	 * 			..... more properties
-	 * 
-	 * 		</changes>
-	 * </pre>
+	 * Json for new and old values in case of edited fields
 	 */
 	private String changesData;
 	
@@ -292,49 +277,50 @@ public class AuditLog implements Serializable {
 	}
 	
 	/**
-	 * Returns a map of changes where the key if the property name and the value is a String array
-	 * of length 2 with the new value at index 0 and the previous value at index 1
+	 * Returns a map of changes
 	 * 
 	 * @return a map of changes
 	 */
-	public Map<String, String[]> getChanges() {
-		if (StringUtils.isNotBlank(changesData) && changes == null)
-			changes = convertChangesXmlToMap(changesData);
-		else if (changes == null)
-			changes = new HashMap<String, String[]>();
+	public Map<String, List> getChanges() {
+		if (changes == null && StringUtils.isNotBlank(changesData)) {
+			try {
+				changes = new ObjectMapper().readValue(changesData, Map.class);
+			}
+			catch (Exception e) {
+				log.warn("Failed to convert changes data map", e);
+			}
+		}
+		
+		if (changes == null)
+			changes = new HashMap<String, List>();
 		
 		return changes;
 	}
 	
 	/**
-	 * Takes the changes xml and converts it to a map where the key if the property name and the
-	 * value is a String array of length 2 with the new value at index 0 and the previous value at
-	 * index 1
+	 * Gets the new property value for the specified property
 	 * 
-	 * @param changesXml the xml to convert
-	 * @return the properties names mapped to their new and previous values
+	 * @param propertyName
+	 * @return the new property value if any
 	 */
-	private static Map<String, String[]> convertChangesXmlToMap(String changesXml) {
-		Map<String, String[]> map = new HashMap<String, String[]>();
-		Document doc;
-		try {
-			doc = AuditLogUtil.createDocument(changesXml);
-			Element changesElement = doc.getDocumentElement();
-			if (changesElement != null) {
-				NodeList propertyElements = changesElement.getElementsByTagName(AuditLogConstants.NODE_PROPERTY);
-				for (int i = 0; i < propertyElements.getLength(); i++) {
-					Element propertyEle = (Element) propertyElements.item(i);
-					String newValue = AuditLogUtil.getPreviousOrNewPropertyValue(propertyEle, true);
-					String previousValue = AuditLogUtil.getPreviousOrNewPropertyValue(propertyEle, false);
-					map.put(propertyEle.getAttribute(AuditLogConstants.ATTRIBUTE_NAME), new String[] { newValue,
-					        previousValue });
-				}
-			}
-		}
-		catch (Exception e) {
-			log.error("Failed to parse changes xml", e);
-		}
-		return map;
+	public String getNewValue(String propertyName) {
+		if (getChanges().get(propertyName) != null)
+			return ((List<String>) changes.get(propertyName)).get(0);
+		
+		return null;
+	}
+	
+	/**
+	 * Gets the old property value for the specified property
+	 * 
+	 * @param propertyName
+	 * @return the old property value if any
+	 */
+	public String getPreviousValue(String propertyName) {
+		if (getChanges().get(propertyName) != null)
+			return ((List<String>) changes.get(propertyName)).get(1);
+		
+		return null;
 	}
 	
 	/**

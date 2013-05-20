@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -96,16 +96,15 @@ public class DWRAuditLogService {
 						
 						if (auditLog.getAction().equals(Action.UPDATED) && auditLog.getChanges().size() > 0) {
 							propertyNameChangesMap = new HashMap<String, String[]>();
-							for (Map.Entry<String, String[]> entry : auditLog.getChanges().entrySet()) {
+							for (Map.Entry<String, List> entry : auditLog.getChanges().entrySet()) {
 								String propertyName = entry.getKey();
+								String previousValue = null;
 								String newValueDisplay = "";
 								String preValueDisplay = "";
 								String newValue = null;
-								String previousValue = null;
-								if (!ArrayUtils.isEmpty(entry.getValue())) {
-									newValue = entry.getValue()[0];
-									if (entry.getValue().length > 0)
-										previousValue = entry.getValue()[1];
+								if (CollectionUtils.isNotEmpty(entry.getValue())) {
+									newValue = auditLog.getNewValue(propertyName);
+									previousValue = auditLog.getPreviousValue(propertyName);
 									if (StringUtils.isNotBlank(newValue) || StringUtils.isNotBlank(previousValue)) {
 										Field field = AuditLogUtil.getField(clazz, propertyName);
 										//This can be null if the auditlog was created and then 

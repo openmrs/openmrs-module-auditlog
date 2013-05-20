@@ -25,7 +25,7 @@ import org.openmrs.test.Verifies;
 public class AuditLogUtilTest {
 	
 	/**
-	 * @see {@link AuditLogUtil#getCollectionElementType(Class<*>,String)}
+	 * @see {@link AuditLogUtil#getCollectionElementType(Class, String)}
 	 */
 	@Test
 	@Verifies(value = "should return the class of the property", method = "getCollectionElementType(Class<*>,String)")

@@ -13,10 +13,6 @@
  */
 package org.openmrs.module.auditlog.util;
 
-import static org.openmrs.module.auditlog.util.AuditLogConstants.NODE_NEW;
-import static org.openmrs.module.auditlog.util.AuditLogConstants.NODE_PREVIOUS;
-
-import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -25,15 +21,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 
 /**
  * Contains utility methods used by the module
@@ -41,54 +31,6 @@ import org.xml.sax.InputSource;
 public class AuditLogUtil {
 	
 	private static final Log log = LogFactory.getLog(AuditLogUtil.class);
-	
-	/**
-	 * Gets the text content of a nested previous or new tag inside a property tag with a name
-	 * attribute matching the specified property name
-	 * 
-	 * @param propertyEle {@link Element} object
-	 * @param getNew specifies which value to value to return i.e previous vs new
-	 * @return the text content of the nested tag
-	 * @throws Exception
-	 */
-	public static String getPreviousOrNewPropertyValue(Element propertyEle, boolean getNew) throws Exception {
-		if (propertyEle != null) {
-			String tagName = (getNew) ? NODE_NEW : NODE_PREVIOUS;
-			Element ele = getElement(propertyEle, tagName);
-			if (ele != null) {
-				if (ele.getTextContent() != null)
-					return ele.getTextContent().trim();
-			}
-		}
-		return null;
-	}
-	
-	/**
-	 * Utility method that converts an xml string to a {@link Document} object
-	 * 
-	 * @param xml the xml to convert
-	 * @return {@link Document} object
-	 * @throws Exception
-	 */
-	public static Document createDocument(String xml) throws Exception {
-		return DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(new StringReader(xml)));
-	}
-	
-	/**
-	 * @param propertyElement {@link Element} object
-	 * @return
-	 * @throws Exception
-	 */
-	private static Element getElement(Element propertyElement, String tagName) throws Exception {
-		NodeList nodeList = propertyElement.getElementsByTagName(tagName);
-		if (nodeList != null) {
-			if (nodeList.getLength() == 1)
-				return (Element) nodeList.item(0);
-			else if (nodeList.getLength() > 1)
-				log.warn("Invalid changes xml: Found multiple " + tagName + " tags");
-		}
-		return null;
-	}
 	
 	/**
 	 * Converts a set of class objects to a list of class name strings

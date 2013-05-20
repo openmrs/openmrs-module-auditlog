@@ -85,9 +85,9 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		AuditLog al = patientLogs.get(0);
 		assertEquals(al.getObjectUuid(), patient.getUuid());
 		assertEquals(originalCount - 1, patient.getNames().size());
-		assertEquals(-1, al.getChanges().get("names")[0].indexOf(nameToRemove.getUuid()));
+		assertEquals(-1, al.getNewValue("names").indexOf(nameToRemove.getUuid()));
 		for (PersonName name : patient.getNames()) {
-			assertTrue(al.getChanges().get("names")[1].indexOf(name.getUuid()) > -1);
+			assertTrue(al.getPreviousValue("names").indexOf(name.getUuid()) > -1);
 		}
 		List<AuditLog> nameLogs = getAllLogs(nameUuid, PersonName.class, Collections.singletonList(DELETED));
 		assertEquals(1, nameLogs.size());
@@ -118,9 +118,9 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(1, conceptLogs.size());
 		AuditLog al = conceptLogs.get(0);
 		assertEquals(al.getObjectUuid(), concept.getUuid());
-		assertEquals(al.getChanges().get("descriptions")[0], previousDescriptionUuids + AuditLogConstants.SEPARATOR
+		assertEquals(al.getNewValue("descriptions"), previousDescriptionUuids + AuditLogConstants.SEPARATOR
 		        + AuditLogConstants.UUID_LABEL + cd1.getUuid());
-		assertEquals(al.getChanges().get("descriptions")[1], previousDescriptionUuids);
+		assertEquals(al.getPreviousValue("descriptions"), previousDescriptionUuids);
 		
 		List<AuditLog> descriptionLogs = getAllLogs(cd1.getUuid(), ConceptDescription.class,
 		    Collections.singletonList(CREATED));
@@ -164,11 +164,12 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		List<AuditLog> logs = getAllLogs(c.getUuid(), Concept.class, actions);
 		int newCount = logs.size();
 		assertEquals(++count, newCount);
-		assertNull(logs.get(0).getChanges().get("descriptions")[0]);
-		assertNotNull(logs.get(0).getChanges().get("descriptions")[1].indexOf(descriptionUuid1) > -1);
-		assertNotNull(logs.get(0).getChanges().get("descriptions")[1].indexOf(descriptionUuid2) > -1);
-		assertNotNull(logs.get(0).getChanges().get("descriptions")[1].indexOf(descriptionUuid3) > -1);
-		assertNotNull(logs.get(0).getChanges().get("descriptions")[1].indexOf(descriptionUuid4) > -1);
+		AuditLog log = logs.get(0);
+		assertNull(log.getNewValue("descriptions"));
+		assertNotNull(log.getPreviousValue("descriptions").indexOf(descriptionUuid1) > -1);
+		assertNotNull(log.getPreviousValue("descriptions").indexOf(descriptionUuid2) > -1);
+		assertNotNull(log.getPreviousValue("descriptions").indexOf(descriptionUuid3) > -1);
+		assertNotNull(log.getPreviousValue("descriptions").indexOf(descriptionUuid4) > -1);
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -191,8 +192,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 			List<AuditLog> logs = getAllLogs(c.getUuid(), Cohort.class, actions);
 			int newCount = logs.size();
 			assertEquals(++count, newCount);
-			assertTrue(logs.get(0).getChanges().get("memberIds")[0].indexOf(memberId.toString()) > -1);
-			assertEquals(-1, logs.get(0).getChanges().get("memberIds")[1].indexOf(memberId.toString()));
+			assertTrue(logs.get(0).getNewValue("memberIds").indexOf(memberId.toString()) > -1);
+			assertEquals(-1, logs.get(0).getPreviousValue("memberIds").indexOf(memberId.toString()));
 		}
 		finally {
 			auditLogService.stopMonitoring(Cohort.class);
@@ -220,8 +221,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 			List<AuditLog> logs = getAllLogs(c.getUuid(), Cohort.class, actions);
 			int newCount = logs.size();
 			assertEquals(++count, newCount);
-			assertEquals(-1, logs.get(0).getChanges().get("memberIds")[0].indexOf(memberId.toString()));
-			assertTrue(logs.get(0).getChanges().get("memberIds")[1].indexOf(memberId.toString()) > -1);
+			assertEquals(-1, logs.get(0).getNewValue("memberIds").indexOf(memberId.toString()));
+			assertTrue(logs.get(0).getPreviousValue("memberIds").indexOf(memberId.toString()) > -1);
 		}
 		finally {
 			auditLogService.stopMonitoring(Cohort.class);
@@ -252,9 +253,10 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 			List<AuditLog> logs = getAllLogs(c.getUuid(), Cohort.class, actions);
 			int newCount = logs.size();
 			assertEquals(++count, newCount);
-			assertNull(logs.get(0).getChanges().get("memberIds")[0]);
-			assertTrue(logs.get(0).getChanges().get("memberIds")[1].indexOf(memberId2.toString()) > -1);
-			assertTrue(logs.get(0).getChanges().get("memberIds")[1].indexOf(memberId3.toString()) > -1);
+			AuditLog log = logs.get(0);
+			assertNull(log.getNewValue("memberIds"));
+			assertTrue(log.getPreviousValue("memberIds").indexOf(memberId2.toString()) > -1);
+			assertTrue(log.getPreviousValue("memberIds").indexOf(memberId3.toString()) > -1);
 		}
 		finally {
 			auditLogService.stopMonitoring(Cohort.class);
@@ -465,10 +467,10 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 			List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, null);
 			assertEquals(1, logs.size());
 			AuditLog al = logs.get(0);
-			assertEquals(previousUserProperties, al.getChanges().get("userProperties")[1], previousUserProperties);
+			assertEquals(previousUserProperties, al.getPreviousValue("userProperties"), previousUserProperties);
 			String expectedNewUserProperties = previousUserProperties + SEPARATOR + newPropKey1 + MAP_KEY_VALUE_SEPARATOR
 			        + newPropValue1 + SEPARATOR + newPropKey2 + MAP_KEY_VALUE_SEPARATOR + newPropValue2;
-			assertEquals(expectedNewUserProperties, al.getChanges().get("userProperties")[0]);
+			assertEquals(expectedNewUserProperties, al.getNewValue("userProperties"));
 		}
 		finally {
 			auditLogService.stopMonitoring(User.class);
@@ -494,8 +496,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 			List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, null);
 			assertEquals(1, logs.size());
 			AuditLog al = logs.get(0);
-			assertEquals(previousUserProperties, al.getChanges().get("userProperties")[1], previousUserProperties);
-			assertNull(al.getChanges().get("userProperties")[0]);
+			assertEquals(previousUserProperties, al.getPreviousValue("userProperties"), previousUserProperties);
+			assertNull(al.getNewValue("userProperties"));
 		}
 		finally {
 			auditLogService.stopMonitoring(User.class);

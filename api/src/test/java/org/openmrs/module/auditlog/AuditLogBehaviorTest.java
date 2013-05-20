@@ -123,15 +123,15 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		//Should have created entries for the changes properties and their old values
 		assertEquals(UPDATED, auditLog.getAction());
 		//Check that there 3 property tag entries
-		Map<String, String[]> changes = auditLog.getChanges();
+		Map<String, List> changes = auditLog.getChanges();
 		assertEquals(3, changes.size());
-		assertEquals(AuditLogConstants.UUID_LABEL + oldConceptClassUuid, changes.get("conceptClass")[1]);
-		assertEquals(AuditLogConstants.UUID_LABEL + oldDatatypeUuid, changes.get("datatype")[1]);
-		assertEquals(oldVersion, changes.get("version")[1]);
+		assertEquals(AuditLogConstants.UUID_LABEL + oldConceptClassUuid, auditLog.getPreviousValue("conceptClass"));
+		assertEquals(AuditLogConstants.UUID_LABEL + oldDatatypeUuid, auditLog.getPreviousValue("datatype"));
+		assertEquals(oldVersion, auditLog.getPreviousValue("version"));
 		
-		assertEquals(AuditLogConstants.UUID_LABEL + cc.getUuid(), changes.get("conceptClass")[0]);
-		assertEquals(AuditLogConstants.UUID_LABEL + dt.getUuid(), changes.get("datatype")[0]);
-		assertEquals(newVersion, changes.get("version")[0]);
+		assertEquals(AuditLogConstants.UUID_LABEL + cc.getUuid(), auditLog.getNewValue("conceptClass"));
+		assertEquals(AuditLogConstants.UUID_LABEL + dt.getUuid(), auditLog.getNewValue("datatype"));
+		assertEquals(newVersion, auditLog.getNewValue("version"));
 	}
 	
 	@Test
