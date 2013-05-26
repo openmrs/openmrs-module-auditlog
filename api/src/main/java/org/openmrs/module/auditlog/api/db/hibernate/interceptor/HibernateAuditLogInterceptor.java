@@ -231,13 +231,12 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					if (!removedItems.isEmpty()) {
 						Class<?> elementClass = removedItems.iterator().next().getClass();
 						if (OpenmrsObject.class.isAssignableFrom(elementClass)) {
-							OpenmrsObject o = (OpenmrsObject) owningObject;
-							if (entityRemovedChildrenMap.get().get(o) == null) {
-								entityRemovedChildrenMap.get().put(o, new HashSet<OpenmrsObject>());
+							if (entityRemovedChildrenMap.get().get(owningObject) == null) {
+								entityRemovedChildrenMap.get().put(owningObject, new HashSet<OpenmrsObject>());
 							}
 							for (Object removedItem : removedItems) {
 								OpenmrsObject removed = (OpenmrsObject) removedItem;
-								entityRemovedChildrenMap.get().get(o).add(removed);
+								entityRemovedChildrenMap.get().get(owningObject).add(removed);
 							}
 						}
 					}
@@ -248,6 +247,32 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				
 				objectChangesMap.get().get(ownerUuid)
 				        .put(propertyName, new String[] { newSerializedItems, previousSerializedItems });
+			}
+		}
+	}
+	
+	@Override
+	public void onCollectionRemove(Object collection, Serializable key) throws CallbackException {
+		//We need to get all collection elements and link their childlogs them to the parent's
+		if (collection != null) {
+			PersistentCollection persistentColl = (PersistentCollection) collection;
+			if (isAuditable(persistentColl.getOwner())) {
+				OpenmrsObject owningObject = (OpenmrsObject) persistentColl.getOwner();
+				if (Collection.class.isAssignableFrom(collection.getClass())) {
+					Collection coll = (Collection) collection;
+					if (!coll.isEmpty()) {
+						Class<?> elementClass = coll.iterator().next().getClass();
+						if (OpenmrsObject.class.isAssignableFrom(elementClass)) {
+							if (entityRemovedChildrenMap.get().get(owningObject) == null) {
+								entityRemovedChildrenMap.get().put(owningObject, new HashSet<OpenmrsObject>());
+							}
+							for (Object removedItem : coll) {
+								OpenmrsObject removed = (OpenmrsObject) removedItem;
+								entityRemovedChildrenMap.get().get(owningObject).add(removed);
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -321,6 +346,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 							}
 							
 							//noinspection SuspiciousMethodCalls
+							//We handle the removed collections items below because either way they
+							//are nolonger in the current collection
 							if (isInsert || updates.get().contains(obj)) {
 								OpenmrsObject owner = (OpenmrsObject) entry.getKey();
 								if (updates.get().contains(owner)) {
