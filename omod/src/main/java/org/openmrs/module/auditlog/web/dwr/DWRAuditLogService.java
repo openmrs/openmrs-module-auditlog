@@ -32,6 +32,7 @@ import org.openmrs.Obs;
 import org.openmrs.OpenmrsMetadata;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.Person;
+import org.openmrs.User;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
@@ -175,12 +176,13 @@ public class DWRAuditLogService {
 				}
 				
 				AuditLogDetails details = new AuditLogDetails(displayString, auditLog.getObjectUuid(),
-				        auditLog.getClassName(), auditLog.getAction().name(), objectId, objectExists, propertyNameChangesMap);
+				        auditLog.getClassName(), auditLog.getAction().name(), objectId, auditLog.getUuid(), objectExists,
+				        propertyNameChangesMap);
 				if (!auditLog.getChildAuditLogs().isEmpty()) {
 					List<AuditLogDetails> childDetails = new ArrayList<AuditLogDetails>();
 					for (AuditLog childLog : auditLog.getChildAuditLogs()) {
 						childDetails.add(new AuditLogDetails(null, childLog.getUuid(), childLog.getSimpleClassname(),
-						        childLog.getAction().name(), null, false, null));
+						        childLog.getAction().name(), null, childLog.getUuid(), false, null));
 					}
 					details.setChildAuditLogDetails(childDetails);
 				}
@@ -276,16 +278,19 @@ public class DWRAuditLogService {
 	 */
 	private String getDisplayString(Object obj, boolean includeUuidAndId) {
 		String displayString = "";
-		if (OpenmrsMetadata.class.isAssignableFrom(obj.getClass())) {
-			OpenmrsMetadata metadataObj = (OpenmrsMetadata) obj;
-			if (StringUtils.isNotBlank(metadataObj.getName()))
-				displayString += metadataObj.getName();
-		} else if (Concept.class.isAssignableFrom(obj.getClass())) {
+		if (Concept.class.isAssignableFrom(obj.getClass())) {
 			Concept concept = (Concept) obj;
 			displayString += ((concept.getName() != null) ? concept.getName().getName() : "");
 		} else if (Person.class.isAssignableFrom(obj.getClass())) {
 			Person person = (Person) obj;
 			displayString += ((person.getPersonName() != null) ? person.getPersonName().getFullName() : "");
+		} else if (User.class.isAssignableFrom(obj.getClass())) {
+			User user = (User) obj;
+			displayString += ((user.getPersonName() != null) ? user.getPersonName().getFullName() : "");
+			displayString += " [";
+			if (StringUtils.isNotBlank(user.getUsername()))
+				displayString += user.getUsername() + " - ";
+			displayString += user.getSystemId() + "]";
 		} else if (Obs.class.isAssignableFrom(obj.getClass())) {
 			Obs obs = (Obs) obj;
 			if (obs.getConcept() != null) {
@@ -294,9 +299,14 @@ public class DWRAuditLogService {
 			}
 			
 			displayString += obs.getValueAsString(Context.getLocale());
-		} else {
-			displayString += obj.toString();
+		} else if (OpenmrsMetadata.class.isAssignableFrom(obj.getClass())) {
+			OpenmrsMetadata metadataObj = (OpenmrsMetadata) obj;
+			if (StringUtils.isNotBlank(metadataObj.getName()))
+				displayString += metadataObj.getName();
 		}
+		
+		if (StringUtils.isBlank(displayString))
+			displayString += obj.toString();
 		
 		if (includeUuidAndId && OpenmrsObject.class.isAssignableFrom(obj.getClass())) {
 			OpenmrsObject openmrsObj = (OpenmrsObject) obj;
@@ -314,6 +324,7 @@ public class DWRAuditLogService {
 				displayString = displayString + " - " + openmrsObj.getUuid() + id;
 			}
 		}
+		
 		return displayString;
 	}
 }

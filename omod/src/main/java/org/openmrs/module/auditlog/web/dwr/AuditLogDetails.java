@@ -44,6 +44,8 @@ public class AuditLogDetails {
 	//The database Id
 	private Integer objectId;
 	
+	private String uuid;
+	
 	//Mappings of edited property names to their new(index 0) and previous(index 1) values' array
 	private Map<String, String[]> changes;
 	
@@ -53,13 +55,14 @@ public class AuditLogDetails {
 	 * Convenience constructor that created an {@link AuditLogDetails} from an {@link AuditLog}
 	 */
 	public AuditLogDetails(String displayString, String objectUuid, String classname, String action, Integer objectId,
-	    boolean objectExists, Map<String, String[]> changes) {
+	    String uuid, boolean objectExists, Map<String, String[]> changes) {
 		this.displayString = displayString;
 		this.objectExists = objectExists;
 		this.objectUuid = objectUuid;
 		this.classname = classname;
 		this.action = action;
 		this.objectId = objectId;
+		this.uuid = uuid;
 		this.changes = changes;
 	}
 	
@@ -145,6 +148,20 @@ public class AuditLogDetails {
 	 */
 	public void setObjectId(Integer objectId) {
 		this.objectId = objectId;
+	}
+	
+	/**
+	 * @return the uuid
+	 */
+	public String getUuid() {
+		return uuid;
+	}
+	
+	/**
+	 * @param uuid the uuid to set
+	 */
+	public void setUuid(String uuid) {
+		this.uuid = uuid;
 	}
 	
 	/**

@@ -14,219 +14,324 @@
 <openmrs:htmlInclude file="/dwr/interface/DWRAuditLogService.js"/>
 
 <script type="text/javascript">
-	var auditLogDetailsMap = new Object();
-	
-	$j(document).ready(function() {
-		$j('#${moduleId}').dataTable({
-		    sPaginationType: "full_numbers",
-		    iDisplayLength: 15,
-		    bJQueryUI: true,
-		    bSort:false,
-		    //sDom: 'flt<"ui-helper-clearfix"ip>',
-		    sDom: '<fl>t<"ui-helper-clearfix"ip>',
-		    oLanguage: {
-	    		"sInfo": omsgs.sInfoLabel,
-	    		"oPaginate": {"sFirst": omsgs.first, "sPrevious": omsgs.previous, "sNext": omsgs.next, "sLast": omsgs.last},
-	    		"sZeroRecords": omsgs.noMatchesFound,
-	    		"sInfoEmpty": " ",
-	    		"sLengthMenu": omsgs.showNumberofEntries
-	    	},
-	    	fnDrawCallback: function( oSettings ) {
-	    		//remove jquery row striping so that we have our custom green for created, pink for deleted etc.
-	    		$j('table#${moduleId} tr.odd').removeClass('odd');
-	    		$j('table#${moduleId} tr.even').removeClass('even');
-	        }
-		});
-		
-		//set the dialog to display update changes for each row
-		$j("#${moduleId}-changes-dialog").dialog({
-			autoOpen: false,
-			width:'1040px',
-			height:'640',
-			modal: true,
-			beforeClose: function(event, ui){
-				//reset
-				$j("#${moduleId}-changes-objectId").html("");
-				$j("#${moduleId}-changes-summary").html("");
-				$j("#${moduleId}-changes-objectUuid").html("");
-				$j("#${moduleId}-childLogCount").html("");
-				//remove all rows from previous displays except the header rows
-				$j("#${moduleId}-changes-table tr:gt(0)").remove();
-				$j("#${moduleId}-childAuditLogDetails-table tr:gt(0)").remove();
-				$j("#${moduleId}-details .${moduleId}-changes-element").hide();
-				$j("#${moduleId}-details .${moduleId}-childAuditLogDetails-element").hide()
-			}
-		});
-	});
-	
-	function ${moduleId}_showDetails(auditLogUuid){
-		existingLogDetails = auditLogDetailsMap[auditLogUuid];
-		if(!existingLogDetails){
-			DWRAuditLogService.getAuditLogDetails(auditLogUuid, function(detailsResponse){
-				if(detailsResponse){
-					displayLogDetails(detailsResponse);
-					auditLogDetailsMap[auditLogUuid] = detailsResponse;
-				}
-			});
-		}else{
-			displayLogDetails(existingLogDetails);
-		}
-	}
-	
-	function displayLogDetails(logDetails){
-		if(logDetails){
-			if(logDetails.objectExists == true)
-				$j("#${moduleId}-changes-summary").html(logDetails.displayString);
-			else if(logDetails.action != 'DELETED')
-				$j("#${moduleId}-changes-summary").html("<span style='color:red'><spring:message code="${moduleId}.objectDoesnotExist" /></span>");
-			
-			if(logDetails.objectId)
-				$j("#${moduleId}-changes-objectId").html(logDetails.objectId);
-			
-			if(logDetails.objectUuid)
-				$j("#${moduleId}-changes-objectUuid").html(logDetails.objectUuid);
-			
-			if(logDetails.classname)
-				$j("#${moduleId}-changes-classname").html(logDetails.classname);
-			
-			if(logDetails.changes){
-				auditLogChanges = logDetails.changes;
-				$j.each(auditLogChanges, function(propertyName){
-					currentChange = auditLogChanges[propertyName];
-					$j("#${moduleId}-changes-table tr:last").after(
-						"<tr><td class=\"${moduleId}_align_text_left\" valign=\"top\">"+propertyName+"</td>"+
-						"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange[0]+"</td>"+
-						"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange[1]+"</td></tr>");
-				});
-				$j("#${moduleId}-details .${moduleId}-changes-element").show();
-			}
-			
-			if(logDetails.childAuditLogDetails){
-				childAuditLogDetails = logDetails.childAuditLogDetails;
-				$j("#${moduleId}-childLogCount").html(childAuditLogDetails.length);
-				$j.each(childAuditLogDetails, function(index, detail){
-					$j("#${moduleId}-childAuditLogDetails-table tr:last").after(
-						"<tr class=\"${moduleId}_"+detail.action+" ${moduleId}_child_log\" onclick=\"${moduleId}_showDetails('"+detail.uuid+"')\">"+
-							"<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+detail.classname+"</td></tr>");
-				});
-				$j("#${moduleId}-details .${moduleId}-childAuditLogDetails-element").show();
-			}
-		
-			$j("#${moduleId}-changes-dialog").dialog('open');
-		}
-	}
-	
+    var auditLogDetailsMap = new Object();
+    var dialogObj;
+    var childDialogObj;
+    var dialogWidth = 1140;
+    var dialogHeight = 640;
+    var childDialogWidth = dialogWidth*0.9;
+    var childDialogHeight = dialogHeight*0.9;
+
+    $j(document).ready(function() {
+        $j('#${moduleId}').dataTable({
+            sPaginationType: "full_numbers",
+            iDisplayLength: 15,
+            bJQueryUI: true,
+            bSort:false,
+            //sDom: 'flt<"ui-helper-clearfix"ip>',
+            sDom: '<fl>t<"ui-helper-clearfix"ip>',
+            oLanguage: {
+                "sInfo": omsgs.sInfoLabel,
+                "oPaginate": {"sFirst": omsgs.first, "sPrevious": omsgs.previous, "sNext": omsgs.next, "sLast": omsgs.last},
+                "sZeroRecords": omsgs.noMatchesFound,
+                "sInfoEmpty": " ",
+                "sLengthMenu": omsgs.showNumberofEntries
+            },
+            fnDrawCallback: function( oSettings ) {
+                //remove jquery row striping so that we have our custom green for created, pink for deleted etc.
+                $j('table#${moduleId} tr.odd').removeClass('odd');
+                $j('table#${moduleId} tr.even').removeClass('even');
+            }
+        });
+
+        //setup the dialog to display update changes for each row
+        dialogObj = $j("#${moduleId}-changes-dialog");
+        dialogObj.dialog({
+            autoOpen: false,
+            width: dialogWidth+'px',
+            height: dialogHeight,
+            modal: true,
+            beforeClose: function(event, ui){
+                //reset
+                $j("#${moduleId}-changes-objectId").html("");
+                $j("#${moduleId}-changes-summary").html("");
+                $j("#${moduleId}-changes-objectUuid").html("");
+                $j("#${moduleId}-childLogCount").html("");
+                //remove all rows from previous displays except the header rows
+                $j("#${moduleId}-changes-table tr:gt(0)").remove();
+                $j("#${moduleId}-childAuditLogDetails-table tr:gt(0)").remove();
+                $j("#${moduleId}-details .${moduleId}-changes-element").hide();
+                $j("#${moduleId}-details .${moduleId}-childAuditLogDetails-element").hide()
+            }
+        });
+
+        childDialogObj = $j("#${moduleId}-child-changes-dialog");
+        childDialogObj.dialog({
+            autoOpen: false,
+            width: childDialogWidth+'px',
+            height: childDialogHeight,
+            modal: true,
+            beforeClose: function(event, ui){
+                //reset
+                $j("#${moduleId}-child-changes-objectId").html("");
+                $j("#${moduleId}-child-changes-summary").html("");
+                $j("#${moduleId}-child-changes-objectUuid").html("");
+                $j("#${moduleId}-child-childLogCount").html("");
+                //remove all rows from previous displays except the header rows
+                $j("#${moduleId}-child-changes-table tr:gt(0)").remove();
+                $j("#${moduleId}-child-childAuditLogDetails-table tr:gt(0)").remove();
+                $j("#${moduleId}-child-details .${moduleId}-changes-element").hide();
+                $j("#${moduleId}-child-details .${moduleId}-childAuditLogDetails-element").hide()
+            }
+        });
+    });
+
+    function ${moduleId}_showDetails(auditLogUuid, isChildLog){
+        existingLogDetails = auditLogDetailsMap[auditLogUuid];
+        if(!existingLogDetails){
+            DWRAuditLogService.getAuditLogDetails(auditLogUuid, function(detailsResponse){
+                if(detailsResponse){
+                    displayLogDetails(detailsResponse, isChildLog);
+                    auditLogDetailsMap[auditLogUuid] = detailsResponse;
+                }
+            });
+        }else{
+            displayLogDetails(existingLogDetails, isChildLog);
+        }
+    }
+
+    function displayLogDetails(logDetails, isChildLog){
+        idPart = (isChildLog) ? "-child" : "";
+        if(logDetails){
+            if(logDetails.objectExists == true)
+                $j("#${moduleId}"+idPart+"-changes-summary").html(logDetails.displayString);
+            else if(logDetails.action != 'DELETED')
+                $j("#${moduleId}"+idPart+"-changes-summary").html("<span style='color:red'><spring:message code="${moduleId}.objectDoesnotExist" /></span>");
+
+            if(logDetails.objectId)
+                $j("#${moduleId}"+idPart+"-changes-objectId").html(logDetails.objectId);
+
+            if(logDetails.objectUuid)
+                $j("#${moduleId}"+idPart+"-changes-objectUuid").html(logDetails.objectUuid);
+
+            if(logDetails.classname)
+                $j("#${moduleId}"+idPart+"-changes-classname").html(logDetails.classname);
+
+            if(logDetails.changes){
+                auditLogChanges = logDetails.changes;
+                $j.each(auditLogChanges, function(propertyName){
+                    currentChange = auditLogChanges[propertyName];
+                    $j("#${moduleId}"+idPart+"-changes-table tr:last").after(
+                            "<tr><td class=\"${moduleId}_align_text_left\" valign=\"top\">"+propertyName+"</td>"+
+                                    "<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange[0]+"</td>"+
+                                    "<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange[1]+"</td></tr>");
+                });
+                $j("#${moduleId}"+idPart+"-details .${moduleId}-changes-element").show();
+            }
+
+            if(logDetails.childAuditLogDetails){
+                childAuditLogDetails = logDetails.childAuditLogDetails;
+                $j("#${moduleId}"+idPart+"-childLogCount").html(childAuditLogDetails.length);
+                $j.each(childAuditLogDetails, function(index, detail){
+                    $j("#${moduleId}"+idPart+"-childAuditLogDetails-table tr:last").after(
+                            "<tr class=\"${moduleId}_"+detail.action+" ${moduleId}_child_log\" onclick=\"${moduleId}_showDetails('"+detail.uuid+"', true)\">"+
+                                    "<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+detail.classname+"</td></tr>");
+                });
+                $j("#${moduleId}"+idPart+"-details .${moduleId}-childAuditLogDetails-element").show();
+            }
+
+            if(isChildLog)
+                childDialogObj.dialog('open');
+            else
+                dialogObj.dialog('open');
+        }
+    }
+
 </script>
 
 <div class="box">
-<b class="boxHeader" style="width: auto;"><spring:message code="${moduleId}.auditlogs" /></b>
+    <b class="boxHeader" style="width: auto;"><spring:message code="${moduleId}.auditlogs" /></b>
+    <br />
+    <table id="${moduleId}" width="100%" cellpadding="3" cellspacing="0" align="left">
+        <thead>
+        <tr>
+            <th class="ui-state-default"></th>
+            <th class="ui-state-default">Item (<spring:message code="${moduleId}.numberOfChangedProperties" />)</th>
+            <th class="ui-state-default">User (username)</th>
+            <th class="ui-state-default">Date Of Occurence</th>
+        </tr>
+        </thead>
+        <tbody>
+        <c:forEach items="${auditLogs}" var="auditLog">
+            <tr class="${moduleId}_${auditLog.action}" onclick="${moduleId}_showDetails('${auditLog.uuid}')">
+                <td style="width: 17px !important;" align="center">
+                    <img class="${moduleId}_action_image" align="top"
+                         src="<openmrs:contextPath />/moduleResources/${moduleId}/images/${auditLog.action}.gif" />
+                </td>
+                <td>
+                    ${auditLog.simpleClassname}
+                    <c:if test="${auditLog.action == 'UPDATED' && fn:length(auditLog.changes) > 0}"> (${fn:length(auditLog.changes)})</c:if>
+                </td>
+                <td>
+                    <c:choose>
+                        <%-- If this is a scheduled task, something done by daemon thread or at start up --%>
+                        <c:when test="${auditLog.user == null || auditLog.user.uuid == 'A4F30A1B-5EB9-11DF-A648-37A07F9C90FB'}">
+                            <spring:message code="${moduleId}.systemAction" />
+                        </c:when>
+                        <c:otherwise>
+                            ${auditLog.user.personName} <c:if test="${fn:trim(auditLog.user.username) != ''}">[${auditLog.user.username}]</c:if>
+                        </c:otherwise>
+                    </c:choose>
+                </td>
+                <td><openmrs:formatDate date="${auditLog.dateCreated}" type="long" /></td>
+            </tr>
+        </c:forEach>
+        </tbody>
+    </table>
+</div>
+
+<%-- Dialog to display auditlog details --%>
+
+<div id="${moduleId}-changes-dialog" class="${moduleId}_align_text_left" title="<spring:message code="${moduleId}.logDetails" />">
 <br />
-<table id="${moduleId}" width="100%" cellpadding="3" cellspacing="0" align="left">
-	<thead>
-		<tr>
-			<th class="ui-state-default"></th>
-			<th class="ui-state-default">Item (<spring:message code="${moduleId}.numberOfChangedProperties" />)</th>
-			<th class="ui-state-default">User (username)</th>
-			<th class="ui-state-default">Date Of Occurence</th>
-		</tr>
-	</thead>
-	<tbody>
-	<c:forEach items="${auditLogs}" var="auditLog">
-		<tr class="${moduleId}_${auditLog.action}" onclick="${moduleId}_showDetails('${auditLog.uuid}')">
-			<td style="width: 17px !important;" align="center">
-   				<img class="${moduleId}_action_image" align="top" 
-   				 	src="<openmrs:contextPath />/moduleResources/${moduleId}/images/${auditLog.action}.gif" />
-			</td>
-   			<td>
-   				${auditLog.simpleClassname}
-   				<c:if test="${auditLog.action == 'UPDATED' && fn:length(auditLog.changes) > 0}"> (${fn:length(auditLog.changes)})</c:if>
-   			</td>
-   			<td>
-   				<c:choose>
-   					<%-- If this is a scheduled task, something done by daemon thread or at start up --%>
-   					<c:when test="${auditLog.user == null || auditLog.user.uuid == 'A4F30A1B-5EB9-11DF-A648-37A07F9C90FB'}">
-   						<spring:message code="${moduleId}.systemAction" />
-   					</c:when>
-   					<c:otherwise>
-   						${auditLog.user.personName} <c:if test="${fn:trim(auditLog.user.username) != ''}">[${auditLog.user.username}]</c:if>
-   					</c:otherwise>
-   				</c:choose>
-   			</td>
-   			<td><openmrs:formatDate date="${auditLog.dateCreated}" type="long" /></td>
-		</tr>
-	</c:forEach>
-	</tbody> 
+<table id="${moduleId}-details" width="100%" cellpadding="0" cellspacing="5">
+    <tr>
+        <th valign="top" class="${moduleId}_align_text_left" style="width:15%"><spring:message code="${moduleId}.uuid" /></th>
+        <td id="${moduleId}-changes-objectUuid" width="100%"></td>
+    </tr>
+    <tr>
+        <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.id" /></th>
+        <td id="${moduleId}-changes-objectId" width="100%"></td>
+    </tr>
+    <tr>
+        <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.classname" /></th>
+        <td id="${moduleId}-changes-classname" width="100%"></td>
+    </tr>
+    <tr>
+        <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.summary" /></th>
+        <td id="${moduleId}-changes-summary"></td>
+    </tr>
+    <tr class="${moduleId}-changes-element"><td colspan="2">&nbsp;</td></tr>
+    <tr class="${moduleId}-changes-element">
+        <td valign="top" colspan="2">
+            <b><spring:message code="${moduleId}.changes" /></b>
+        </td>
+    </tr>
+    <tr class="${moduleId}-changes-element">
+        <td valign="top" colspan="2" class="${moduleId}_align_text_left">
+            <table id="${moduleId}-changes-table" width="100%" cellpadding="3" cellspacing="0" border="1" bordercolor="#ADACAC">
+                <thead>
+                <tr>
+                    <td class="${moduleId}_table_header ${moduleId}_align_text_center" width="26%">
+                        <spring:message code="${moduleId}.propertyName" />
+                    </td>
+                    <td class="${moduleId}_table_header ${moduleId}_align_text_center" width="37%">
+                        <spring:message code="${moduleId}.newValue" />
+                    </td>
+                    <td class="${moduleId}_table_header ${moduleId}_align_text_center" width="37%">
+                        <spring:message code="${moduleId}.previousValue" />
+                    </td>
+                </tr>
+                <thead>
+            </table>
+        </td>
+    </tr>
+    <tr class="${moduleId}-childAuditLogDetails-element"><td colspan="2">&nbsp;</td></tr>
+    <tr class="${moduleId}-childAuditLogDetails-element">
+        <td valign="top" colspan="2">
+            <b><spring:message code="${moduleId}.childAuditLogDetails" />
+                (<span id="${moduleId}-childLogCount"></span>)
+            </b>
+            <img align="top" src="<openmrs:contextPath />/images/help.gif" border="0"
+                 title="<openmrs:message code="${moduleId}.childAuditLogDetails.help" />" />
+        </td>
+    </tr>
+    <tr class="${moduleId}-childAuditLogDetails-element">
+        <td valign="top" colspan="2" class="${moduleId}_align_text_left">
+            <table id="${moduleId}-childAuditLogDetails-table" cellpadding="3" cellspacing="0" border="1" bordercolor="#ADACAC">
+                <thead>
+                <tr>
+                    <td class="${moduleId}_table_header ${moduleId}_align_text_left">
+                        <spring:message code="${moduleId}.item" />
+                    </td>
+                </tr>
+                <thead>
+            </table>
+        </td>
+    </tr>
 </table>
 </div>
 
-<div id="${moduleId}-changes-dialog" class="${moduleId}_align_text_left" title="<spring:message code="${moduleId}.logDetails" />">
-	<br />
-	<table id="${moduleId}-details" width="100%" cellpadding="0" cellspacing="5">
-		<tr>
-			<th valign="top" class="${moduleId}_align_text_left" style="width:15%"><spring:message code="${moduleId}.uuid" /></th>
-			<td id="${moduleId}-changes-objectUuid" width="100%"></td>
-		</tr>
-		<tr>
-			<th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.id" /></th>
-			<td id="${moduleId}-changes-objectId" width="100%"></td>
-		</tr>
-		<tr>
-			<th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.classname" /></th>
-			<td id="${moduleId}-changes-classname" width="100%"></td>
-		</tr>
-		<tr>
-			<th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.summary" /></th>
-			<td id="${moduleId}-changes-summary"></td>
-		</tr>
-		<tr class="${moduleId}-changes-element"><td colspan="2">&nbsp;</td></tr>
-		<tr class="${moduleId}-changes-element">
-			<td valign="top" colspan="2">
-				<b><spring:message code="${moduleId}.changes" /></b>
-			</td>
-		</tr>
-		<tr class="${moduleId}-changes-element">
-			<td valign="top" colspan="2" class="${moduleId}_align_text_left">
-				<table id="${moduleId}-changes-table" width="100%" cellpadding="3" cellspacing="0" border="1" bordercolor="#ADACAC">
-					<thead>
-						<tr>
-							<td class="${moduleId}_table_header ${moduleId}_align_text_center" width="26%">
-								<spring:message code="${moduleId}.propertyName" />
-							</td>
-							<td class="${moduleId}_table_header ${moduleId}_align_text_center" width="37%">
-								<spring:message code="${moduleId}.newValue" />
-							</td>
-							<td class="${moduleId}_table_header ${moduleId}_align_text_center" width="37%">
-								<spring:message code="${moduleId}.previousValue" />
-							</td>
-						</tr>
-					<thead>
-				</table>
-			</td>
-		</tr>
-		<tr class="${moduleId}-childAuditLogDetails-element"><td colspan="2">&nbsp;</td></tr>
-		<tr class="${moduleId}-childAuditLogDetails-element">
-			<td valign="top" colspan="2">
-				<b><spring:message code="${moduleId}.childAuditLogDetails" />
-					(<span id="${moduleId}-childLogCount"></span>)
-				</b>
-				<img align="top" src="<openmrs:contextPath />/images/help.gif" border="0" 
-					title="<openmrs:message code="${moduleId}.childAuditLogDetails.help" />" />
-			</td>
-		</tr>
-		<tr class="${moduleId}-childAuditLogDetails-element">
-			<td valign="top" colspan="2" class="${moduleId}_align_text_left">
-				<table id="${moduleId}-childAuditLogDetails-table" cellpadding="3" cellspacing="0" border="1" bordercolor="#ADACAC">
-					<thead>
-						<tr>
-							<td class="${moduleId}_table_header ${moduleId}_align_text_left">
-								<spring:message code="${moduleId}.item" />
-							</td>
-						</tr>
-					<thead>
-				</table>
-			</td>
-		</tr>
-	</table>
+<%-- Dialog to display auditlog details for a child auditlog --%>
+
+<div id="${moduleId}-child-changes-dialog" class="${moduleId}_align_text_left" title="<spring:message code="${moduleId}.childLogDetails" />">
+<br />
+<table id="${moduleId}-child-details" width="100%" cellpadding="0" cellspacing="5">
+    <tr>
+        <th valign="top" class="${moduleId}_align_text_left" style="width:15%"><spring:message code="${moduleId}.uuid" /></th>
+        <td id="${moduleId}-child-changes-objectUuid" width="100%"></td>
+    </tr>
+    <tr>
+        <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.id" /></th>
+        <td id="${moduleId}-child-changes-objectId" width="100%"></td>
+    </tr>
+    <tr>
+        <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.classname" /></th>
+        <td id="${moduleId}-child-changes-classname" width="100%"></td>
+    </tr>
+    <tr>
+        <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.summary" /></th>
+        <td id="${moduleId}-child-changes-summary"></td>
+    </tr>
+    <tr class="${moduleId}-changes-element"><td colspan="2">&nbsp;</td></tr>
+    <tr class="${moduleId}-changes-element">
+        <td valign="top" colspan="2">
+            <b><spring:message code="${moduleId}.changes" /></b>
+        </td>
+    </tr>
+    <tr class="${moduleId}-changes-element">
+        <td valign="top" colspan="2" class="${moduleId}_align_text_left">
+            <table id="${moduleId}-child-changes-table" width="100%" cellpadding="3" cellspacing="0" border="1" bordercolor="#ADACAC">
+                <thead>
+                <tr>
+                    <td class="${moduleId}_table_header ${moduleId}_align_text_center" width="26%">
+                        <spring:message code="${moduleId}.propertyName" />
+                    </td>
+                    <td class="${moduleId}_table_header ${moduleId}_align_text_center" width="37%">
+                        <spring:message code="${moduleId}.newValue" />
+                    </td>
+                    <td class="${moduleId}_table_header ${moduleId}_align_text_center" width="37%">
+                        <spring:message code="${moduleId}.previousValue" />
+                    </td>
+                </tr>
+                <thead>
+            </table>
+        </td>
+    </tr>
+    <tr class="${moduleId}-childAuditLogDetails-element"><td colspan="2">&nbsp;</td></tr>
+    <tr class="${moduleId}-childAuditLogDetails-element">
+        <td valign="top" colspan="2">
+            <b><spring:message code="${moduleId}.childAuditLogDetails" />
+                (<span id="${moduleId}-child-childLogCount"></span>)
+            </b>
+            <img align="top" src="<openmrs:contextPath />/images/help.gif" border="0"
+                 title="<openmrs:message code="${moduleId}.childAuditLogDetails.help" />" />
+        </td>
+    </tr>
+    <tr class="${moduleId}-childAuditLogDetails-element">
+        <td valign="top" colspan="2" class="${moduleId}_align_text_left">
+            <table id="${moduleId}-child-childAuditLogDetails-table" cellpadding="3" cellspacing="0" border="1" bordercolor="#ADACAC">
+                <thead>
+                <tr>
+                    <td class="${moduleId}_table_header ${moduleId}_align_text_left">
+                        <spring:message code="${moduleId}.item" />
+                    </td>
+                </tr>
+                <thead>
+            </table>
+        </td>
+    </tr>
+</table>
 </div>
 
 <%@ include file="/WEB-INF/template/footer.jsp"%>
