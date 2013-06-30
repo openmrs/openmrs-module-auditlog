@@ -324,9 +324,9 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 								
 								entityCollectionsMap.get().peek().get(entity).add(collection);
 							}
-						} else {
-							//TODO handle maps too because hibernate treats maps to be of CollectionType
-						}
+						} //else {
+						  //TODO handle maps too because hibernate treats maps to be of CollectionType
+						  //}
 					}
 				}
 			}
@@ -353,26 +353,17 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				for (Map.Entry<Object, List<Collection<?>>> entry : entityCollectionsMap.get().peek().entrySet()) {
 					for (Collection<?> coll : entry.getValue()) {
 						for (Object obj : coll) {
-							//Apparently inserts.get().contains(obj) always returns false
-							//yet when looping and using obj.equals(ins) works					
-							//Strangely, updates.get().contains(obj) works
-							boolean isInsert = false;
-							for (OpenmrsObject ins : inserts.get().peek()) {
-								if (obj.equals(ins)) {
-									isInsert = true;
-									break;
-								}
-							}
+							boolean isInsert = OpenmrsUtil.collectionContains(inserts.get().peek(), obj);
+							boolean isUpdate = OpenmrsUtil.collectionContains(updates.get().peek(), obj);
 							
-							//noinspection SuspiciousMethodCalls
 							//We handle the removed collections items below because either way they
 							//are nolonger in the current collection
 							//This is an IDEA specific comment to suppress warnings
 							//noinspection SuspiciousMethodCalls
-							if (isInsert || updates.get().peek().contains(obj)) {
+							if (isInsert || isUpdate) {
 								OpenmrsObject owner = (OpenmrsObject) entry.getKey();
-								//noinspection SuspiciousMethodCalls
-								if (updates.get().peek().contains(owner)) {
+								boolean ownerHasUpdates = OpenmrsUtil.collectionContains(updates.get().peek(), owner);
+								if (ownerHasUpdates) {
 									if (log.isDebugEnabled()) {
 										log.debug("There is already an  auditlog for:" + owner.getClass() + " - "
 										        + owner.getUuid());
@@ -416,7 +407,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 						//This should fail for collections that don't have all-delete-orphan cascade
 						//this is idea specific to suppress a warning
 						//noinspection SuspiciousMethodCalls
-						if (deletes.get().peek().contains(removed)) {
+						boolean isDelete = OpenmrsUtil.collectionContains(deletes.get().peek(), removed);
+						if (isDelete) {
 							if (getAuditLogDao().isMonitored(removed.getClass())) {
 								if (ownerUuidChildLogsMap.get().peek().get(removedItemsOwner.getUuid()) == null)
 									ownerUuidChildLogsMap.get().peek()

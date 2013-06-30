@@ -13,11 +13,11 @@
  */
 package org.openmrs.module.auditlog;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertNull;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.openmrs.module.auditlog.AuditLog.Action.CREATED;
 import static org.openmrs.module.auditlog.AuditLog.Action.DELETED;
 import static org.openmrs.module.auditlog.AuditLog.Action.UPDATED;
@@ -45,14 +45,12 @@ import org.openmrs.DrugOrder;
 import org.openmrs.EncounterType;
 import org.openmrs.GlobalProperty;
 import org.openmrs.Location;
-import org.openmrs.LocationTag;
 import org.openmrs.Order;
 import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.EncounterService;
-import org.openmrs.api.LocationService;
 import org.openmrs.api.PatientService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog.Action;
@@ -279,7 +277,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldMonitorAnyOpenmrsObjectWhenStrateyIsSetToAll() throws Exception {
+	public void shouldMonitorAnyOpenmrsObjectWhenStrategyIsSetToAll() throws Exception {
 		assertFalse(auditLogService.isMonitored(Location.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
@@ -293,7 +291,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldNotMonitorAnyObjectWhenStrateyIsSetToNone() throws Exception {
+	public void shouldNotMonitorAnyObjectWhenStrategyIsSetToNone() throws Exception {
 		assertTrue(auditLogService.isMonitored(EncounterType.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
@@ -306,7 +304,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldNotCreateLogWhenStrateyIsSetToAllExceptAndObjectTypeIsListedAsExcluded() throws Exception {
+	public void shouldNotCreateLogWhenStrategyIsSetToAllExceptAndObjectTypeIsListedAsExcluded() throws Exception {
 		AdministrationService as = Context.getAdministrationService();
 		//sanity check
 		GlobalProperty monitoredGP = as.getGlobalPropertyObject(AuditLogConstants.GP_UN_MONITORED_CLASSES);
@@ -322,7 +320,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldCreateLogWhenStrateyIsSetToAllExceptAndObjectTypeIsNotListedAsIncluded() throws Exception {
+	public void shouldCreateLogWhenStrategyIsSetToAllExceptAndObjectTypeIsNotListedAsIncluded() throws Exception {
 		AdministrationService as = Context.getAdministrationService();
 		//sanity check
 		GlobalProperty monitoredGP = as.getGlobalPropertyObject(AuditLogConstants.GP_UN_MONITORED_CLASSES);
@@ -335,31 +333,6 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		location.setName("new location");
 		Context.getLocationService().saveLocation(location);
 		assertEquals(1, getAllLogs(location.getUuid(), Location.class, Collections.singletonList(CREATED)).size());
-	}
-	
-	@Test
-	@NotTransactional
-	public void shouldCreateLogForUnMonitoredTypeIfTheOwningTypeIsMonitoredAndStrategyIsAllExcept() throws Exception {
-		executeDataSet("org/openmrs/api/include/LocationServiceTest-initialData.xml");
-		LocationService ls = Context.getLocationService();
-		assertEquals(0, getAllLogs().size());
-		
-		AdministrationService as = Context.getAdministrationService();
-		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
-		gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
-		as.saveGlobalProperty(gp);
-		assertEquals(MonitoringStrategy.ALL_EXCEPT, auditLogService.getMonitoringStrategy());
-		assertEquals(true, auditLogService.isMonitored(Location.class));
-		assertEquals(true, auditLogService.isMonitored(LocationTag.class));
-		
-		auditLogService.stopMonitoring(LocationTag.class);
-		assertEquals(false, auditLogService.isMonitored(LocationTag.class));
-		Location loc = ls.getLocation(2);
-		LocationTag tag = loc.getTags().iterator().next();
-		tag.setDescription("new");
-		ls.saveLocation(loc);
-		assertEquals(1, getAllLogs(tag.getUuid(), LocationTag.class, Collections.singletonList(UPDATED)).size());
-		assertEquals(1, getAllLogs(loc.getUuid(), Location.class, Collections.singletonList(UPDATED)).size());
 	}
 	
 	@Test
@@ -417,8 +390,6 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		//No sync record should have been created
 		assertEquals(initialLogCount, getAllLogs().size());
 	}
-	
-	// START OF CHANGES
 	
 	@Test
 	@NotTransactional

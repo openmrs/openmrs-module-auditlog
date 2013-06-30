@@ -37,6 +37,9 @@ import org.junit.Test;
 import org.openmrs.Cohort;
 import org.openmrs.Concept;
 import org.openmrs.ConceptDescription;
+import org.openmrs.GlobalProperty;
+import org.openmrs.Location;
+import org.openmrs.LocationTag;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.Order;
 import org.openmrs.Patient;
@@ -47,7 +50,9 @@ import org.openmrs.PersonAttribute;
 import org.openmrs.PersonName;
 import org.openmrs.Relationship;
 import org.openmrs.User;
+import org.openmrs.api.AdministrationService;
 import org.openmrs.api.CohortService;
+import org.openmrs.api.LocationService;
 import org.openmrs.api.OrderService;
 import org.openmrs.api.PatientService;
 import org.openmrs.api.PersonService;
@@ -275,6 +280,31 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 			auditLogService.stopMonitoring(Cohort.class);
 		}
 		assertFalse(auditLogService.isMonitored(Cohort.class));
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldCreateLogForUnMonitoredTypeIfTheOwningTypeIsMonitoredAndStrategyIsAllExcept() throws Exception {
+		executeDataSet("org/openmrs/api/include/LocationServiceTest-initialData.xml");
+		LocationService ls = Context.getLocationService();
+		assertEquals(0, getAllLogs().size());
+		
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
+		gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
+		as.saveGlobalProperty(gp);
+		assertEquals(MonitoringStrategy.ALL_EXCEPT, auditLogService.getMonitoringStrategy());
+		assertEquals(true, auditLogService.isMonitored(Location.class));
+		assertEquals(true, auditLogService.isMonitored(LocationTag.class));
+		
+		auditLogService.stopMonitoring(LocationTag.class);
+		assertEquals(false, auditLogService.isMonitored(LocationTag.class));
+		Location loc = ls.getLocation(2);
+		LocationTag tag = loc.getTags().iterator().next();
+		tag.setDescription("new");
+		ls.saveLocation(loc);
+		assertEquals(1, getAllLogs(tag.getUuid(), LocationTag.class, Collections.singletonList(UPDATED)).size());
+		assertEquals(1, getAllLogs(loc.getUuid(), Location.class, Collections.singletonList(UPDATED)).size());
 	}
 	
 	@Test
