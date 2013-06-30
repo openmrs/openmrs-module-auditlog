@@ -359,7 +359,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 							//We handle the removed collections items below because either way they
 							//are nolonger in the current collection
 							//This is an IDEA specific comment to suppress warnings
-							//noinspection SuspiciousMethodCalls
 							if (isInsert || isUpdate) {
 								OpenmrsObject owner = (OpenmrsObject) entry.getKey();
 								boolean ownerHasUpdates = OpenmrsUtil.collectionContains(updates.get().peek(), owner);
@@ -406,7 +405,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					for (OpenmrsObject removed : entry.getValue()) {
 						//This should fail for collections that don't have all-delete-orphan cascade
 						//this is idea specific to suppress a warning
-						//noinspection SuspiciousMethodCalls
 						boolean isDelete = OpenmrsUtil.collectionContains(deletes.get().peek(), removed);
 						if (isDelete) {
 							if (getAuditLogDao().isMonitored(removed.getClass())) {
