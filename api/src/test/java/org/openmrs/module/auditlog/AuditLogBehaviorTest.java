@@ -48,6 +48,7 @@ import org.openmrs.Location;
 import org.openmrs.LocationTag;
 import org.openmrs.Order;
 import org.openmrs.PatientIdentifierType;
+import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.EncounterService;
@@ -347,14 +348,18 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
 		gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
 		as.saveGlobalProperty(gp);
+		assertEquals(MonitoringStrategy.ALL_EXCEPT, auditLogService.getMonitoringStrategy());
+		assertEquals(true, auditLogService.isMonitored(Location.class));
+		assertEquals(true, auditLogService.isMonitored(LocationTag.class));
 		
 		auditLogService.stopMonitoring(LocationTag.class);
+		assertEquals(false, auditLogService.isMonitored(LocationTag.class));
 		Location loc = ls.getLocation(2);
 		LocationTag tag = loc.getTags().iterator().next();
 		tag.setDescription("new");
 		ls.saveLocation(loc);
-		assertEquals(1, getAllLogs(loc.getUuid(), Location.class, Collections.singletonList(UPDATED)).size());
 		assertEquals(1, getAllLogs(tag.getUuid(), LocationTag.class, Collections.singletonList(UPDATED)).size());
+		assertEquals(1, getAllLogs(loc.getUuid(), Location.class, Collections.singletonList(UPDATED)).size());
 	}
 	
 	@Test
@@ -411,5 +416,136 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		
 		//No sync record should have been created
 		assertEquals(initialLogCount, getAllLogs().size());
+	}
+	
+	// START OF CHANGES
+	
+	@Test
+	@NotTransactional
+	public void shouldCreateLogsForActionsSavedInNestedTransactions() throws Exception {
+		auditLogService.startMonitoring(Location.class);
+		try {
+			assertEquals(true, auditLogService.isMonitored(Location.class));
+			final String newLocationName = "Some strange new name";
+			Location location = Context.getLocationService().getLocation(1);
+			//sanity checks
+			List<AuditLog> locationLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+			assertEquals(0, locationLogs.size());
+			
+			EncounterType et = Context.getEncounterService().getEncounterType(MockNestedService.ENCOUNTER_TYPE_ID);
+			List<AuditLog> encounterTypeLogs = getAllLogs(et.getUuid(), EncounterType.class,
+			    Collections.singletonList(UPDATED));
+			assertEquals(0, encounterTypeLogs.size());
+			
+			assertEquals(false, location.getName().equalsIgnoreCase(newLocationName));
+			location.setName(newLocationName);
+			
+			Context.getService(MockNestedService.class).outerTransaction(location, false, false);
+			locationLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+			assertEquals(1, locationLogs.size());
+			assertEquals(UPDATED, locationLogs.get(0).getAction());
+			
+			encounterTypeLogs = getAllLogs(et.getUuid(), EncounterType.class, Collections.singletonList(UPDATED));
+			assertEquals(1, encounterTypeLogs.size());
+			assertEquals(UPDATED, encounterTypeLogs.get(0).getAction());
+		}
+		finally {
+			auditLogService.stopMonitoring(Location.class);
+		}
+		assertEquals(false, auditLogService.isMonitored(Location.class));
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldNotCreateLogsForActionsSavedInInnerTransactionIfRollback() throws Exception {
+		auditLogService.startMonitoring(Location.class);
+		try {
+			assertEquals(true, auditLogService.isMonitored(Location.class));
+			final String newLocationName = "Some strange new name";
+			Location location = Context.getLocationService().getLocation(1);
+			//sanity checks
+			List<AuditLog> locationLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+			assertEquals(0, locationLogs.size());
+			
+			EncounterType et = Context.getEncounterService().getEncounterType(MockNestedService.ENCOUNTER_TYPE_ID);
+			List<AuditLog> encounterTypeLogs = getAllLogs(et.getUuid(), EncounterType.class,
+			    Collections.singletonList(UPDATED));
+			assertEquals(0, encounterTypeLogs.size());
+			
+			assertEquals(false, location.getName().equalsIgnoreCase(newLocationName));
+			location.setName(newLocationName);
+			
+			try {
+				Context.getService(MockNestedService.class).outerTransaction(location, true, false);
+			}
+			catch (APIException e) {}
+			
+			encounterTypeLogs = getAllLogs(et.getUuid(), EncounterType.class, Collections.singletonList(UPDATED));
+			assertEquals(0, encounterTypeLogs.size());
+			locationLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+			assertEquals(1, locationLogs.size());
+			assertEquals(UPDATED, locationLogs.get(0).getAction());
+		}
+		finally {
+			auditLogService.stopMonitoring(Location.class);
+		}
+		assertEquals(false, auditLogService.isMonitored(Location.class));
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldNotCreateLogsForActionsSavedInOuterTransactionIfRollback() throws Exception {
+		final String newLocationName = "Some strange new name";
+		Location location = Context.getLocationService().getLocation(1);
+		//sanity checks
+		List<AuditLog> locationLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+		assertEquals(0, locationLogs.size());
+		
+		EncounterType et = Context.getEncounterService().getEncounterType(MockNestedService.ENCOUNTER_TYPE_ID);
+		List<AuditLog> encounterTypeLogs = getAllLogs(et.getUuid(), EncounterType.class, Collections.singletonList(UPDATED));
+		assertEquals(0, encounterTypeLogs.size());
+		
+		assertEquals(false, location.getName().equalsIgnoreCase(newLocationName));
+		location.setName(newLocationName);
+		
+		try {
+			Context.getService(MockNestedService.class).outerTransaction(location, false, true);
+		}
+		catch (APIException e) {}
+		
+		locationLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+		assertEquals(0, locationLogs.size());
+		
+		encounterTypeLogs = getAllLogs(et.getUuid(), EncounterType.class, Collections.singletonList(UPDATED));
+		assertEquals(1, encounterTypeLogs.size());
+		assertEquals(UPDATED, encounterTypeLogs.get(0).getAction());
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldNotCreateLogsForActionsSavedInBothTransactionsIfBothRollbacked() throws Exception {
+		final String newLocationName = "Some strange new name";
+		Location location = Context.getLocationService().getLocation(1);
+		//sanity checks
+		List<AuditLog> locationLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+		assertEquals(0, locationLogs.size());
+		
+		EncounterType et = Context.getEncounterService().getEncounterType(MockNestedService.ENCOUNTER_TYPE_ID);
+		List<AuditLog> encounterTypeLogs = getAllLogs(et.getUuid(), EncounterType.class, Collections.singletonList(UPDATED));
+		assertEquals(0, encounterTypeLogs.size());
+		
+		assertEquals(false, location.getName().equalsIgnoreCase(newLocationName));
+		location.setName(newLocationName);
+		
+		try {
+			Context.getService(MockNestedService.class).outerTransaction(location, true, true);
+		}
+		catch (APIException e) {}
+		
+		locationLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+		assertEquals(0, locationLogs.size());
+		
+		encounterTypeLogs = getAllLogs(et.getUuid(), EncounterType.class, Collections.singletonList(UPDATED));
+		assertEquals(0, encounterTypeLogs.size());
 	}
 }

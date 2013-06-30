@@ -76,29 +76,34 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertTrue(originalCount > 1);
 		
 		auditLogService.startMonitoring(Patient.class);
-		PersonName nameToRemove = null;
-		for (PersonName name : patient.getNames()) {
-			if (!name.isPreferred()) {
-				nameToRemove = name;
-				break;
+		try {
+			PersonName nameToRemove = null;
+			for (PersonName name : patient.getNames()) {
+				if (!name.isPreferred()) {
+					nameToRemove = name;
+					break;
+				}
 			}
+			assertNotNull(nameToRemove);
+			String nameUuid = nameToRemove.getUuid();
+			patient.removeName(nameToRemove);
+			ps.savePatient(patient);
+			assertEquals(originalCount - 1, patient.getNames().size());
+			List<AuditLog> patientLogs = getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED));
+			assertEquals(1, patientLogs.size());
+			AuditLog al = patientLogs.get(0);
+			assertEquals(al.getObjectUuid(), patient.getUuid());
+			assertEquals(originalCount - 1, patient.getNames().size());
+			assertEquals(-1, al.getNewValue("names").indexOf(nameToRemove.getUuid()));
+			for (PersonName name : patient.getNames()) {
+				assertTrue(al.getPreviousValue("names").indexOf(name.getUuid()) > -1);
+			}
+			List<AuditLog> nameLogs = getAllLogs(nameUuid, PersonName.class, Collections.singletonList(DELETED));
+			assertEquals(1, nameLogs.size());
 		}
-		assertNotNull(nameToRemove);
-		String nameUuid = nameToRemove.getUuid();
-		patient.removeName(nameToRemove);
-		ps.savePatient(patient);
-		assertEquals(originalCount - 1, patient.getNames().size());
-		List<AuditLog> patientLogs = getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED));
-		assertEquals(1, patientLogs.size());
-		AuditLog al = patientLogs.get(0);
-		assertEquals(al.getObjectUuid(), patient.getUuid());
-		assertEquals(originalCount - 1, patient.getNames().size());
-		assertEquals(-1, al.getNewValue("names").indexOf(nameToRemove.getUuid()));
-		for (PersonName name : patient.getNames()) {
-			assertTrue(al.getPreviousValue("names").indexOf(name.getUuid()) > -1);
+		finally {
+			auditLogService.stopMonitoring(Patient.class);
 		}
-		List<AuditLog> nameLogs = getAllLogs(nameUuid, PersonName.class, Collections.singletonList(DELETED));
-		assertEquals(1, nameLogs.size());
 	}
 	
 	@Test
@@ -281,8 +286,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		classes.add(PersonName.class);
 		classes.add(Patient.class);
 		
+		auditLogService.startMonitoring(classes);
 		try {
-			auditLogService.startMonitoring(classes);
 			patient = ps.savePatient(patient);
 			//Ensure that no log will be created unless we actually perform an update
 			assertEquals(0, getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED)).size());
@@ -381,10 +386,10 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertTrue(originalDescriptionCount > 3);
 		
 		auditLogService.startMonitoring(ConceptDescription.class);
-		concept = conceptService.saveConcept(concept);
-		//Ensure that no log will be created unless we actually perform an update
-		assertEquals(0, getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED)).size());
 		try {
+			concept = conceptService.saveConcept(concept);
+			//Ensure that no log will be created unless we actually perform an update
+			assertEquals(0, getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED)).size());
 			assertTrue(auditLogService.isMonitored(ConceptDescription.class));
 			Iterator<ConceptDescription> it = concept.getDescriptions().iterator();
 			//update some existing descriptions
@@ -468,8 +473,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		classes.add(PatientIdentifier.class);
 		classes.add(Patient.class);
 		
+		auditLogService.startMonitoring(classes);
 		try {
-			auditLogService.startMonitoring(classes);
 			patient = ps.savePatient(patient);
 			//Ensure that no log will be created unless we actually perform an update
 			assertEquals(0, getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED)).size());

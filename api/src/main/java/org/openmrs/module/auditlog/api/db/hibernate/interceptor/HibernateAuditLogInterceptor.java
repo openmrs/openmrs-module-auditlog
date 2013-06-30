@@ -1,3 +1,16 @@
+/**
+ * The contents of this file are subject to the OpenMRS Public License
+ * Version 1.0 (the "License"); you may not use this file except in
+ * compliance with the License. You may obtain a copy of the License at
+ * http://license.openmrs.org
+ *
+ * Software distributed under the License is distributed on an "AS IS"
+ * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
+ * License for the specific language governing rights and limitations
+ * under the License.
+ *
+ * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ */
 package org.openmrs.module.auditlog.api.db.hibernate.interceptor;
 
 import java.io.Serializable;
@@ -9,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
@@ -18,7 +32,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.CallbackException;
 import org.hibernate.EmptyInterceptor;
-import org.hibernate.Interceptor;
 import org.hibernate.Transaction;
 import org.hibernate.collection.PersistentCollection;
 import org.hibernate.type.StringType;
@@ -32,11 +45,11 @@ import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.util.OpenmrsUtil;
 
 /**
- * A hibernate {@link Interceptor} implementation, intercepts any database inserts, updates and
- * deletes and creates audit log entries for Monitored Objects, it logs changes for a single session
- * meaning that if User A and B concurrently make changes to the same object, there will be 2 log
- * entries in the DB, one for each user's session. Any changes/inserts/deletes made to the DB that
- * are not made through the application won't be detected by the module.
+ * A hibernate {@link org.hibernate.Interceptor} implementation, intercepts any database inserts,
+ * updates and deletes and creates audit log entries for Monitored Objects, it logs changes for a
+ * single session meaning that if User A and B concurrently make changes to the same object, there
+ * will be 2 log entries in the DB, one for each user's session. Any changes/inserts/deletes made to
+ * the DB that are not made through the application won't be detected by the module.
  */
 public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	
@@ -44,30 +57,33 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	
 	private static final Log log = LogFactory.getLog(HibernateAuditLogInterceptor.class);
 	
-	private ThreadLocal<HashSet<OpenmrsObject>> inserts = new ThreadLocal<HashSet<OpenmrsObject>>();
+	//Use stacks to take care of nested transactions to avoid NPE since on each transaction 
+	//completion the ThreadLocals get nullified, see code below, i.e a stack of two elements implies
+	//the element at the top of the stack is the inserts made in the inner/nested transaction
+	private ThreadLocal<Stack<HashSet<OpenmrsObject>>> inserts = new ThreadLocal<Stack<HashSet<OpenmrsObject>>>();
 	
-	private ThreadLocal<HashSet<OpenmrsObject>> updates = new ThreadLocal<HashSet<OpenmrsObject>>();
+	private ThreadLocal<Stack<HashSet<OpenmrsObject>>> updates = new ThreadLocal<Stack<HashSet<OpenmrsObject>>>();
 	
-	private ThreadLocal<HashSet<OpenmrsObject>> deletes = new ThreadLocal<HashSet<OpenmrsObject>>();
+	private ThreadLocal<Stack<HashSet<OpenmrsObject>>> deletes = new ThreadLocal<Stack<HashSet<OpenmrsObject>>>();
 	
 	//Mapping between object uuids and maps of their changed property names and their older values, 
 	//the first item in the array is the old value while the the second is the new value
-	private ThreadLocal<Map<String, Map<String, String[]>>> objectChangesMap = new ThreadLocal<Map<String, Map<String, String[]>>>();
+	private ThreadLocal<Stack<Map<String, Map<String, String[]>>>> objectChangesMap = new ThreadLocal<Stack<Map<String, Map<String, String[]>>>>();
 	
 	//Mapping between entities and lists of their Collections in the current session
-	private ThreadLocal<Map<Object, List<Collection<?>>>> entityCollectionsMap = new ThreadLocal<Map<Object, List<Collection<?>>>>();
+	private ThreadLocal<Stack<Map<Object, List<Collection<?>>>>> entityCollectionsMap = new ThreadLocal<Stack<Map<Object, List<Collection<?>>>>>();
 	
 	//Mapping between parent entity uuids and lists of AuditLogs for their collection elements
-	private ThreadLocal<Map<String, List<AuditLog>>> ownerUuidChildLogsMap = new ThreadLocal<Map<String, List<AuditLog>>>();
+	private ThreadLocal<Stack<Map<String, List<AuditLog>>>> ownerUuidChildLogsMap = new ThreadLocal<Stack<Map<String, List<AuditLog>>>>();
 	
 	//Mapping between collection element uuids and their AuditLogs, will use 
 	//this to avoid creating logs for collections elements multiple times
-	private ThreadLocal<Map<String, AuditLog>> childbjectUuidAuditLogMap = new ThreadLocal<Map<String, AuditLog>>();
+	private ThreadLocal<Stack<Map<String, AuditLog>>> childbjectUuidAuditLogMap = new ThreadLocal<Stack<Map<String, AuditLog>>>();
 	
 	//Mapping between parent entities and sets of removed collection elements
-	private ThreadLocal<Map<OpenmrsObject, HashSet<OpenmrsObject>>> entityRemovedChildrenMap = new ThreadLocal<Map<OpenmrsObject, HashSet<OpenmrsObject>>>();
+	private ThreadLocal<Stack<Map<OpenmrsObject, HashSet<OpenmrsObject>>>> entityRemovedChildrenMap = new ThreadLocal<Stack<Map<OpenmrsObject, HashSet<OpenmrsObject>>>>();
 	
-	private ThreadLocal<Date> date = new ThreadLocal<Date>();
+	private ThreadLocal<Stack<Date>> date = new ThreadLocal<Stack<Date>>();
 	
 	private AuditLogDAO auditLogDao;
 	
@@ -90,20 +106,22 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	 */
 	@Override
 	public void afterTransactionBegin(Transaction tx) {
-		inserts.set(new HashSet<OpenmrsObject>());
-		updates.set(new HashSet<OpenmrsObject>());
-		deletes.set(new HashSet<OpenmrsObject>());
-		objectChangesMap.set(new HashMap<String, Map<String, String[]>>());
-		entityCollectionsMap.set(new HashMap<Object, List<Collection<?>>>());
-		ownerUuidChildLogsMap.set(new HashMap<String, List<AuditLog>>());
-		childbjectUuidAuditLogMap.set(new HashMap<String, AuditLog>());
-		entityRemovedChildrenMap.set(new HashMap<OpenmrsObject, HashSet<OpenmrsObject>>());
-		date.set(new Date());
+		initializeStacksIfNecessary();
+		
+		inserts.get().push(new HashSet<OpenmrsObject>());
+		updates.get().push(new HashSet<OpenmrsObject>());
+		deletes.get().push(new HashSet<OpenmrsObject>());
+		objectChangesMap.get().push(new HashMap<String, Map<String, String[]>>());
+		entityCollectionsMap.get().push(new HashMap<Object, List<Collection<?>>>());
+		ownerUuidChildLogsMap.get().push(new HashMap<String, List<AuditLog>>());
+		childbjectUuidAuditLogMap.get().push(new HashMap<String, AuditLog>());
+		entityRemovedChildrenMap.get().push(new HashMap<OpenmrsObject, HashSet<OpenmrsObject>>());
+		date.get().push(new Date());
 	}
 	
 	/**
-	 * @see org.hibernate.EmptyInterceptor#onSave(java.lang.Object, java.io.Serializable,
-	 *      java.lang.Object[], java.lang.String[], org.hibernate.type.Type[])
+	 * @see org.hibernate.EmptyInterceptor#onSave(Object, java.io.Serializable, Object[], String[],
+	 *      org.hibernate.type.Type[])
 	 */
 	@Override
 	public boolean onSave(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
@@ -113,15 +131,15 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				log.debug("Creating log entry for created object with uuid:" + openmrsObject.getUuid() + " of type:"
 				        + entity.getClass().getName());
 			
-			inserts.get().add(openmrsObject);
+			inserts.get().peek().add(openmrsObject);
 		}
 		
 		return false;
 	}
 	
 	/**
-	 * @see org.hibernate.EmptyInterceptor#onFlushDirty(java.lang.Object, java.io.Serializable,
-	 *      java.lang.Object[], java.lang.Object[], java.lang.String[], org.hibernate.type.Type[])
+	 * @see org.hibernate.EmptyInterceptor#onFlushDirty(Object, java.io.Serializable, Object[],
+	 *      Object[], String[], org.hibernate.type.Type[])
 	 */
 	@Override
 	public boolean onFlushDirty(Object entity, Serializable id, Object[] currentState, Object[] previousState,
@@ -172,8 +190,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					log.debug("Creating log entry for updated object with uuid:" + openmrsObject.getUuid() + " of type:"
 					        + entity.getClass().getName());
 				
-				updates.get().add(openmrsObject);
-				objectChangesMap.get().put(openmrsObject.getUuid(), propertyChangesMap);
+				updates.get().peek().add(openmrsObject);
+				objectChangesMap.get().peek().put(openmrsObject.getUuid(), propertyChangesMap);
 			}
 		}
 		
@@ -181,8 +199,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	}
 	
 	/**
-	 * @see org.hibernate.EmptyInterceptor#onDelete(java.lang.Object, java.io.Serializable,
-	 *      java.lang.Object[], java.lang.String[], org.hibernate.type.Type[])
+	 * @see org.hibernate.EmptyInterceptor#onDelete(Object, java.io.Serializable, Object[],
+	 *      String[], org.hibernate.type.Type[])
 	 */
 	@Override
 	public void onDelete(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
@@ -192,13 +210,12 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				log.debug("Creating log entry for deleted object with uuid:" + openmrsObject.getUuid() + " of type:"
 				        + entity.getClass().getName());
 			
-			deletes.get().add(openmrsObject);
+			deletes.get().peek().add(openmrsObject);
 		}
 	}
 	
 	/**
-	 * @see org.hibernate.EmptyInterceptor#onCollectionUpdate(java.lang.Object,
-	 *      java.io.Serializable)
+	 * @see org.hibernate.EmptyInterceptor#onCollectionUpdate(Object, java.io.Serializable)
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
@@ -207,13 +224,13 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			PersistentCollection persistentColl = ((PersistentCollection) collection);
 			if (isAuditable(persistentColl.getOwner())) {
 				OpenmrsObject owningObject = (OpenmrsObject) persistentColl.getOwner();
-				updates.get().add(owningObject);
+				updates.get().peek().add(owningObject);
 				Map previousStoredSnapshotMap = (Map) persistentColl.getStoredSnapshot();
 				String ownerUuid = owningObject.getUuid();
 				String propertyName = persistentColl.getRole().substring(persistentColl.getRole().lastIndexOf('.') + 1);
 				
-				if (objectChangesMap.get().get(ownerUuid) == null) {
-					objectChangesMap.get().put(ownerUuid, new HashMap<String, String[]>());
+				if (objectChangesMap.get().peek().get(ownerUuid) == null) {
+					objectChangesMap.get().peek().put(ownerUuid, new HashMap<String, String[]>());
 				}
 				
 				String previousSerializedItems = null;
@@ -231,12 +248,12 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					if (!removedItems.isEmpty()) {
 						Class<?> elementClass = removedItems.iterator().next().getClass();
 						if (OpenmrsObject.class.isAssignableFrom(elementClass)) {
-							if (entityRemovedChildrenMap.get().get(owningObject) == null) {
-								entityRemovedChildrenMap.get().put(owningObject, new HashSet<OpenmrsObject>());
+							if (entityRemovedChildrenMap.get().peek().get(owningObject) == null) {
+								entityRemovedChildrenMap.get().peek().put(owningObject, new HashSet<OpenmrsObject>());
 							}
 							for (Object removedItem : removedItems) {
 								OpenmrsObject removed = (OpenmrsObject) removedItem;
-								entityRemovedChildrenMap.get().get(owningObject).add(removed);
+								entityRemovedChildrenMap.get().peek().get(owningObject).add(removed);
 							}
 						}
 					}
@@ -245,7 +262,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					newSerializedItems = InterceptorUtil.serializeMap((Map) collection, getAuditLogDao());
 				}
 				
-				objectChangesMap.get().get(ownerUuid)
+				objectChangesMap.get().peek().get(ownerUuid)
 				        .put(propertyName, new String[] { newSerializedItems, previousSerializedItems });
 			}
 		}
@@ -263,12 +280,12 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					if (!coll.isEmpty()) {
 						Class<?> elementClass = coll.iterator().next().getClass();
 						if (OpenmrsObject.class.isAssignableFrom(elementClass)) {
-							if (entityRemovedChildrenMap.get().get(owningObject) == null) {
-								entityRemovedChildrenMap.get().put(owningObject, new HashSet<OpenmrsObject>());
+							if (entityRemovedChildrenMap.get().peek().get(owningObject) == null) {
+								entityRemovedChildrenMap.get().peek().put(owningObject, new HashSet<OpenmrsObject>());
 							}
 							for (Object removedItem : coll) {
 								OpenmrsObject removed = (OpenmrsObject) removedItem;
-								entityRemovedChildrenMap.get().get(owningObject).add(removed);
+								entityRemovedChildrenMap.get().peek().get(owningObject).add(removed);
 							}
 						}
 					}
@@ -281,14 +298,14 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	 * This is a hacky way to find all loaded persistent objects in this session that have
 	 * collections
 	 * 
-	 * @see org.hibernate.EmptyInterceptor#findDirty(java.lang.Object, java.io.Serializable,
-	 *      java.lang.Object[], java.lang.Object[], java.lang.String[], org.hibernate.type.Type[])
+	 * @see org.hibernate.EmptyInterceptor#findDirty(Object, java.io.Serializable, Object[],
+	 *      Object[], String[], org.hibernate.type.Type[])
 	 */
 	@Override
 	public int[] findDirty(Object entity, Serializable id, Object[] currentState, Object[] previousState,
 	                       String[] propertyNames, Type[] types) {
 		if (getAuditLogDao().isMonitored(entity.getClass())) {
-			if (entityCollectionsMap.get().get(entity) == null) {
+			if (entityCollectionsMap.get().peek().get(entity) == null) {
 				//This is the first time we are trying to find collection elements for this object
 				if (log.isDebugEnabled())
 					log.debug("Finding collections for object:" + entity.getClass() + " #" + id);
@@ -296,14 +313,16 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				for (int i = 0; i < propertyNames.length; i++) {
 					if (types[i].isCollectionType()) {
 						Object coll = currentState[i];
+						//For now ignore maps because still cant imagine a logical case where the
+						//keys or values are Persistent objects that can't exist on their own
 						if (coll != null && Collection.class.isAssignableFrom(coll.getClass())) {
 							Collection<?> collection = (Collection<?>) coll;
 							if (!collection.isEmpty()) {
-								if (entityCollectionsMap.get().get(entity) == null) {
-									entityCollectionsMap.get().put(entity, new ArrayList<Collection<?>>());
+								if (entityCollectionsMap.get().peek().get(entity) == null) {
+									entityCollectionsMap.get().peek().put(entity, new ArrayList<Collection<?>>());
 								}
 								
-								entityCollectionsMap.get().get(entity).add(collection);
+								entityCollectionsMap.get().peek().get(entity).add(collection);
 							}
 						} else {
 							//TODO handle maps too because hibernate treats maps to be of CollectionType
@@ -322,7 +341,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	@Override
 	public void beforeTransactionCompletion(Transaction tx) {
 		try {
-			if (inserts.get().isEmpty() && updates.get().isEmpty() && deletes.get().isEmpty())
+			if (inserts.get().peek().isEmpty() && updates.get().peek().isEmpty() && deletes.get().peek().isEmpty())
 				return;
 			
 			try {
@@ -331,14 +350,14 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				//If we have any entities in the session that have child collections and there were some updates, 
 				//check all collection items to find dirty ones so that we can mark the the owners as dirty too
 				//I.e if a ConceptName/Mapping/Description was edited, mark the the Concept as dirty too
-				for (Map.Entry<Object, List<Collection<?>>> entry : entityCollectionsMap.get().entrySet()) {
+				for (Map.Entry<Object, List<Collection<?>>> entry : entityCollectionsMap.get().peek().entrySet()) {
 					for (Collection<?> coll : entry.getValue()) {
 						for (Object obj : coll) {
 							//Apparently inserts.get().contains(obj) always returns false
 							//yet when looping and using obj.equals(ins) works					
 							//Strangely, updates.get().contains(obj) works
 							boolean isInsert = false;
-							for (OpenmrsObject ins : inserts.get()) {
+							for (OpenmrsObject ins : inserts.get().peek()) {
 								if (obj.equals(ins)) {
 									isInsert = true;
 									break;
@@ -348,35 +367,40 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 							//noinspection SuspiciousMethodCalls
 							//We handle the removed collections items below because either way they
 							//are nolonger in the current collection
-							if (isInsert || updates.get().contains(obj)) {
+							//This is an IDEA specific comment to suppress warnings
+							//noinspection SuspiciousMethodCalls
+							if (isInsert || updates.get().peek().contains(obj)) {
 								OpenmrsObject owner = (OpenmrsObject) entry.getKey();
-								if (updates.get().contains(owner)) {
-									if (log.isDebugEnabled())
+								//noinspection SuspiciousMethodCalls
+								if (updates.get().peek().contains(owner)) {
+									if (log.isDebugEnabled()) {
 										log.debug("There is already an  auditlog for:" + owner.getClass() + " - "
 										        + owner.getUuid());
+									}
 								} else if (!isInsert) {
 									//A collection item was updated and no other update had been made on the owner
-									if (log.isDebugEnabled())
+									if (log.isDebugEnabled()) {
 										log.debug("Creating log entry for edited object with uuid:" + owner.getUuid()
 										        + " of type:" + owner.getClass().getName()
 										        + " due to an update for a item in a child collection");
-									updates.get().add(owner);
+									}
+									updates.get().peek().add(owner);
 								}
 								
 								if (getAuditLogDao().isMonitored(obj.getClass())) {
-									if (ownerUuidChildLogsMap.get().get(owner.getUuid()) == null)
-										ownerUuidChildLogsMap.get().put(owner.getUuid(), new ArrayList<AuditLog>());
+									if (ownerUuidChildLogsMap.get().peek().get(owner.getUuid()) == null)
+										ownerUuidChildLogsMap.get().peek().put(owner.getUuid(), new ArrayList<AuditLog>());
 									
 									OpenmrsObject collElement = (OpenmrsObject) obj;
 									AuditLog childLog = instantiateAuditLog(collElement, (isInsert) ? Action.CREATED
 									        : Action.UPDATED);
 									
-									childbjectUuidAuditLogMap.get().put(collElement.getUuid(), childLog);
-									ownerUuidChildLogsMap.get().get(owner.getUuid()).add(childLog);
+									childbjectUuidAuditLogMap.get().peek().put(collElement.getUuid(), childLog);
+									ownerUuidChildLogsMap.get().peek().get(owner.getUuid()).add(childLog);
 								}
 								
 								//TODO add this collection to the list of changes properties
-								/*Map<String, String[]> propertyValuesMap = objectChangesMap.get().get(owner.getUuid());
+								/*Map<String, String[]> propertyValuesMap = objectChangesMap.get().peek().get(owner.getUuid());
 								if(propertyValuesMap == null)
 									propertyValuesMap = new HashMap<String, String[]>();
 									propertyValuesMap.put(arg0, arg1);*/
@@ -384,59 +408,59 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 						}
 					}
 				}
-				entityCollectionsMap.remove();//free some memory
 				
-				for (Map.Entry<OpenmrsObject, HashSet<OpenmrsObject>> entry : entityRemovedChildrenMap.get().entrySet()) {
+				for (Map.Entry<OpenmrsObject, HashSet<OpenmrsObject>> entry : entityRemovedChildrenMap.get().peek()
+				        .entrySet()) {
 					OpenmrsObject removedItemsOwner = entry.getKey();
 					for (OpenmrsObject removed : entry.getValue()) {
 						//This should fail for collections that don't have all-delete-orphan cascade
-						if (deletes.get().contains(removed)) {
+						//this is idea specific to suppress a warning
+						//noinspection SuspiciousMethodCalls
+						if (deletes.get().peek().contains(removed)) {
 							if (getAuditLogDao().isMonitored(removed.getClass())) {
-								if (ownerUuidChildLogsMap.get().get(removedItemsOwner.getUuid()) == null)
-									ownerUuidChildLogsMap.get().put(removedItemsOwner.getUuid(), new ArrayList<AuditLog>());
+								if (ownerUuidChildLogsMap.get().peek().get(removedItemsOwner.getUuid()) == null)
+									ownerUuidChildLogsMap.get().peek()
+									        .put(removedItemsOwner.getUuid(), new ArrayList<AuditLog>());
 								
 								AuditLog childLog = instantiateAuditLog(removed, Action.DELETED);
 								
-								childbjectUuidAuditLogMap.get().put(removed.getUuid(), childLog);
-								ownerUuidChildLogsMap.get().get(removedItemsOwner.getUuid()).add(childLog);
+								childbjectUuidAuditLogMap.get().peek().put(removed.getUuid(), childLog);
+								ownerUuidChildLogsMap.get().peek().get(removedItemsOwner.getUuid()).add(childLog);
 							}
 						}
 					}
 				}
 				
-				entityRemovedChildrenMap.remove();
-				
-				for (OpenmrsObject insert : inserts.get()) {
+				for (OpenmrsObject insert : inserts.get().peek()) {
 					createIfNecessaryAndSaveAuditLog(insert, Action.CREATED);
 				}
-				inserts.remove();
 				
-				for (OpenmrsObject delete : deletes.get()) {
+				for (OpenmrsObject delete : deletes.get().peek()) {
 					createIfNecessaryAndSaveAuditLog(delete, Action.DELETED);
 				}
-				deletes.remove();
 				
-				for (OpenmrsObject update : updates.get()) {
+				for (OpenmrsObject update : updates.get().peek()) {
 					createIfNecessaryAndSaveAuditLog(update, Action.UPDATED);
 				}
-				updates.remove();
 			}
 			catch (Exception e) {
-				//error should not bubble out of the intercepter
+				//error should not bubble out of the interceptor
 				log.error("An error occured while creating audit log(s):", e);
 			}
 		}
 		finally {
 			//cleanup
-			inserts.remove();
-			updates.remove();
-			deletes.remove();
-			objectChangesMap.remove();
-			entityCollectionsMap.remove();
-			ownerUuidChildLogsMap.remove();
-			childbjectUuidAuditLogMap.remove();
-			entityRemovedChildrenMap.remove();
-			date.remove();
+			inserts.get().pop();
+			updates.get().pop();
+			deletes.get().pop();
+			objectChangesMap.get().pop();
+			entityCollectionsMap.get().pop();
+			ownerUuidChildLogsMap.get().pop();
+			childbjectUuidAuditLogMap.get().pop();
+			entityRemovedChildrenMap.get().pop();
+			date.get().pop();
+			
+			removeStacksIfEmpty();
 		}
 	}
 	
@@ -444,18 +468,18 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	 * Creates if necessary and saves an auditLog in the DB for the specified object
 	 * 
 	 * @param object the object to create for the AuditLog
-	 * @param action see {@link Action}
+	 * @param action see {@link org.openmrs.module.auditlog.AuditLog.Action}
 	 */
 	private void createIfNecessaryAndSaveAuditLog(OpenmrsObject object, Action action) {
 		//If this is a collection element, we already created a log for it
-		AuditLog auditLog = childbjectUuidAuditLogMap.get().get(object.getUuid());
+		AuditLog auditLog = childbjectUuidAuditLogMap.get().peek().get(object.getUuid());
 		if (auditLog == null) {
 			auditLog = instantiateAuditLog(object, action);
 			getAuditLogDao().save(auditLog);
 		}
 		
-		if ((ownerUuidChildLogsMap != null && ownerUuidChildLogsMap.get().containsKey(object.getUuid()))) {
-			for (AuditLog al : ownerUuidChildLogsMap.get().get(object.getUuid())) {
+		if ((ownerUuidChildLogsMap != null && ownerUuidChildLogsMap.get().peek().containsKey(object.getUuid()))) {
+			for (AuditLog al : ownerUuidChildLogsMap.get().peek().get(object.getUuid())) {
 				//We do this for unit tests to pass and in memory reads
 				auditLog.addChildAuditLog(al);
 				//Hibernate has issues with updating a child if the parent has already been saved
@@ -466,18 +490,18 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	}
 	
 	/**
-	 * Creates a new instance of an {@link AuditLog} for the specified object and Action
+	 * Creates a new instance of an {@link org.openmrs.module.auditlog.AuditLog} for the specified
+	 * object and Action
 	 * 
 	 * @param object the object to create for the AuditLog
-	 * @param action see {@link Action}
+	 * @param action see {@link org.openmrs.module.auditlog.AuditLog.Action}
 	 * @return the created AuditLog
 	 */
 	private AuditLog instantiateAuditLog(OpenmrsObject object, Action action) {
-		Date tempDate = (date.get() != null) ? date.get() : new Date();
 		AuditLog auditLog = new AuditLog(object.getClass().getName(), object.getUuid(), action,
-		        Context.getAuthenticatedUser(), tempDate);
+		        Context.getAuthenticatedUser(), date.get().peek());
 		if (action == Action.UPDATED) {
-			Map<String, String[]> propertyValuesMap = objectChangesMap.get().get(object.getUuid());
+			Map<String, String[]> propertyValuesMap = objectChangesMap.get().peek().get(object.getUuid());
 			if (propertyValuesMap != null) {
 				auditLog.setChangesData(InterceptorUtil.generateChangesData(propertyValuesMap));
 			}
@@ -493,5 +517,65 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	 */
 	private boolean isAuditable(Object entity) {
 		return getAuditLogDao().isMonitored(entity.getClass()) || getAuditLogDao().isImplicitlyMonitored(entity.getClass());
+	}
+	
+	private void initializeStacksIfNecessary() {
+		if (inserts.get() == null) {
+			inserts.set(new Stack<HashSet<OpenmrsObject>>());
+		}
+		if (updates.get() == null) {
+			updates.set(new Stack<HashSet<OpenmrsObject>>());
+		}
+		if (deletes.get() == null) {
+			deletes.set(new Stack<HashSet<OpenmrsObject>>());
+		}
+		if (objectChangesMap.get() == null) {
+			objectChangesMap.set(new Stack<Map<String, Map<String, String[]>>>());
+		}
+		if (entityCollectionsMap.get() == null) {
+			entityCollectionsMap.set(new Stack<Map<Object, List<Collection<?>>>>());
+		}
+		if (ownerUuidChildLogsMap.get() == null) {
+			ownerUuidChildLogsMap.set(new Stack<Map<String, List<AuditLog>>>());
+		}
+		if (childbjectUuidAuditLogMap.get() == null) {
+			childbjectUuidAuditLogMap.set(new Stack<Map<String, AuditLog>>());
+		}
+		if (entityRemovedChildrenMap.get() == null) {
+			entityRemovedChildrenMap.set(new Stack<Map<OpenmrsObject, HashSet<OpenmrsObject>>>());
+		}
+		if (date.get() == null) {
+			date.set(new Stack<Date>());
+		}
+	}
+	
+	private void removeStacksIfEmpty() {
+		if (inserts.get().empty()) {
+			inserts.remove();
+		}
+		if (updates.get().empty()) {
+			updates.remove();
+		}
+		if (deletes.get().empty()) {
+			deletes.remove();
+		}
+		if (objectChangesMap.get().empty()) {
+			objectChangesMap.remove();
+		}
+		if (entityCollectionsMap.get().empty()) {
+			entityCollectionsMap.remove();
+		}
+		if (ownerUuidChildLogsMap.get().empty()) {
+			ownerUuidChildLogsMap.remove();
+		}
+		if (childbjectUuidAuditLogMap.get().empty()) {
+			childbjectUuidAuditLogMap.remove();
+		}
+		if (entityRemovedChildrenMap.get().empty()) {
+			entityRemovedChildrenMap.remove();
+		}
+		if (date.get().empty()) {
+			date.remove();
+		}
 	}
 }
