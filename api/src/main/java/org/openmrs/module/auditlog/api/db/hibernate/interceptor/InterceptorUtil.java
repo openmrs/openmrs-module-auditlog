@@ -137,41 +137,40 @@ public final class InterceptorUtil {
 	 * @return the serialized String form of the object
 	 */
 	protected static String serializeObject(Object obj, AuditLogDAO auditLogDAO) {
-		if (obj == null)
-			return null;
-		
 		String serializedValue = null;
-		Class<?> clazz = obj.getClass();
-		if (Date.class.isAssignableFrom(clazz)) {
-			//TODO We need to handle time zones issues better
-			serializedValue = new SimpleDateFormat(AuditLogConstants.DATE_FORMAT).format(obj);
-		} else if (Enum.class.isAssignableFrom(clazz)) {
-			//Use value.name() over value.toString() to ensure we always get back the enum
-			//constant value and not the value returned by the implementation of value.toString()
-			serializedValue = ((Enum<?>) obj).name();
-		} else if (Class.class.isAssignableFrom(clazz)) {
-			serializedValue = ((Class<?>) obj).getName();
-		} else if (OpenmrsObject.class.isAssignableFrom(clazz)) {
-			try {
-				serializedValue = AuditLogConstants.UUID_LABEL + ((OpenmrsObject) obj).getUuid();
-			}
-			catch (Exception e) {
-				//In case the object doesn't support uuids, but why?
-			}
-		}
-		
-		if (serializedValue == null && auditLogDAO != null) {
-			ClassMetadata metadata = auditLogDAO.getClassMetadata(clazz);
-			if (metadata != null) {
-				Serializable id = metadata.getIdentifier(obj, EntityMode.POJO);
-				if (id != null) {
-					serializedValue = AuditLogConstants.ID_LABEL + id.toString();
+		if (obj != null) {
+			Class<?> clazz = obj.getClass();
+			if (Date.class.isAssignableFrom(clazz)) {
+				//TODO We need to handle time zones issues better
+				serializedValue = new SimpleDateFormat(AuditLogConstants.DATE_FORMAT).format(obj);
+			} else if (Enum.class.isAssignableFrom(clazz)) {
+				//Use value.name() over value.toString() to ensure we always get back the enum
+				//constant value and not the value returned by the implementation of value.toString()
+				serializedValue = ((Enum<?>) obj).name();
+			} else if (Class.class.isAssignableFrom(clazz)) {
+				serializedValue = ((Class<?>) obj).getName();
+			} else if (OpenmrsObject.class.isAssignableFrom(clazz)) {
+				try {
+					serializedValue = AuditLogConstants.UUID_LABEL + ((OpenmrsObject) obj).getUuid();
+				}
+				catch (Exception e) {
+					//In case the object doesn't support uuids, but why?
 				}
 			}
+			
+			if (serializedValue == null && auditLogDAO != null) {
+				ClassMetadata metadata = auditLogDAO.getClassMetadata(clazz);
+				if (metadata != null) {
+					Serializable id = metadata.getIdentifier(obj, EntityMode.POJO);
+					if (id != null) {
+						serializedValue = AuditLogConstants.ID_LABEL + id.toString();
+					}
+				}
+			}
+			
+			if (serializedValue == null)
+				serializedValue = obj.toString();
 		}
-		
-		if (serializedValue == null)
-			serializedValue = obj.toString();
 		
 		return serializedValue;
 	}
