@@ -465,18 +465,15 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 		AuditLog auditLog = childbjectUuidAuditLogMap.get().peek().get(object.getUuid());
 		if (auditLog == null) {
 			auditLog = instantiateAuditLog(object, action);
-			getAuditLogDao().save(auditLog);
 		}
 		
 		if ((ownerUuidChildLogsMap != null && ownerUuidChildLogsMap.get().peek().containsKey(object.getUuid()))) {
 			for (AuditLog al : ownerUuidChildLogsMap.get().peek().get(object.getUuid())) {
-				//We do this for unit tests to pass and in memory reads
 				auditLog.addChildAuditLog(al);
-				//Hibernate has issues with updating a child if the parent has already been saved
-				//So we need to explicitly call saved for the children
-				getAuditLogDao().save(al);
 			}
 		}
+		
+		getAuditLogDao().save(auditLog);
 	}
 	
 	/**
