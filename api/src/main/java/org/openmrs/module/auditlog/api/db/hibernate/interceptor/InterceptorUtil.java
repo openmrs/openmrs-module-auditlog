@@ -17,8 +17,10 @@ import static org.openmrs.module.auditlog.util.AuditLogConstants.MAP_KEY_VALUE_S
 
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
@@ -38,21 +40,23 @@ public final class InterceptorUtil {
 	private static final Log log = LogFactory.getLog(InterceptorUtil.class);
 	
 	/**
-	 * Utility method that generates the data for edited properties including their previous and new
-	 * property values of an edited object
+	 * Utility method that serializes the passed in data to json
 	 * 
-	 * @param propertyChangesMap mapping of edited properties to their previous and new values
-	 * @return the generated text data
+	 * @param data the data to serialize
+	 * @return the generated json
 	 */
-	protected static String generateChangesData(Map<String, String[]> propertyChangesMap) {
-		ObjectMapper mapper = new ObjectMapper();
+	protected static String serialize(Object data) {
 		String json = null;
-		try {
-			json = mapper.writeValueAsString(propertyChangesMap);
+		if (data != null) {
+			ObjectMapper mapper = new ObjectMapper();
+			try {
+				json = mapper.writeValueAsString(data);
+			}
+			catch (Exception e) {
+				log.error("Failed to generate changes data", e);
+			}
 		}
-		catch (Exception e) {
-			log.error("Failed to generate changes data", e);
-		}
+		
 		return json;
 	}
 	
@@ -63,30 +67,23 @@ public final class InterceptorUtil {
 	 * @return The serialized collection elements
 	 */
 	protected static String serializeCollection(Collection<?> collection, AuditLogDAO auditLogDao) {
-		if (collection == null)
-			return null;
-		
-		String serializedCollectionItems = null;
-		boolean isFirst = true;
-		for (Object currItem : collection) {
-			if (currItem == null)
-				continue;
-			
-			String serializedItem = serializeValue(currItem, auditLogDao);
-			if (serializedItem != null) {
-				if (serializedCollectionItems == null)
-					serializedCollectionItems = "";
+		List<Object> collectionItems = null;
+		if (collection != null) {
+			for (Object currItem : collection) {
+				if (currItem == null)
+					continue;
 				
-				if (isFirst) {
-					serializedCollectionItems += serializedItem;
-					isFirst = false;
-				} else {
-					serializedCollectionItems += (AuditLogConstants.SEPARATOR + serializedItem);
+				String serializedItem = serializeValue(currItem, auditLogDao);
+				if (serializedItem != null) {
+					if (collectionItems == null)
+						collectionItems = new ArrayList<Object>();
+					
+					collectionItems.add(serializedItem);
 				}
 			}
 		}
 		
-		return serializedCollectionItems;
+		return serialize(collectionItems);
 	}
 	
 	/**

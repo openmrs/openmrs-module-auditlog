@@ -136,9 +136,9 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(1, conceptLogs.size());
 		AuditLog al = conceptLogs.get(0);
 		assertEquals(al.getObjectUuid(), concept.getUuid());
-		assertEquals(al.getNewValue("descriptions"), previousDescriptionUuids + AuditLogConstants.SEPARATOR
-		        + AuditLogConstants.UUID_LABEL + cd1.getUuid());
-		assertEquals(al.getPreviousValue("descriptions"), previousDescriptionUuids);
+		assertEquals(al.getNewValue("descriptions"), "[\"" + previousDescriptionUuids + "\"" + AuditLogConstants.SEPARATOR
+		        + "\"" + AuditLogConstants.UUID_LABEL + cd1.getUuid() + "\"]");
+		assertEquals(al.getPreviousValue("descriptions"), "[\"" + previousDescriptionUuids + "\"]");
 		
 		List<AuditLog> descriptionLogs = getAllLogs(cd1.getUuid(), ConceptDescription.class,
 		    Collections.singletonList(CREATED));

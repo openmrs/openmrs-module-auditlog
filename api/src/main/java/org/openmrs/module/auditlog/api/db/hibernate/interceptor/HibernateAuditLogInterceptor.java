@@ -490,7 +490,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 		if (action == Action.UPDATED) {
 			Map<String, String[]> propertyValuesMap = objectChangesMap.get().peek().get(object.getUuid());
 			if (propertyValuesMap != null) {
-				auditLog.setChangesData(InterceptorUtil.generateChangesData(propertyValuesMap));
+				auditLog.setChangesData(InterceptorUtil.serialize(propertyValuesMap));
 			}
 		}
 		return auditLog;
