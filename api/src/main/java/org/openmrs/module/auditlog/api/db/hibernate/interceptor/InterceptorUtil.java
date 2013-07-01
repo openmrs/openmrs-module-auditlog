@@ -45,7 +45,7 @@ public final class InterceptorUtil {
 	 * @param data the data to serialize
 	 * @return the generated json
 	 */
-	protected static String serialize(Object data) {
+	protected static String serializeToJson(Object data) {
 		String json = null;
 		if (data != null) {
 			ObjectMapper mapper = new ObjectMapper();
@@ -73,7 +73,7 @@ public final class InterceptorUtil {
 				if (currItem == null)
 					continue;
 				
-				String serializedItem = serializeValue(currItem, auditLogDao);
+				String serializedItem = serializeObject(currItem, auditLogDao);
 				if (serializedItem != null) {
 					if (collectionItems == null)
 						collectionItems = new ArrayList<Object>();
@@ -83,7 +83,7 @@ public final class InterceptorUtil {
 			}
 		}
 		
-		return serialize(collectionItems);
+		return serializeToJson(collectionItems);
 	}
 	
 	/**
@@ -104,8 +104,8 @@ public final class InterceptorUtil {
 			if (key == null && value == null)
 				continue;
 			
-			String serializedKey = serializeValue(key, auditLogDao);
-			String serializedValue = serializeValue(value, auditLogDao);
+			String serializedKey = serializeObject(key, auditLogDao);
+			String serializedValue = serializeObject(value, auditLogDao);
 			String serializedMapEntry = "";
 			if (serializedKey != null)
 				serializedMapEntry += serializedKey;
@@ -136,7 +136,7 @@ public final class InterceptorUtil {
 	 * @param auditLogDAO the AuditLogDAO object
 	 * @return the serialized String form of the object
 	 */
-	protected static String serializeValue(Object obj, AuditLogDAO auditLogDAO) {
+	protected static String serializeObject(Object obj, AuditLogDAO auditLogDAO) {
 		if (obj == null)
 			return null;
 		

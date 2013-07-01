@@ -177,8 +177,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					if (propertyChangesMap == null)
 						propertyChangesMap = new HashMap<String, String[]>();
 					
-					String serializedPreviousValue = InterceptorUtil.serializeValue(previousValue, getAuditLogDao());
-					String serializedCurrentValue = InterceptorUtil.serializeValue(currentValue, getAuditLogDao());
+					String serializedPreviousValue = InterceptorUtil.serializeObject(previousValue, getAuditLogDao());
+					String serializedCurrentValue = InterceptorUtil.serializeObject(currentValue, getAuditLogDao());
 					
 					propertyChangesMap.put(propertyNames[i],
 					    new String[] { serializedCurrentValue, serializedPreviousValue });
@@ -490,7 +490,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 		if (action == Action.UPDATED) {
 			Map<String, String[]> propertyValuesMap = objectChangesMap.get().peek().get(object.getUuid());
 			if (propertyValuesMap != null) {
-				auditLog.setChangesData(InterceptorUtil.serialize(propertyValuesMap));
+				auditLog.setChangesData(InterceptorUtil.serializeToJson(propertyValuesMap));
 			}
 		}
 		return auditLog;
