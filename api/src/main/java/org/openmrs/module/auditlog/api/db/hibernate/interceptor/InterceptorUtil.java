@@ -13,13 +13,12 @@
  */
 package org.openmrs.module.auditlog.api.db.hibernate.interceptor;
 
-import static org.openmrs.module.auditlog.util.AuditLogConstants.MAP_KEY_VALUE_SEPARATOR;
-
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -67,7 +66,7 @@ public final class InterceptorUtil {
 	 * @return The serialized collection elements
 	 */
 	protected static String serializeCollection(Collection<?> collection, AuditLogDAO auditLogDao) {
-		List<Object> collectionItems = null;
+		List<String> serializedCollectionItems = null;
 		if (collection != null) {
 			for (Object currItem : collection) {
 				if (currItem == null)
@@ -75,15 +74,15 @@ public final class InterceptorUtil {
 				
 				String serializedItem = serializeObject(currItem, auditLogDao);
 				if (serializedItem != null) {
-					if (collectionItems == null)
-						collectionItems = new ArrayList<Object>();
+					if (serializedCollectionItems == null)
+						serializedCollectionItems = new ArrayList<String>(collection.size());
 					
-					collectionItems.add(serializedItem);
+					serializedCollectionItems.add(serializedItem);
 				}
 			}
 		}
 		
-		return serializeToJson(collectionItems);
+		return serializeToJson(serializedCollectionItems);
 	}
 	
 	/**
@@ -96,34 +95,20 @@ public final class InterceptorUtil {
 		if (map == null)
 			return null;
 		
-		String serializedMapEntries = null;
-		boolean isFirst = true;
+		Map<String, String> serializedMap = null;
 		for (Map.Entry<?, ?> entry : map.entrySet()) {
 			Object key = entry.getKey();
 			Object value = entry.getValue();
 			if (key == null && value == null)
 				continue;
 			
-			String serializedKey = serializeObject(key, auditLogDao);
-			String serializedValue = serializeObject(value, auditLogDao);
-			String serializedMapEntry = "";
-			if (serializedKey != null)
-				serializedMapEntry += serializedKey;
-			if (serializedValue != null)
-				serializedMapEntry += (MAP_KEY_VALUE_SEPARATOR + serializedValue);
+			if (serializedMap == null)
+				serializedMap = new HashMap<String, String>(map.size());
 			
-			if (serializedMapEntries == null)
-				serializedMapEntries = "";
-			
-			if (isFirst) {
-				serializedMapEntries += serializedMapEntry;
-				isFirst = false;
-			} else {
-				serializedMapEntries += (AuditLogConstants.SEPARATOR + serializedMapEntry);
-			}
+			serializedMap.put(serializeObject(key, auditLogDao), serializeObject(value, auditLogDao));
 		}
 		
-		return serializedMapEntries;
+		return serializeToJson(serializedMap);
 	}
 	
 	/**

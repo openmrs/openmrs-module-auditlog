@@ -643,7 +643,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		User user = us.getUser(505);
 		assertEquals(1, user.getUserProperties().size());
 		Map.Entry<String, String> entry = user.getUserProperties().entrySet().iterator().next();
-		String previousUserProperties = entry.getKey() + MAP_KEY_VALUE_SEPARATOR + entry.getValue();
+		String previousUserProperties = "\"" + entry.getKey() + "\"" + MAP_KEY_VALUE_SEPARATOR + "\"" + entry.getValue()
+		        + "\"";
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
 		auditLogService.startMonitoring(User.class);
 		try {
@@ -658,9 +659,10 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 			List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, null);
 			assertEquals(1, logs.size());
 			AuditLog al = logs.get(0);
-			assertEquals(previousUserProperties, al.getPreviousValue("userProperties"), previousUserProperties);
-			String expectedNewUserProperties = previousUserProperties + SEPARATOR + newPropKey1 + MAP_KEY_VALUE_SEPARATOR
-			        + newPropValue1 + SEPARATOR + newPropKey2 + MAP_KEY_VALUE_SEPARATOR + newPropValue2;
+			assertEquals("{" + previousUserProperties + "}", al.getPreviousValue("userProperties"));
+			String expectedNewUserProperties = "{" + previousUserProperties + SEPARATOR + "\"" + newPropKey2 + "\""
+			        + MAP_KEY_VALUE_SEPARATOR + "\"" + newPropValue2 + "\"" + SEPARATOR + "\"" + newPropKey1 + "\""
+			        + MAP_KEY_VALUE_SEPARATOR + "\"" + newPropValue1 + "\"}";
 			assertEquals(expectedNewUserProperties, al.getNewValue("userProperties"));
 		}
 		finally {
@@ -677,7 +679,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		User user = us.getUser(505);
 		assertEquals(1, user.getUserProperties().size());
 		Map.Entry<String, String> entry = user.getUserProperties().entrySet().iterator().next();
-		String previousUserProperties = entry.getKey() + MAP_KEY_VALUE_SEPARATOR + entry.getValue();
+		String previousUserProperties = "{\"" + entry.getKey() + "\"" + MAP_KEY_VALUE_SEPARATOR + "\"" + entry.getValue()
+		        + "\"}";
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
 		auditLogService.startMonitoring(User.class);
 		try {
@@ -687,7 +690,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 			List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, null);
 			assertEquals(1, logs.size());
 			AuditLog al = logs.get(0);
-			assertEquals(previousUserProperties, al.getPreviousValue("userProperties"), previousUserProperties);
+			assertEquals(previousUserProperties, al.getPreviousValue("userProperties"));
 			assertNull(al.getNewValue("userProperties"));
 		}
 		finally {
