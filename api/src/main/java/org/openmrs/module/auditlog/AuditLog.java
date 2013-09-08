@@ -342,4 +342,12 @@ public class AuditLog implements Serializable {
 			return super.hashCode();
 		return getUuid().hashCode();
 	}
+	
+	/**
+	 * @see Object#toString() ()
+	 */
+	@Override
+	public String toString() {
+		return action + " " + className + " " + objectUuid;
+	}
 }

@@ -270,7 +270,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	
 	@Override
 	public void onCollectionRemove(Object collection, Serializable key) throws CallbackException {
-		//We need to get all collection elements and link their childlogs them to the parent's
+		//We need to get all collection elements and link their childlogs to the parent's
 		if (collection != null) {
 			PersistentCollection persistentColl = (PersistentCollection) collection;
 			if (isAuditable(persistentColl.getOwner())) {
@@ -362,15 +362,16 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 							if (isInsert || isUpdate) {
 								OpenmrsObject owner = (OpenmrsObject) entry.getKey();
 								boolean ownerHasUpdates = OpenmrsUtil.collectionContains(updates.get().peek(), owner);
+								boolean isOwnerNew = OpenmrsUtil.collectionContains(inserts.get().peek(), owner);
 								if (ownerHasUpdates) {
 									if (log.isDebugEnabled()) {
-										log.debug("There is already an  auditlog for:" + owner.getClass() + " - "
+										log.debug("There is already an auditlog for owner:" + owner.getClass() + " - "
 										        + owner.getUuid());
 									}
-								} else if (!isInsert) {
+								} else if (!isOwnerNew) {
 									//A collection item was updated and no other update had been made on the owner
 									if (log.isDebugEnabled()) {
-										log.debug("Creating log entry for edited object with uuid:" + owner.getUuid()
+										log.debug("Creating log entry for edited owner object with uuid:" + owner.getUuid()
 										        + " of type:" + owner.getClass().getName()
 										        + " due to an update for a item in a child collection");
 									}
@@ -382,7 +383,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 										ownerUuidChildLogsMap.get().peek().put(owner.getUuid(), new ArrayList<AuditLog>());
 									
 									OpenmrsObject collElement = (OpenmrsObject) obj;
-									AuditLog childLog = instantiateAuditLog(collElement, (isInsert) ? Action.CREATED
+									AuditLog childLog = instantiateAuditLog(collElement, isInsert ? Action.CREATED
 									        : Action.UPDATED);
 									
 									childbjectUuidAuditLogMap.get().peek().put(collElement.getUuid(), childLog);

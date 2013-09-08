@@ -322,8 +322,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 			//Ensure that no log will be created unless we actually perform an update
 			assertEquals(0, getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED)).size());
 			
-			int originalDescriptionCount = patient.getNames().size();
-			assertTrue(originalDescriptionCount > 3);
+			int originalNameCount = patient.getNames().size();
+			assertTrue(originalNameCount > 3);
 			
 			assertTrue(auditLogService.isMonitored(PersonName.class));
 			assertTrue(auditLogService.isMonitored(Patient.class));
