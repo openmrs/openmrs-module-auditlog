@@ -350,4 +350,9 @@ public class AuditLog implements Serializable {
 	public String toString() {
 		return action + " " + className + " " + objectUuid;
 	}
+	/*
+	public boolean hasChildLogs() {
+		return getChildAuditLogs().size() > 0;
+	}
+	*/
 }

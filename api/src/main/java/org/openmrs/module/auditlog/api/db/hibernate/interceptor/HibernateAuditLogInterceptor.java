@@ -467,14 +467,17 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 		if (auditLog == null) {
 			auditLog = instantiateAuditLog(object, action);
 		}
-		
-		if ((ownerUuidChildLogsMap != null && ownerUuidChildLogsMap.get().peek().containsKey(object.getUuid()))) {
-			for (AuditLog al : ownerUuidChildLogsMap.get().peek().get(object.getUuid())) {
-				auditLog.addChildAuditLog(al);
-			}
+		//save so that it gets an id otherwise hibernate won't be able to associate the child logs if any
+		if (auditLog.getAuditLogId() == null) {
+			auditLog = getAuditLogDao().save(auditLog);
 		}
 		
-		getAuditLogDao().save(auditLog);
+		if ((ownerUuidChildLogsMap != null && ownerUuidChildLogsMap.get().peek().containsKey(object.getUuid()))) {
+			for (AuditLog child : ownerUuidChildLogsMap.get().peek().get(object.getUuid())) {
+				auditLog.addChildAuditLog(child);
+				getAuditLogDao().save(child);
+			}
+		}
 	}
 	
 	/**
