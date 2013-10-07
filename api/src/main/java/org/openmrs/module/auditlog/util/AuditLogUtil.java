@@ -117,9 +117,9 @@ public class AuditLogUtil {
 		}
 		
 		Map<String, List> changes = new HashMap<String, List>();
-		if (StringUtils.isNotBlank(auditLog.getChangesData())) {
+		if (StringUtils.isNotBlank(auditLog.getSerializedData())) {
 			try {
-				changes = new ObjectMapper().readValue(auditLog.getChangesData(), Map.class);
+				changes = new ObjectMapper().readValue(auditLog.getSerializedData(), Map.class);
 			}
 			catch (Exception e) {
 				log.warn("Failed to convert changes data to a map", e);
@@ -141,9 +141,9 @@ public class AuditLogUtil {
 		}
 		
 		Map<String, String> changes = new HashMap<String, String>();
-		if (StringUtils.isNotBlank(auditLog.getChangesData())) {
+		if (StringUtils.isNotBlank(auditLog.getSerializedData())) {
 			try {
-				changes = new ObjectMapper().readValue(auditLog.getChangesData(), Map.class);
+				changes = new ObjectMapper().readValue(auditLog.getSerializedData(), Map.class);
 			}
 			catch (Exception e) {
 				log.warn("Failed to convert serialized last state data to a map", e);

@@ -42,7 +42,6 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
-import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.util.OpenmrsUtil;
 
 /**
@@ -504,10 +503,10 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			if (action == Action.UPDATED) {
 				propertyValuesMap = objectChangesMap.get().peek().get(object.getUuid());
 				if (propertyValuesMap != null) {
-					auditLog.setChangesData(InterceptorUtil.serializeToJson(propertyValuesMap));
+					auditLog.setSerializedData(InterceptorUtil.serializeToJson(propertyValuesMap));
 				}
 			} else {
-                auditLog.setChangesData(InterceptorUtil.serializePersistentObject(object));
+				auditLog.setSerializedData(InterceptorUtil.serializePersistentObject(object));
 			}
 		}
 		return auditLog;

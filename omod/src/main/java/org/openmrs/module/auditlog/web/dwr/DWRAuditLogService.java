@@ -94,7 +94,7 @@ public class DWRAuditLogService {
 								displayString += ((GlobalProperty) obj).getProperty();
 							}
 						}
-						
+
 						if (auditLog.getAction().equals(Action.UPDATED)) {
 							Map<String, List> changes = AuditLogUtil.getChangesOfUpdatedItem(auditLog);
 							if (changes.size() > 0) {
@@ -109,56 +109,11 @@ public class DWRAuditLogService {
 										newValue = AuditLogUtil.getNewValueOfUpdatedItem(propertyName, auditLog);
 										previousValue = AuditLogUtil.getPreviousValueOfUpdatedItem(propertyName, auditLog);
 										if (StringUtils.isNotBlank(newValue) || StringUtils.isNotBlank(previousValue)) {
-											Field field = AuditLogUtil.getField(clazz, propertyName);
-											//This can be null if the auditlog was created and then 
-											//later upgraded to a version where the field was removed
-											if (field != null) {
-												if (Date.class.isAssignableFrom(field.getType())) {
-													if (newValue != null) {
-														try {
-															newValueDisplay += Context.getDateFormat().format(
-															    new SimpleDateFormat(AuditLogConstants.DATE_FORMAT)
-															            .parse(newValue));
-														}
-														catch (ParseException e) {
-															log.warn(e.getMessage());
-															newValueDisplay = newValue;
-														}
-													}
-													if (previousValue != null) {
-														try {
-															preValueDisplay += Context.getDateFormat().format(
-															    new SimpleDateFormat(AuditLogConstants.DATE_FORMAT)
-															            .parse(previousValue));
-														}
-														catch (Exception e) {
-															log.warn(e.getMessage());
-															preValueDisplay = previousValue;
-														}
-													}
-												} else {
-													if (StringUtils.isNotBlank(newValue)
-													        && (newValue.startsWith(AuditLogConstants.UUID_LABEL) || newValue
-													                .startsWith(AuditLogConstants.ID_LABEL))) {
-														newValueDisplay += getPropertyDisplayString(clazz, propertyName,
-														    field.getType(), newValue);
-													} else if (newValue != null) {
-														newValueDisplay = newValue;
-													}
-													
-													if (StringUtils.isNotBlank(previousValue)
-													        && (previousValue.startsWith(AuditLogConstants.UUID_LABEL) || previousValue
-													                .startsWith(AuditLogConstants.ID_LABEL))) {
-														preValueDisplay += getPropertyDisplayString(clazz, propertyName,
-														    field.getType(), previousValue);
-													} else if (previousValue != null) {
-														preValueDisplay = previousValue;
-													}
-												}
-											}
+											newValueDisplay += getPrettyPropertyValue(propertyName, newValue, clazz);
+											preValueDisplay += getPrettyPropertyValue(propertyName, previousValue, clazz);
 										}
 									}
-									
+
 									if (StringUtils.isBlank(preValueDisplay))
 										preValueDisplay = previousValue;
 									if (preValueDisplay == null)
@@ -167,7 +122,7 @@ public class DWRAuditLogService {
 										newValueDisplay = newValue;
 									if (newValueDisplay == null)
 										newValueDisplay = "";
-									
+
 									propertyNameChangesMap.put(propertyName,
 									    new String[] { newValueDisplay, preValueDisplay });
 								}
@@ -331,5 +286,35 @@ public class DWRAuditLogService {
 		}
 		
 		return displayString;
+	}
+	
+	private String getPrettyPropertyValue(String propertyName, String value, Class<?> clazz) {
+		String prettyValue = null;
+		Field field = AuditLogUtil.getField(clazz, propertyName);
+		//This can be null if the auditlog was created and then 
+		//later upgraded to a version where the field was removed
+		if (field != null && StringUtils.isNotBlank(value)) {
+			if (Date.class.isAssignableFrom(field.getType())) {
+				try {
+					prettyValue = Context.getDateFormat().format(
+					    new SimpleDateFormat(AuditLogConstants.DATE_FORMAT).parse(value));
+				}
+				catch (ParseException e) {
+					log.warn(e.getMessage());
+				}
+			} else if (value.startsWith(AuditLogConstants.UUID_LABEL) || value.startsWith(AuditLogConstants.ID_LABEL)) {
+				prettyValue = getPropertyDisplayString(clazz, propertyName, field.getType(), value);
+			}
+		}
+		
+		if (prettyValue == null && value != null) {
+			prettyValue = value;
+		}
+		
+		if (prettyValue == null) {
+			prettyValue = "";
+		}
+		
+		return prettyValue;
 	}
 }

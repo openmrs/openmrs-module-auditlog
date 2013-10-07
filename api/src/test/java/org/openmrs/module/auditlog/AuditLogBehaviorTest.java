@@ -99,7 +99,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		        + "\"description\":\"Visit to the laboratory\"," + "\"name\":\"Laboratory\"," + "\"retired\":\"true\","
 		        + "\"dateRetired\":\"2008-08-15 00:00:00\"," + "\"dateCreated\":\"2008-08-15 15:39:55\","
 		        + "\"uuid\":\"02c533ab-b74b-4ee4-b6e5-ffb6d09a0ac8\","
-		        + "\"creator\":\"uuid:1010d442-e134-11de-babe-001e378eb67e\"}", al.getChangesData());
+		        + "\"creator\":\"uuid:1010d442-e134-11de-babe-001e378eb67e\"}", al.getSerializedData());
 	}
 	
 	@Test
