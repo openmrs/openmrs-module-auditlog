@@ -56,6 +56,7 @@
                 $j("#${moduleId}-changes-objectId").html("");
                 $j("#${moduleId}-changes-summary").html("");
                 $j("#${moduleId}-changes-objectUuid").html("");
+                $j("#${moduleId}-changes-openmrsVersion").html("");
                 $j("#${moduleId}-childLogCount").html("");
                 //remove all rows from previous displays except the header rows
                 $j("#${moduleId}-changes-table tr:gt(0)").remove();
@@ -76,6 +77,7 @@
                 $j("#${moduleId}-child-changes-objectId").html("");
                 $j("#${moduleId}-child-changes-summary").html("");
                 $j("#${moduleId}-child-changes-objectUuid").html("");
+                $j("#${moduleId}-child-changes-openmrsVersion").html("");
                 $j("#${moduleId}-child-childLogCount").html("");
                 //remove all rows from previous displays except the header rows
                 $j("#${moduleId}-child-changes-table tr:gt(0)").remove();
@@ -116,6 +118,9 @@
 
             if(logDetails.classname)
                 $j("#${moduleId}"+idPart+"-changes-classname").html(logDetails.classname);
+
+            if(logDetails.openmrsVersion)
+                $j("#${moduleId}"+idPart+"-changes-openmrsVersion").html(logDetails.openmrsVersion);
 
             if(logDetails.changes){
                 auditLogChanges = logDetails.changes;
@@ -211,6 +216,10 @@
         <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.summary" /></th>
         <td id="${moduleId}-changes-summary"></td>
     </tr>
+    <tr>
+        <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.openmrsVersion" /></th>
+        <td id="${moduleId}-changes-openmrsVersion"></td>
+    </tr>
     <tr class="${moduleId}-changes-element"><td colspan="2">&nbsp;</td></tr>
     <tr class="${moduleId}-changes-element">
         <td valign="top" colspan="2">
@@ -282,6 +291,10 @@
     <tr>
         <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.summary" /></th>
         <td id="${moduleId}-child-changes-summary"></td>
+    </tr>
+    <tr>
+        <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.openmrsVersion" /></th>
+        <td id="${moduleId}-child-changes-openmrsVersion"></td>
     </tr>
     <tr class="${moduleId}-changes-element"><td colspan="2">&nbsp;</td></tr>
     <tr class="${moduleId}-changes-element">

@@ -46,6 +46,8 @@ public class AuditLogDetails {
 	
 	private String uuid;
 	
+	private String openmrsVersion;
+	
 	//Mappings of edited property names to their new(index 0) and previous(index 1) values' array
 	private Map<String, String[]> changes;
 	
@@ -55,7 +57,7 @@ public class AuditLogDetails {
 	 * Convenience constructor that created an {@link AuditLogDetails} from an {@link AuditLog}
 	 */
 	public AuditLogDetails(String displayString, String objectUuid, String classname, String action, String objectId,
-	    String uuid, boolean objectExists, Map<String, String[]> changes) {
+	    String uuid, String openmrsVersion, boolean objectExists, Map<String, String[]> changes) {
 		this.displayString = displayString;
 		this.objectExists = objectExists;
 		this.objectUuid = objectUuid;
@@ -63,6 +65,7 @@ public class AuditLogDetails {
 		this.action = action;
 		this.objectId = objectId;
 		this.uuid = uuid;
+		this.openmrsVersion = openmrsVersion;
 		this.changes = changes;
 	}
 	
@@ -162,6 +165,20 @@ public class AuditLogDetails {
 	 */
 	public void setUuid(String uuid) {
 		this.uuid = uuid;
+	}
+	
+	/**
+	 * @return the openmrsVersion
+	 */
+	public String getOpenmrsVersion() {
+		return openmrsVersion;
+	}
+	
+	/**
+	 * @param openmrsVersion the openmrsVersion to set
+	 */
+	public void setOpenmrsVersion(String openmrsVersion) {
+		this.openmrsVersion = openmrsVersion;
 	}
 	
 	/**
