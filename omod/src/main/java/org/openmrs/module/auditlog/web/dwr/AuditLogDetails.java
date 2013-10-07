@@ -42,7 +42,7 @@ public class AuditLogDetails {
 	private String action;
 	
 	//The database Id
-	private Integer objectId;
+	private String objectId;
 	
 	private String uuid;
 	
@@ -54,7 +54,7 @@ public class AuditLogDetails {
 	/**
 	 * Convenience constructor that created an {@link AuditLogDetails} from an {@link AuditLog}
 	 */
-	public AuditLogDetails(String displayString, String objectUuid, String classname, String action, Integer objectId,
+	public AuditLogDetails(String displayString, String objectUuid, String classname, String action, String objectId,
 	    String uuid, boolean objectExists, Map<String, String[]> changes) {
 		this.displayString = displayString;
 		this.objectExists = objectExists;
@@ -139,14 +139,14 @@ public class AuditLogDetails {
 	/**
 	 * @return the objectId
 	 */
-	public Integer getObjectId() {
+	public String getObjectId() {
 		return objectId;
 	}
 	
 	/**
 	 * @param objectId the objectId to set
 	 */
-	public void setObjectId(Integer objectId) {
+	public void setString(String objectId) {
 		this.objectId = objectId;
 	}
 	

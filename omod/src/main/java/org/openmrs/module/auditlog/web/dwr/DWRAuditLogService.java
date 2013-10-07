@@ -72,7 +72,7 @@ public class DWRAuditLogService {
 			if (auditLog != null) {
 				String displayString = "";
 				boolean objectExists = false;
-				Integer objectId = null;
+				String objectId = null;
 				Map<String, String[]> propertyNameChangesMap = null;
 				if (!auditLog.getAction().equals(Action.DELETED)) {
 					Class<? extends OpenmrsObject> clazz;
@@ -84,7 +84,7 @@ public class DWRAuditLogService {
 							//some objects don't support this method e.g GlobalProperties
 							if (!GlobalProperty.class.isAssignableFrom(obj.getClass())) {
 								try {
-									objectId = obj.getId();
+									objectId = obj.getId() != null ? obj.getId().toString() : "";
 								}
 								catch (UnsupportedOperationException e) {
 									//ignore

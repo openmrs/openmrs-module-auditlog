@@ -698,4 +698,31 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		}
 		assertEquals(false, auditLogService.isMonitored(User.class));
 	}
+	
+	@Test
+	@NotTransactional
+	public void shouldCreateAnAuditLogWhenNoChangesHaveBeenMadeToAUser() throws Exception {
+		executeDataSet("org/openmrs/api/include/UserServiceTest.xml");
+		UserService us = Context.getUserService();
+		User user = us.getUser(505);
+		assertEquals(1, user.getUserProperties().size());
+		final String key = "some key";
+		final String value = "some value";
+		assertEquals(key, user.getUserProperties().keySet().iterator().next());
+		assertEquals(value, user.getUserProperties().values().iterator().next());
+		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
+		auditLogService.startMonitoring(User.class);
+		try {
+			assertEquals(true, auditLogService.isMonitored(User.class));
+			//We are setting the same original value but the string are new objects
+			user.setUserProperty(key, value);
+			us.saveUser(user, null);
+			List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, null);
+			assertEquals(0, logs.size());
+		}
+		finally {
+			auditLogService.stopMonitoring(User.class);
+		}
+		assertEquals(false, auditLogService.isMonitored(User.class));
+	}
 }

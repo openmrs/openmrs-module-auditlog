@@ -89,7 +89,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	
 	//Ignore these properties because they match auditLog.user and auditLog.dateCreated
 	private static final String[] IGNORED_PROPERTIES = new String[] { "changedBy", "dateChanged", "creator", "dateCreated",
-	        "voidedBy", "dateVoided", "retiredBy", "dateRetired", "personChangedBy", "personDateChanged" };
+	        "voidedBy", "dateVoided", "retiredBy", "dateRetired", "personChangedBy", "personDateChanged", "personCreator",
+	        "personDateCreated" };
 	
 	/**
 	 * @return the dao
@@ -224,7 +225,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			PersistentCollection persistentColl = ((PersistentCollection) collection);
 			if (isAuditable(persistentColl.getOwner())) {
 				OpenmrsObject owningObject = (OpenmrsObject) persistentColl.getOwner();
-				updates.get().peek().add(owningObject);
 				Map previousStoredSnapshotMap = (Map) persistentColl.getStoredSnapshot();
 				String ownerUuid = owningObject.getUuid();
 				String propertyName = persistentColl.getRole().substring(persistentColl.getRole().lastIndexOf('.') + 1);
@@ -260,8 +260,15 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				} else if (Map.class.isAssignableFrom(collection.getClass())) {
 					previousSerializedItems = InterceptorUtil.serializeMap(previousStoredSnapshotMap, getAuditLogDao());
 					newSerializedItems = InterceptorUtil.serializeMap((Map) collection, getAuditLogDao());
+					//For some reason hibernate ends calling onCollectionUpdate even when the map has
+					//no changes. I think it uses object equality for the map entries and assumes the map has 
+					//changes. Noticed this happens for user.userProperties and added a unit test to prove it
+					if (previousSerializedItems.equals(newSerializedItems)) {
+						return;
+					}
 				}
 				
+				updates.get().peek().add(owningObject);
 				objectChangesMap.get().peek().get(ownerUuid)
 				        .put(propertyName, new String[] { newSerializedItems, previousSerializedItems });
 			}
