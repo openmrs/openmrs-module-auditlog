@@ -161,7 +161,7 @@
         <thead>
         <tr>
             <th class="ui-state-default"></th>
-            <th class="ui-state-default">Item (<spring:message code="${moduleId}.numberOfChangedProperties" />)</th>
+            <th class="ui-state-default">Item (<spring:message code="${moduleId}.numberOfLinkedAuditLogs" />)</th>
             <th class="ui-state-default">User (username)</th>
             <th class="ui-state-default">Date Of Occurence</th>
         </tr>
@@ -175,7 +175,7 @@
                 </td>
                 <td>
                     ${auditLog.simpleClassname}
-                    <c:if test="${auditLog.action == 'UPDATED' && fn:length(auditLog.changes) > 0}"> (${fn:length(auditLog.changes)})</c:if>
+                    <c:if test="${auditLog.action == 'UPDATED' && fn:length(auditLog.childAuditLogs) > 0}"> (${fn:length(auditLog.childAuditLogs)})</c:if>
                 </td>
                 <td>
                     <c:choose>
@@ -248,11 +248,11 @@
     <tr class="${moduleId}-childAuditLogDetails-element"><td colspan="2">&nbsp;</td></tr>
     <tr class="${moduleId}-childAuditLogDetails-element">
         <td valign="top" colspan="2">
-            <b><spring:message code="${moduleId}.childAuditLogDetails" />
+            <b><spring:message code="${moduleId}.linkedAuditLogDetails" />
                 (<span id="${moduleId}-childLogCount"></span>)
             </b>
             <img align="top" src="<openmrs:contextPath />/images/help.gif" border="0"
-                 title="<openmrs:message code="${moduleId}.childAuditLogDetails.help" />" />
+                 title="<openmrs:message code="${moduleId}.linkedAuditLogDetails.help" />" />
         </td>
     </tr>
     <tr class="${moduleId}-childAuditLogDetails-element">
@@ -273,7 +273,7 @@
 
 <%-- Dialog to display auditlog details for a child auditlog --%>
 
-<div id="${moduleId}-child-changes-dialog" class="${moduleId}_align_text_left" title="<spring:message code="${moduleId}.childLogDetails" />">
+<div id="${moduleId}-child-changes-dialog" class="${moduleId}_align_text_left" title="<spring:message code="${moduleId}.linkedLogDetails" />">
 <br />
 <table id="${moduleId}-child-details" width="100%" cellpadding="0" cellspacing="5">
     <tr>
@@ -324,11 +324,11 @@
     <tr class="${moduleId}-childAuditLogDetails-element"><td colspan="2">&nbsp;</td></tr>
     <tr class="${moduleId}-childAuditLogDetails-element">
         <td valign="top" colspan="2">
-            <b><spring:message code="${moduleId}.childAuditLogDetails" />
+            <b><spring:message code="${moduleId}.linkedAuditLogDetails" />
                 (<span id="${moduleId}-child-childLogCount"></span>)
             </b>
             <img align="top" src="<openmrs:contextPath />/images/help.gif" border="0"
-                 title="<openmrs:message code="${moduleId}.childAuditLogDetails.help" />" />
+                 title="<openmrs:message code="${moduleId}.linkedAuditLogDetails.help" />" />
         </td>
     </tr>
     <tr class="${moduleId}-childAuditLogDetails-element">

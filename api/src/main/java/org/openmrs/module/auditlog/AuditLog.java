@@ -15,7 +15,6 @@ package org.openmrs.module.auditlog;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +24,6 @@ import java.util.UUID;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.User;
 import org.openmrs.util.OpenmrsConstants;
 
@@ -281,53 +279,6 @@ public class AuditLog implements Serializable {
 			return;
 		auditLog.setParentAuditLog(this);
 		getChildAuditLogs().add(auditLog);
-	}
-	
-	/**
-	 * Returns a map of changes
-	 * 
-	 * @return a map of changes
-	 */
-	public Map<String, List> getChanges() {
-		if (action == Action.UPDATED && changes == null && StringUtils.isNotBlank(changesData)) {
-			try {
-				changes = new ObjectMapper().readValue(changesData, Map.class);
-			}
-			catch (Exception e) {
-				log.warn("Failed to convert changes data to a map", e);
-			}
-		}
-		
-		if (changes == null)
-			changes = new HashMap<String, List>();
-		
-		return changes;
-	}
-	
-	/**
-	 * Gets the new property value for the specified property
-	 * 
-	 * @param propertyName
-	 * @return the new property value if found
-	 */
-	public String getNewValue(String propertyName) {
-		if (getChanges().get(propertyName) != null)
-			return ((List<String>) getChanges().get(propertyName)).get(0);
-		
-		return null;
-	}
-	
-	/**
-	 * Gets the old property value for the specified property
-	 * 
-	 * @param propertyName
-	 * @return the old property value if found
-	 */
-	public String getPreviousValue(String propertyName) {
-		if (getChanges().get(propertyName) != null)
-			return ((List<String>) getChanges().get(propertyName)).get(1);
-		
-		return null;
 	}
 	
 	/**

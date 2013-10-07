@@ -95,78 +95,82 @@ public class DWRAuditLogService {
 							}
 						}
 						
-						if (auditLog.getAction().equals(Action.UPDATED) && auditLog.getChanges().size() > 0) {
-							propertyNameChangesMap = new HashMap<String, String[]>();
-							for (Map.Entry<String, List> entry : auditLog.getChanges().entrySet()) {
-								String propertyName = entry.getKey();
-								String previousValue = null;
-								String newValueDisplay = "";
-								String preValueDisplay = "";
-								String newValue = null;
-								if (CollectionUtils.isNotEmpty(entry.getValue())) {
-									newValue = auditLog.getNewValue(propertyName);
-									previousValue = auditLog.getPreviousValue(propertyName);
-									if (StringUtils.isNotBlank(newValue) || StringUtils.isNotBlank(previousValue)) {
-										Field field = AuditLogUtil.getField(clazz, propertyName);
-										//This can be null if the auditlog was created and then 
-										//later upgraded to a version where the field was removed
-										if (field != null) {
-											if (Date.class.isAssignableFrom(field.getType())) {
-												if (newValue != null) {
-													try {
-														newValueDisplay += Context.getDateFormat().format(
-														    new SimpleDateFormat(AuditLogConstants.DATE_FORMAT)
-														            .parse(newValue));
+						if (auditLog.getAction().equals(Action.UPDATED)) {
+							Map<String, List> changes = AuditLogUtil.getChangesOfUpdatedItem(auditLog);
+							if (changes.size() > 0) {
+								propertyNameChangesMap = new HashMap<String, String[]>();
+								for (Map.Entry<String, List> entry : changes.entrySet()) {
+									String propertyName = entry.getKey();
+									String previousValue = null;
+									String newValueDisplay = "";
+									String preValueDisplay = "";
+									String newValue = null;
+									if (CollectionUtils.isNotEmpty(entry.getValue())) {
+										newValue = AuditLogUtil.getNewValueOfUpdatedItem(propertyName, auditLog);
+										previousValue = AuditLogUtil.getPreviousValueOfUpdatedItem(propertyName, auditLog);
+										if (StringUtils.isNotBlank(newValue) || StringUtils.isNotBlank(previousValue)) {
+											Field field = AuditLogUtil.getField(clazz, propertyName);
+											//This can be null if the auditlog was created and then 
+											//later upgraded to a version where the field was removed
+											if (field != null) {
+												if (Date.class.isAssignableFrom(field.getType())) {
+													if (newValue != null) {
+														try {
+															newValueDisplay += Context.getDateFormat().format(
+															    new SimpleDateFormat(AuditLogConstants.DATE_FORMAT)
+															            .parse(newValue));
+														}
+														catch (ParseException e) {
+															log.warn(e.getMessage());
+															newValueDisplay = newValue;
+														}
 													}
-													catch (ParseException e) {
-														log.warn(e.getMessage());
+													if (previousValue != null) {
+														try {
+															preValueDisplay += Context.getDateFormat().format(
+															    new SimpleDateFormat(AuditLogConstants.DATE_FORMAT)
+															            .parse(previousValue));
+														}
+														catch (Exception e) {
+															log.warn(e.getMessage());
+															preValueDisplay = previousValue;
+														}
+													}
+												} else {
+													if (StringUtils.isNotBlank(newValue)
+													        && (newValue.startsWith(AuditLogConstants.UUID_LABEL) || newValue
+													                .startsWith(AuditLogConstants.ID_LABEL))) {
+														newValueDisplay += getPropertyDisplayString(clazz, propertyName,
+														    field.getType(), newValue);
+													} else if (newValue != null) {
 														newValueDisplay = newValue;
 													}
-												}
-												if (previousValue != null) {
-													try {
-														preValueDisplay += Context.getDateFormat().format(
-														    new SimpleDateFormat(AuditLogConstants.DATE_FORMAT)
-														            .parse(previousValue));
-													}
-													catch (Exception e) {
-														log.warn(e.getMessage());
+													
+													if (StringUtils.isNotBlank(previousValue)
+													        && (previousValue.startsWith(AuditLogConstants.UUID_LABEL) || previousValue
+													                .startsWith(AuditLogConstants.ID_LABEL))) {
+														preValueDisplay += getPropertyDisplayString(clazz, propertyName,
+														    field.getType(), previousValue);
+													} else if (previousValue != null) {
 														preValueDisplay = previousValue;
 													}
-												}
-											} else {
-												if (StringUtils.isNotBlank(newValue)
-												        && (newValue.startsWith(AuditLogConstants.UUID_LABEL) || newValue
-												                .startsWith(AuditLogConstants.ID_LABEL))) {
-													newValueDisplay += getPropertyDisplayString(clazz, propertyName,
-													    field.getType(), newValue);
-												} else if (newValue != null) {
-													newValueDisplay = newValue;
-												}
-												
-												if (StringUtils.isNotBlank(previousValue)
-												        && (previousValue.startsWith(AuditLogConstants.UUID_LABEL) || previousValue
-												                .startsWith(AuditLogConstants.ID_LABEL))) {
-													preValueDisplay += getPropertyDisplayString(clazz, propertyName,
-													    field.getType(), previousValue);
-												} else if (previousValue != null) {
-													preValueDisplay = previousValue;
 												}
 											}
 										}
 									}
+									
+									if (StringUtils.isBlank(preValueDisplay))
+										preValueDisplay = previousValue;
+									if (preValueDisplay == null)
+										preValueDisplay = "";
+									if (StringUtils.isBlank(newValueDisplay))
+										newValueDisplay = newValue;
+									if (newValueDisplay == null)
+										newValueDisplay = "";
+									
+									propertyNameChangesMap.put(propertyName,
+									    new String[] { newValueDisplay, preValueDisplay });
 								}
-								
-								if (StringUtils.isBlank(preValueDisplay))
-									preValueDisplay = previousValue;
-								if (preValueDisplay == null)
-									preValueDisplay = "";
-								if (StringUtils.isBlank(newValueDisplay))
-									newValueDisplay = newValue;
-								if (newValueDisplay == null)
-									newValueDisplay = "";
-								
-								propertyNameChangesMap.put(propertyName, new String[] { newValueDisplay, preValueDisplay });
 							}
 						}
 					}

@@ -13,17 +13,26 @@
  */
 package org.openmrs.module.auditlog.util;
 
+import static org.openmrs.module.auditlog.AuditLog.Action.DELETED;
+import static org.openmrs.module.auditlog.AuditLog.Action.UPDATED;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.openmrs.api.APIException;
+import org.openmrs.module.auditlog.AuditLog;
 
 /**
  * Contains utility methods used by the module
@@ -95,4 +104,83 @@ public class AuditLogUtil {
 		
 		return field;
 	}
+	
+	/**
+	 * Returns a map of changes for AuditLogs with action UPDATED
+	 * 
+	 * @param auditLog
+	 * @return a map of changes
+	 */
+	public static Map<String, List> getChangesOfUpdatedItem(AuditLog auditLog) {
+		if (auditLog.getAction() != UPDATED) {
+			throw new APIException("Can't call this method for an AuditLog item with action " + auditLog.getAction());
+		}
+		
+		Map<String, List> changes = new HashMap<String, List>();
+		if (StringUtils.isNotBlank(auditLog.getChangesData())) {
+			try {
+				changes = new ObjectMapper().readValue(auditLog.getChangesData(), Map.class);
+			}
+			catch (Exception e) {
+				log.warn("Failed to convert changes data to a map", e);
+			}
+		}
+		
+		return changes;
+	}
+	
+	/**
+	 * Returns a map of property names and values for AuditLogs with action DELETED
+	 * 
+	 * @param auditLog
+	 * @return a map of property names and values
+	 */
+	public static Map<String, String> getLastStateOfDeletedItem(AuditLog auditLog) {
+		if (auditLog.getAction() != DELETED) {
+			throw new APIException("Can't call this method for an AuditLog item with action " + auditLog.getAction());
+		}
+		
+		Map<String, String> changes = new HashMap<String, String>();
+		if (StringUtils.isNotBlank(auditLog.getChangesData())) {
+			try {
+				changes = new ObjectMapper().readValue(auditLog.getChangesData(), Map.class);
+			}
+			catch (Exception e) {
+				log.warn("Failed to convert serialized last state data to a map", e);
+			}
+		}
+		
+		return changes;
+	}
+	
+	/**
+	 * Gets the new property value for the specified property
+	 * 
+	 * @param propertyName
+	 * @param auditLog
+	 * @return the new property value if found
+	 */
+	public static String getNewValueOfUpdatedItem(String propertyName, AuditLog auditLog) {
+		Map<String, List> changes = getChangesOfUpdatedItem(auditLog);
+		if (changes.get(propertyName) != null) {
+			return ((List<String>) changes.get(propertyName)).get(0);
+		}
+		return null;
+	}
+	
+	/**
+	 * Gets the old property value for the specified property
+	 * 
+	 * @param propertyName
+	 * @param auditLog
+	 * @return the old property value if found
+	 */
+	public static String getPreviousValueOfUpdatedItem(String propertyName, AuditLog auditLog) {
+		Map<String, List> changes = getChangesOfUpdatedItem(auditLog);
+		if (changes.get(propertyName) != null) {
+			return ((List<String>) changes.get(propertyName)).get(1);
+		}
+		return null;
+	}
+	
 }
