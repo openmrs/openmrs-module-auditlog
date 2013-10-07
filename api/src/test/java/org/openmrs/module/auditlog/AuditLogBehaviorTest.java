@@ -92,7 +92,14 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		List<AuditLog> logs = getAllLogs(encounterType.getUuid(), EncounterType.class, null);
 		//Should have created a log entry for deleted Encounter type
 		assertEquals(1, logs.size());
-		assertEquals(DELETED, logs.get(0).getAction());
+		AuditLog al = logs.get(0);
+		assertEquals(DELETED, al.getAction());
+		assertEquals("{\"encounterTypeId\":6," + "\"retireReason\":\"for testing\","
+		        + "\"retiredBy\":\"uuid:1010d442-e134-11de-babe-001e378eb67e\","
+		        + "\"description\":\"Visit to the laboratory\"," + "\"name\":\"Laboratory\"," + "\"retired\":\"true\","
+		        + "\"dateRetired\":\"2008-08-15 00:00:00\"," + "\"dateCreated\":\"2008-08-15 15:39:55\","
+		        + "\"uuid\":\"02c533ab-b74b-4ee4-b6e5-ffb6d09a0ac8\","
+		        + "\"creator\":\"uuid:1010d442-e134-11de-babe-001e378eb67e\"}", al.getChangesData());
 	}
 	
 	@Test

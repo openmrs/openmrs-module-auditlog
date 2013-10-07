@@ -25,7 +25,7 @@
 			</type>
 		</property>
 		
-		<property name="changesData" type="string" column="changes_data" access="field" lazy="true" length="16777215"  />
+		<property name="changesData" type="string" column="changes_data" length="16777215"  />
 		
 		<property name="dateCreated" type="java.util.Date" column="date_created" length="19" not-null="true" />
 

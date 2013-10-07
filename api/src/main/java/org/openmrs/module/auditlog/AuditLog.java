@@ -242,6 +242,13 @@ public class AuditLog implements Serializable {
 	}
 	
 	/**
+	 * @return the changesData
+	 */
+	public String getChangesData() {
+		return changesData;
+	}
+	
+	/**
 	 * @param changesData the changesData to set
 	 */
 	public void setChangesData(String changesData) {
@@ -282,7 +289,7 @@ public class AuditLog implements Serializable {
 	 * @return a map of changes
 	 */
 	public Map<String, List> getChanges() {
-		if (changes == null && StringUtils.isNotBlank(changesData)) {
+		if (action == Action.UPDATED && changes == null && StringUtils.isNotBlank(changesData)) {
 			try {
 				changes = new ObjectMapper().readValue(changesData, Map.class);
 			}

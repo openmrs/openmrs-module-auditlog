@@ -26,20 +26,23 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.hibernate.EntityMode;
+import org.hibernate.SessionFactory;
 import org.hibernate.metadata.ClassMetadata;
 import org.openmrs.OpenmrsObject;
+import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 
 /**
  * Contains utility methods used by the interceptor
  */
-public final class InterceptorUtil {
+final class InterceptorUtil {
 	
 	private static final Log log = LogFactory.getLog(InterceptorUtil.class);
 	
 	/**
-	 * Utility method that serializes the passed in data to json
+	 * Utility method that serializes the passed in data to json, this method asssumes all the
+	 * passed in data is already serialized
 	 * 
 	 * @param data the data to serialize
 	 * @return the generated json
@@ -158,5 +161,26 @@ public final class InterceptorUtil {
 		}
 		
 		return serializedValue;
+	}
+	
+	/**
+	 * Serializes mapped hibernate objects
+	 * 
+	 * @param object the object to serialize
+	 * @return the serialized JSON text
+	 */
+	public static String serializePersistentObject(Object object) {
+		ClassMetadata cmd = Context.getRegisteredComponents(SessionFactory.class).get(0).getClassMetadata(object.getClass());
+		AuditLogDAO dao = Context.getRegisteredComponents(AuditLogDAO.class).get(0);
+		Map<String, Serializable> propertyNameValueMap = new HashMap<String, Serializable>();
+		propertyNameValueMap.put(cmd.getIdentifierPropertyName(), cmd.getIdentifier(object, EntityMode.POJO));
+		for (String propertyName : cmd.getPropertyNames()) {
+			String serializedValue = serializeObject(cmd.getPropertyValue(object, propertyName, EntityMode.POJO), dao);
+			if (serializedValue != null) {
+				propertyNameValueMap.put(propertyName, serializedValue);
+			}
+		}
+		
+		return serializeToJson(propertyNameValueMap);
 	}
 }
