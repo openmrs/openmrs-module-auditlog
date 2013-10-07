@@ -199,6 +199,15 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	@Override
 	@Transactional
 	public <T> T save(T object) {
+		if (object instanceof AuditLog) {
+			AuditLog auditLog = (AuditLog) object;
+			//Hibernate has issues with saving the parentAuditLog field if the parent isn't yet saved
+			//so we need to first save the parent before its children
+			if (auditLog.getParentAuditLog() != null && auditLog.getParentAuditLog().getAuditLogId() == null) {
+				save(auditLog.getParentAuditLog());
+			}
+		}
+		
 		sessionFactory.getCurrentSession().saveOrUpdate(object);
 		return object;
 	}

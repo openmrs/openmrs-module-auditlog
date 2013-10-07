@@ -421,17 +421,21 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 						}
 					}
 				}
-				
+				List<AuditLog> logs = new ArrayList<AuditLog>();
 				for (OpenmrsObject insert : inserts.get().peek()) {
-					createIfNecessaryAndSaveAuditLog(insert, Action.CREATED);
+					logs.add(createAuditLogIfNecessary(insert, Action.CREATED));
 				}
 				
 				for (OpenmrsObject delete : deletes.get().peek()) {
-					createIfNecessaryAndSaveAuditLog(delete, Action.DELETED);
+					logs.add(createAuditLogIfNecessary(delete, Action.DELETED));
 				}
 				
 				for (OpenmrsObject update : updates.get().peek()) {
-					createIfNecessaryAndSaveAuditLog(update, Action.UPDATED);
+					logs.add(createAuditLogIfNecessary(update, Action.UPDATED));
+				}
+				
+				for (AuditLog al : logs) {
+					getAuditLogDao().save(al);
 				}
 			}
 			catch (Exception e) {
@@ -456,28 +460,24 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	}
 	
 	/**
-	 * Creates if necessary and saves an auditLog in the DB for the specified object
+	 * Creates if necessary
 	 * 
 	 * @param object the object to create for the AuditLog
 	 * @param action see {@link org.openmrs.module.auditlog.AuditLog.Action}
 	 */
-	private void createIfNecessaryAndSaveAuditLog(OpenmrsObject object, Action action) {
+	private AuditLog createAuditLogIfNecessary(OpenmrsObject object, Action action) {
 		//If this is a collection element, we already created a log for it
 		AuditLog auditLog = childbjectUuidAuditLogMap.get().peek().get(object.getUuid());
 		if (auditLog == null) {
 			auditLog = instantiateAuditLog(object, action);
 		}
-		//save so that it gets an id otherwise hibernate won't be able to associate the child logs if any
-		if (auditLog.getAuditLogId() == null) {
-			auditLog = getAuditLogDao().save(auditLog);
-		}
 		
 		if ((ownerUuidChildLogsMap != null && ownerUuidChildLogsMap.get().peek().containsKey(object.getUuid()))) {
 			for (AuditLog child : ownerUuidChildLogsMap.get().peek().get(object.getUuid())) {
 				auditLog.addChildAuditLog(child);
-				getAuditLogDao().save(child);
 			}
 		}
+		return auditLog;
 	}
 	
 	/**

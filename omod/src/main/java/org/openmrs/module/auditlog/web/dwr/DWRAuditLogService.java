@@ -178,7 +178,7 @@ public class DWRAuditLogService {
 				AuditLogDetails details = new AuditLogDetails(displayString, auditLog.getObjectUuid(),
 				        auditLog.getClassName(), auditLog.getAction().name(), objectId, auditLog.getUuid(), objectExists,
 				        propertyNameChangesMap);
-				if (!auditLog.getChildAuditLogs().isEmpty()) {
+				if (auditLog.hasChildLogs()) {
 					List<AuditLogDetails> childDetails = new ArrayList<AuditLogDetails>();
 					for (AuditLog childLog : auditLog.getChildAuditLogs()) {
 						childDetails.add(new AuditLogDetails(null, childLog.getUuid(), childLog.getSimpleClassname(),
