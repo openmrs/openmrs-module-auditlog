@@ -175,7 +175,7 @@
                 </td>
                 <td>
                     ${auditLog.simpleClassname}
-                    <c:if test="${auditLog.action == 'UPDATED' && fn:length(auditLog.childAuditLogs) > 0}"> (${fn:length(auditLog.childAuditLogs)})</c:if>
+                    <c:if test="${fn:length(auditLog.childAuditLogs) > 0}"> (${fn:length(auditLog.childAuditLogs)})</c:if>
                 </td>
                 <td>
                     <c:choose>
