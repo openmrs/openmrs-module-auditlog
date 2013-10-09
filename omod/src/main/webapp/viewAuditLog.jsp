@@ -21,6 +21,8 @@
     var dialogHeight = 640;
     var childDialogWidth = dialogWidth*0.9;
     var childDialogHeight = dialogHeight*0.9;
+    var changesLabel = '<spring:message code="${moduleId}.changes" />';
+    var lastKnownStateLabel = '<spring:message code="${moduleId}.lastKnownState" />';
 
     $j(document).ready(function() {
         $j('#${moduleId}').dataTable({
@@ -28,7 +30,6 @@
             iDisplayLength: 15,
             bJQueryUI: true,
             bSort:false,
-            //sDom: 'flt<"ui-helper-clearfix"ip>',
             sDom: '<fl>t<"ui-helper-clearfix"ip>',
             oLanguage: {
                 "sInfo": omsgs.sInfoLabel,
@@ -60,6 +61,7 @@
                 $j("#${moduleId}-childLogCount").html("");
                 //remove all rows from previous displays except the header rows
                 $j("#${moduleId}-changes-table tr:gt(0)").remove();
+                $j("#${moduleId}-delete-otherData-table tr:gt(0)").remove();
                 $j("#${moduleId}-childAuditLogDetails-table tr:gt(0)").remove();
                 $j("#${moduleId}-details .${moduleId}-changes-element").hide();
                 $j("#${moduleId}-details .${moduleId}-childAuditLogDetails-element").hide()
@@ -81,6 +83,7 @@
                 $j("#${moduleId}-child-childLogCount").html("");
                 //remove all rows from previous displays except the header rows
                 $j("#${moduleId}-child-changes-table tr:gt(0)").remove();
+                $j("#${moduleId}-child-delete-otherData-table tr:gt(0)").remove();
                 $j("#${moduleId}-child-childAuditLogDetails-table tr:gt(0)").remove();
                 $j("#${moduleId}-child-details .${moduleId}-changes-element").hide();
                 $j("#${moduleId}-child-details .${moduleId}-childAuditLogDetails-element").hide()
@@ -89,7 +92,7 @@
     });
 
     function ${moduleId}_showDetails(auditLogUuid, isChildLog){
-        existingLogDetails = auditLogDetailsMap[auditLogUuid];
+        var existingLogDetails = auditLogDetailsMap[auditLogUuid];
         if(!existingLogDetails){
             DWRAuditLogService.getAuditLogDetails(auditLogUuid, function(detailsResponse){
                 if(detailsResponse){
@@ -103,12 +106,16 @@
     }
 
     function displayLogDetails(logDetails, isChildLog){
-        idPart = (isChildLog) ? "-child" : "";
+        var idPart = (isChildLog) ? "-child" : "";
+        $j("#${moduleId}"+idPart+"-changes-table").hide();
+        $j("#${moduleId}"+idPart+"-delete-otherData-table").hide();
         if(logDetails){
-            if(logDetails.objectExists == true)
+            if(logDetails.objectExists == true){
                 $j("#${moduleId}"+idPart+"-changes-summary").html(logDetails.displayString);
-            else if(logDetails.action != 'DELETED')
-                $j("#${moduleId}"+idPart+"-changes-summary").html("<span style='color:red'><spring:message code="${moduleId}.objectDoesnotExist" /></span>");
+            }
+            else if(logDetails.action != 'DELETED'){
+                $j("#${moduleId}"+idPart+"-changes-summary").html("<span class='${moduleid}_deleted'><spring:message code="${moduleId}.objectDoesnotExist" /></span>");
+            }
 
             if(logDetails.objectId)
                 $j("#${moduleId}"+idPart+"-changes-objectId").html(logDetails.objectId);
@@ -123,15 +130,42 @@
                 $j("#${moduleId}"+idPart+"-changes-openmrsVersion").html(logDetails.openmrsVersion);
 
             if(logDetails.changes){
-                auditLogChanges = logDetails.changes;
+                var auditLogChanges = logDetails.changes;
+                var isUpdate = logDetails.action == 'UPDATED' ? true : false;
+                var otherDataCount = 0;
                 $j.each(auditLogChanges, function(propertyName){
-                    currentChange = auditLogChanges[propertyName];
-                    $j("#${moduleId}"+idPart+"-changes-table tr:last").after(
-                            "<tr><td class=\"${moduleId}_align_text_left\" valign=\"top\">"+propertyName+"</td>"+
-                                    "<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange[0]+"</td>"+
-                                    "<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentChange[1]+"</td></tr>");
+                    otherDataCount++;
+                    var currentProperty = auditLogChanges[propertyName];
+                    if(isUpdate){
+                        $j("#${moduleId}"+idPart+"-changes-table tr:last").after(
+                            "<tr>" +
+                                "<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+propertyName+"</td>"+
+                                "<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentProperty[0]+"</td>"+
+                                "<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentProperty[1]+"</td>" +
+                            "</tr>");
+                    }else{
+                        $j("#${moduleId}"+idPart+"-delete-otherData-table tr:last").after(
+                             "<tr>" +
+                                 "<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+propertyName+"</td>"+
+                                 "<td class=\"${moduleId}_align_text_left\" valign=\"top\">"+currentProperty+"</td>" +
+                             "</tr>");
+                    }
                 });
-                $j("#${moduleId}"+idPart+"-details .${moduleId}-changes-element").show();
+
+                if(otherDataCount > 0){
+                    var otherDataLabel = "";
+                    if(isUpdate){
+                        otherDataLabel = changesLabel;
+                        $j("#${moduleId}"+idPart+"-changes-table").show();
+
+                    }else{
+                        otherDataLabel = lastKnownStateLabel;
+                        $j("#${moduleId}"+idPart+"-delete-otherData-table").show();
+                    }
+
+                    $j("#${moduleId}"+idPart+"-otherDataLabel").html("<b>"+otherDataLabel+"</b>");
+                    $j("#${moduleId}"+idPart+"-details .${moduleId}-changes-element").show();
+                }
             }
 
             if(logDetails.childAuditLogDetails){
@@ -223,7 +257,7 @@
     <tr class="${moduleId}-changes-element"><td colspan="2">&nbsp;</td></tr>
     <tr class="${moduleId}-changes-element">
         <td valign="top" colspan="2">
-            <b><spring:message code="${moduleId}.changes" /></b>
+            <span id="${moduleId}-otherDataLabel"></span>
         </td>
     </tr>
     <tr class="${moduleId}-changes-element">
@@ -239,6 +273,18 @@
                     </td>
                     <td class="${moduleId}_table_header ${moduleId}_align_text_center" width="37%">
                         <spring:message code="${moduleId}.previousValue" />
+                    </td>
+                </tr>
+                <thead>
+            </table>
+            <table id="${moduleId}-delete-otherData-table" width="100%" cellpadding="3" cellspacing="0" border="1" bordercolor="#ADACAC">
+                <thead>
+                <tr>
+                    <td class="${moduleId}_table_header ${moduleId}_align_text_center">
+                        <spring:message code="${moduleId}.propertyName" />
+                    </td>
+                    <td class="${moduleId}_table_header ${moduleId}_align_text_center">
+                        <spring:message code="${moduleId}.value" />
                     </td>
                 </tr>
                 <thead>
@@ -299,7 +345,7 @@
     <tr class="${moduleId}-changes-element"><td colspan="2">&nbsp;</td></tr>
     <tr class="${moduleId}-changes-element">
         <td valign="top" colspan="2">
-            <b><spring:message code="${moduleId}.changes" /></b>
+            <span id="${moduleId}-child-otherDataLabel"></span>
         </td>
     </tr>
     <tr class="${moduleId}-changes-element">
@@ -315,6 +361,18 @@
                     </td>
                     <td class="${moduleId}_table_header ${moduleId}_align_text_center" width="37%">
                         <spring:message code="${moduleId}.previousValue" />
+                    </td>
+                </tr>
+                <thead>
+            </table>
+            <table id="${moduleId}-child-delete-otherData-table" width="100%" cellpadding="3" cellspacing="0" border="1" bordercolor="#ADACAC">
+                <thead>
+                <tr>
+                    <td class="${moduleId}_table_header ${moduleId}_align_text_center">
+                        <spring:message code="${moduleId}.propertyName" />
+                    </td>
+                    <td class="${moduleId}_table_header ${moduleId}_align_text_center">
+                        <spring:message code="${moduleId}.value" />
                     </td>
                 </tr>
                 <thead>

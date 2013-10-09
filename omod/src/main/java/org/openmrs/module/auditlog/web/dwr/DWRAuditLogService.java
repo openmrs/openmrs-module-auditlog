@@ -73,11 +73,12 @@ public class DWRAuditLogService {
 				String displayString = "";
 				boolean objectExists = false;
 				String objectId = null;
-				Map<String, String[]> propertyNameChangesMap = null;
-				if (!auditLog.getAction().equals(Action.DELETED)) {
-					Class<? extends OpenmrsObject> clazz;
-					try {
-						clazz = (Class<? extends OpenmrsObject>) Context.loadClass(auditLog.getClassName());
+				Map<String, Object> otherData = new HashMap<String, Object>();
+				try {
+					Class<? extends OpenmrsObject> clazz = (Class<? extends OpenmrsObject>) Context.loadClass(auditLog
+					        .getClassName());
+					if (!auditLog.getAction().equals(Action.DELETED)) {
+						
 						OpenmrsObject obj = getService().getObjectByUuid(clazz, auditLog.getObjectUuid());
 						if (obj != null) {
 							objectExists = true;
@@ -94,11 +95,10 @@ public class DWRAuditLogService {
 								displayString += ((GlobalProperty) obj).getProperty();
 							}
 						}
-
+						
 						if (auditLog.getAction().equals(Action.UPDATED)) {
 							Map<String, List> changes = AuditLogUtil.getChangesOfUpdatedItem(auditLog);
 							if (changes.size() > 0) {
-								propertyNameChangesMap = new HashMap<String, String[]>();
 								for (Map.Entry<String, List> entry : changes.entrySet()) {
 									String propertyName = entry.getKey();
 									String previousValue = null;
@@ -113,30 +113,26 @@ public class DWRAuditLogService {
 											preValueDisplay += getPrettyPropertyValue(propertyName, previousValue, clazz);
 										}
 									}
-
-									if (StringUtils.isBlank(preValueDisplay))
-										preValueDisplay = previousValue;
-									if (preValueDisplay == null)
-										preValueDisplay = "";
-									if (StringUtils.isBlank(newValueDisplay))
-										newValueDisplay = newValue;
-									if (newValueDisplay == null)
-										newValueDisplay = "";
-
-									propertyNameChangesMap.put(propertyName,
-									    new String[] { newValueDisplay, preValueDisplay });
+									
+									otherData.put(propertyName, new String[] { newValueDisplay, preValueDisplay });
 								}
 							}
 						}
+						
+					} else {
+						Map<String, String> changes = AuditLogUtil.getLastStateOfDeletedItem(auditLog);
+						for (Map.Entry<String, String> entry : changes.entrySet()) {
+							otherData.put(entry.getKey(), getPrettyPropertyValue(entry.getKey(), entry.getValue(), clazz));
+						}
 					}
-					catch (ClassNotFoundException e) {
-						log.error("Cannot log class:" + auditLog.getClassName());
-					}
+				}
+				catch (ClassNotFoundException e) {
+					log.error("Cannot log class:" + auditLog.getClassName());
 				}
 				
 				AuditLogDetails details = new AuditLogDetails(displayString, auditLog.getObjectUuid(),
 				        auditLog.getClassName(), auditLog.getAction().name(), objectId, auditLog.getUuid(),
-				        auditLog.getOpenmrsVersion(), objectExists, propertyNameChangesMap);
+				        auditLog.getOpenmrsVersion(), objectExists, otherData);
 				if (auditLog.hasChildLogs()) {
 					List<AuditLogDetails> childDetails = new ArrayList<AuditLogDetails>();
 					for (AuditLog childLog : auditLog.getChildAuditLogs()) {
@@ -190,10 +186,11 @@ public class DWRAuditLogService {
 						}
 					}
 					
-					if (item != null)
+					if (item != null) {
 						items.add(item);
-					else
+					} else {
 						unmatchedUuidsOrIds.add(currUuidOrStr);
+					}
 				}
 				
 				StringBuilder sb = new StringBuilder("<ul class='" + AuditLogConstants.MODULE_ID + "_collection_property'>");
@@ -220,6 +217,8 @@ public class DWRAuditLogService {
 				
 				if (actualObject != null) {
 					displayString = getDisplayString(actualObject, true);
+				} else {
+					displayString = ""+propertyValue+"";
 				}
 			}
 		}
@@ -288,27 +287,30 @@ public class DWRAuditLogService {
 		return displayString;
 	}
 	
-	private String getPrettyPropertyValue(String propertyName, String value, Class<?> clazz) {
+	private String getPrettyPropertyValue(String propertyName, Object value, Class<?> clazz) {
 		String prettyValue = null;
+		String stringValue = null;
 		Field field = AuditLogUtil.getField(clazz, propertyName);
 		//This can be null if the auditlog was created and then 
 		//later upgraded to a version where the field was removed
-		if (field != null && StringUtils.isNotBlank(value)) {
+		if (field != null && value != null) {
+			stringValue = value.toString();
 			if (Date.class.isAssignableFrom(field.getType())) {
 				try {
 					prettyValue = Context.getDateFormat().format(
-					    new SimpleDateFormat(AuditLogConstants.DATE_FORMAT).parse(value));
+					    new SimpleDateFormat(AuditLogConstants.DATE_FORMAT).parse(stringValue));
 				}
 				catch (ParseException e) {
 					log.warn(e.getMessage());
 				}
-			} else if (value.startsWith(AuditLogConstants.UUID_LABEL) || value.startsWith(AuditLogConstants.ID_LABEL)) {
-				prettyValue = getPropertyDisplayString(clazz, propertyName, field.getType(), value);
+			} else if (stringValue.startsWith(AuditLogConstants.UUID_LABEL)
+			        || stringValue.startsWith(AuditLogConstants.ID_LABEL)) {
+				prettyValue = getPropertyDisplayString(clazz, propertyName, field.getType(), stringValue);
 			}
 		}
 		
-		if (prettyValue == null && value != null) {
-			prettyValue = value;
+		if (prettyValue == null && stringValue != null) {
+			prettyValue = stringValue;
 		}
 		
 		if (prettyValue == null) {

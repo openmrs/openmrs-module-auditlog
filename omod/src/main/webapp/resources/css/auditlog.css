@@ -35,7 +35,7 @@ div#auditlog_info, div#auditlog_paginate{
 }
 
 table#auditlog tr:hover{
-    background-color: #97B9F7; cursor: pointer; color: #FFFFFF; font-weight: bold;
+    background-color: #97B9F7; cursor: pointer; color: #FFFFFF;
 }
 
 .auditlog-changes-element,.auditlog-childAuditLogDetails-element{
@@ -48,4 +48,8 @@ table#auditlog tr:hover{
 
 .auditlog_child_log{
 	cursor: pointer; text-decoration: underline; width: 300px
+}
+
+.auditlog_deleted{
+    color:green
 }

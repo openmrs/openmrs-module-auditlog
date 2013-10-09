@@ -2,6 +2,6 @@
 
 <c:set var="moduleId" value="auditlog" scope="page" />
 
-<openmrs:htmlInclude file="/moduleResources/${moduleId}/auditlog.css" />
+<openmrs:htmlInclude file="/moduleResources/${moduleId}/css/auditlog.css" />
 
 <spring:htmlEscape defaultHtmlEscape="true" />

@@ -48,8 +48,9 @@ public class AuditLogDetails {
 	
 	private String openmrsVersion;
 	
-	//Mappings of edited property names to their new(index 0) and previous(index 1) values' array
-	private Map<String, String[]> changes;
+	//If UPDATE auditlog, this is mappings of edited property names to their new(index 0) 
+	//and previous(index 1) values' array, if DELETED it is all the property and their values
+	private Map<String, Object> changes;
 	
 	private List<AuditLogDetails> childAuditLogDetails;
 	
@@ -57,7 +58,7 @@ public class AuditLogDetails {
 	 * Convenience constructor that created an {@link AuditLogDetails} from an {@link AuditLog}
 	 */
 	public AuditLogDetails(String displayString, String objectUuid, String classname, String action, String objectId,
-	    String uuid, String openmrsVersion, boolean objectExists, Map<String, String[]> changes) {
+	    String uuid, String openmrsVersion, boolean objectExists, Map<String, Object> changes) {
 		this.displayString = displayString;
 		this.objectExists = objectExists;
 		this.objectUuid = objectUuid;
@@ -184,14 +185,14 @@ public class AuditLogDetails {
 	/**
 	 * @return the changes
 	 */
-	public Map<String, String[]> getChanges() {
+	public Map<String, Object> getChanges() {
 		return changes;
 	}
 	
 	/**
 	 * @param changes the changes to set
 	 */
-	public void setChanges(Map<String, String[]> changes) {
+	public void setChanges(Map<String, Object> changes) {
 		this.changes = changes;
 	}
 	
