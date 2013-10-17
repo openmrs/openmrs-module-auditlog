@@ -51,5 +51,5 @@ table#auditlog tr:hover{
 }
 
 .auditlog_deleted{
-    color:green
+    color: red
 }

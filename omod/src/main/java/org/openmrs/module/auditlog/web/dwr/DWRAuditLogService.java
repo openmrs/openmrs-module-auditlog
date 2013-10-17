@@ -14,10 +14,7 @@
 package org.openmrs.module.auditlog.web.dwr;
 
 import java.lang.reflect.Field;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -218,7 +215,7 @@ public class DWRAuditLogService {
 				if (actualObject != null) {
 					displayString = getDisplayString(actualObject, true);
 				} else {
-					displayString = ""+propertyValue+"";
+					displayString = "<span class=" + AuditLogConstants.MODULE_ID + "'_deleted'>" + propertyValue + "</span>";
 				}
 			}
 		}
@@ -295,16 +292,7 @@ public class DWRAuditLogService {
 		//later upgraded to a version where the field was removed
 		if (field != null && value != null) {
 			stringValue = value.toString();
-			if (Date.class.isAssignableFrom(field.getType())) {
-				try {
-					prettyValue = Context.getDateFormat().format(
-					    new SimpleDateFormat(AuditLogConstants.DATE_FORMAT).parse(stringValue));
-				}
-				catch (ParseException e) {
-					log.warn(e.getMessage());
-				}
-			} else if (stringValue.startsWith(AuditLogConstants.UUID_LABEL)
-			        || stringValue.startsWith(AuditLogConstants.ID_LABEL)) {
+			if (stringValue.startsWith(AuditLogConstants.UUID_LABEL) || stringValue.startsWith(AuditLogConstants.ID_LABEL)) {
 				prettyValue = getPropertyDisplayString(clazz, propertyName, field.getType(), stringValue);
 			}
 		}
