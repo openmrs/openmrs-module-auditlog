@@ -59,8 +59,8 @@ public class AuditLogUtil {
 	 * Gets the class of the collection elements if the property with the specified name is a
 	 * collection
 	 * 
-	 * @param owningType
-	 * @param propertyName
+	 * @param owningType the type the collection belongs to
+	 * @param propertyName the property name of the collection
 	 * @return the class of the elements of the matching property
 	 * @should return the class of the property
 	 */

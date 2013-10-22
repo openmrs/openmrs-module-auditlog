@@ -447,10 +447,11 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	/**
 	 * Finds all the types for associations to monitor in as recursive way i.e if a Persistent type
 	 * is found, then we also find its collection element types and types for fields mapped as one
-	 * to one, note that this only includes sub types of {@link OpenmrsObject}
+	 * to one, note that this only includes sub types of {@link OpenmrsObject} and that this method
+	 * is recursive
 	 * 
 	 * @param clazz the Class to match against
-	 * @param foundAssocTypes the found
+	 * @param foundAssocTypes the found association types
 	 * @return a set of found class names
 	 */
 	private Set<Class<?>> getAssociationTypesToMonitorInternal(Class<?> clazz, Set<Class<?>> foundAssocTypes) {
@@ -532,10 +533,11 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		catch (Exception e) {
 			//The cache needs to be rebuilt since we already updated the 
 			//cached above but the GP value didn't get updated in the DB
-			if (isNoneExceptStrategy)
+			if (isNoneExceptStrategy) {
 				monitoredClassnamesCache = null;
-			else
+			} else {
 				unMonitoredClassnamesCache = null;
+			}
 			implicitlyMonitoredClassnamesCache = null;
 			
 			throw new APIException("Failed to " + ((startMonitoring) ? "start" : "stop") + " monitoring " + clazzes, e);
