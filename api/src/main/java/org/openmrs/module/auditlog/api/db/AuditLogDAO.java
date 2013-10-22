@@ -17,7 +17,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-import org.hibernate.metadata.ClassMetadata;
 import org.openmrs.Concept;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.module.auditlog.AuditLog;
@@ -88,13 +87,13 @@ public interface AuditLogDAO {
 	public <T> T getObjectByUuid(Class<T> clazz, String uuid);
 	
 	/**
-	 *  @see AuditLogService#startMonitoring(java.util.Set)
+	 * @see AuditLogService#startMonitoring(java.util.Set)
 	 */
 	public void startMonitoring(Set<Class<? extends OpenmrsObject>> clazzes);
 	
 	/**
 	 * @see AuditLogService#stopMonitoring(java.util.Set)
-     */
+	 */
 	public void stopMonitoring(Set<Class<? extends OpenmrsObject>> clazzes);
 	
 	/**
@@ -143,11 +142,4 @@ public interface AuditLogDAO {
 	 * @should return a set of implicitly monitored classes
 	 */
 	public Set<Class<?>> getImplicitlyMonitoredClasses();
-	
-	/**
-	 * Gets the {@link ClassMetadata} for the specified class
-	 * 
-	 * @return the ClassMetadata
-	 */
-	public ClassMetadata getClassMetadata(Class<?> clazz);
 }

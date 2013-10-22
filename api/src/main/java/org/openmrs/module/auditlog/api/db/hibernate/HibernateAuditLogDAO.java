@@ -590,12 +590,4 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 			}
 		}
 	}
-	
-	/**
-	 * @see org.openmrs.module.auditlog.api.db.AuditLogDAO#getClassMetadata(java.lang.Class)
-	 */
-	@Override
-	public ClassMetadata getClassMetadata(Class<?> clazz) {
-		return sessionFactory.getClassMetadata(clazz);
-	}
 }

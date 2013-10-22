@@ -34,6 +34,7 @@ import org.hibernate.CallbackException;
 import org.hibernate.EmptyInterceptor;
 import org.hibernate.Transaction;
 import org.hibernate.collection.PersistentCollection;
+import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.type.StringType;
 import org.hibernate.type.TextType;
 import org.hibernate.type.Type;
@@ -178,8 +179,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					if (propertyChangesMap == null)
 						propertyChangesMap = new HashMap<String, String[]>();
 					
-					String serializedPreviousValue = InterceptorUtil.serializeObject(previousValue, getAuditLogDao());
-					String serializedCurrentValue = InterceptorUtil.serializeObject(currentValue, getAuditLogDao());
+					String serializedPreviousValue = InterceptorUtil.serializeObject(previousValue);
+					String serializedCurrentValue = InterceptorUtil.serializeObject(currentValue);
 					
 					propertyChangesMap.put(propertyNames[i],
 					    new String[] { serializedCurrentValue, serializedPreviousValue });
@@ -237,9 +238,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				String newSerializedItems = null;
 				if (Collection.class.isAssignableFrom(collection.getClass())) {
 					Collection currentColl = (Collection) collection;
-					previousSerializedItems = InterceptorUtil.serializeCollection(previousStoredSnapshotMap.values(),
-					    getAuditLogDao());
-					newSerializedItems = InterceptorUtil.serializeCollection(currentColl, getAuditLogDao());
+					previousSerializedItems = InterceptorUtil.serializeCollection(previousStoredSnapshotMap.values());
+					newSerializedItems = InterceptorUtil.serializeCollection(currentColl);
 					
 					//Track removed items so that when we create logs for them,
 					//and link them to the parent's log
@@ -506,7 +506,11 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					auditLog.setSerializedData(InterceptorUtil.serializeToJson(propertyValuesMap));
 				}
 			} else {
-				auditLog.setSerializedData(InterceptorUtil.serializePersistentObject(object));
+				//TODO Get rid of this if using xstream to serialize object
+				ClassMetadata cmd = InterceptorUtil.getClassMetadata(object.getClass());
+				if (cmd != null) {
+					auditLog.setSerializedData(InterceptorUtil.serializePersistentObject(object, cmd));
+				}
 			}
 		}
 		return auditLog;

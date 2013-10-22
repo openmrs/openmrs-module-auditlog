@@ -47,7 +47,7 @@ final class InterceptorUtil {
 	 * @param data the data to serialize
 	 * @return the generated json
 	 */
-	protected static String serializeToJson(Object data) {
+	static String serializeToJson(Object data) {
 		String json = null;
 		if (data != null) {
 			ObjectMapper mapper = new ObjectMapper();
@@ -68,14 +68,14 @@ final class InterceptorUtil {
 	 * @param collection the Collection object
 	 * @return The serialized collection elements
 	 */
-	protected static String serializeCollection(Collection<?> collection, AuditLogDAO auditLogDao) {
+	static String serializeCollection(Collection<?> collection) {
 		List<String> serializedCollectionItems = null;
 		if (collection != null) {
 			for (Object currItem : collection) {
 				if (currItem == null)
 					continue;
 				
-				String serializedItem = serializeObject(currItem, auditLogDao);
+				String serializedItem = serializeObject(currItem);
 				if (serializedItem != null) {
 					if (serializedCollectionItems == null)
 						serializedCollectionItems = new ArrayList<String>(collection.size());
@@ -94,7 +94,7 @@ final class InterceptorUtil {
 	 * @param map the Map object
 	 * @return The serialized map entries
 	 */
-	protected static String serializeMap(Map<?, ?> map, AuditLogDAO auditLogDao) {
+	static String serializeMap(Map<?, ?> map, AuditLogDAO auditLogDao) {
 		if (map == null)
 			return null;
 		
@@ -108,7 +108,7 @@ final class InterceptorUtil {
 			if (serializedMap == null)
 				serializedMap = new HashMap<String, String>(map.size());
 			
-			serializedMap.put(serializeObject(key, auditLogDao), serializeObject(value, auditLogDao));
+			serializedMap.put(serializeObject(key), serializeObject(value));
 		}
 		
 		return serializeToJson(serializedMap);
@@ -121,10 +121,9 @@ final class InterceptorUtil {
 	 * handled in a special way.
 	 * 
 	 * @param obj the object to serialize
-	 * @param auditLogDAO the AuditLogDAO object
 	 * @return the serialized String form of the object
 	 */
-	protected static String serializeObject(Object obj, AuditLogDAO auditLogDAO) {
+	static String serializeObject(Object obj) {
 		String serializedValue = null;
 		if (obj != null) {
 			Class<?> clazz = obj.getClass();
@@ -146,8 +145,8 @@ final class InterceptorUtil {
 				}
 			}
 			
-			if (serializedValue == null && auditLogDAO != null) {
-				ClassMetadata metadata = auditLogDAO.getClassMetadata(clazz);
+			if (serializedValue == null) {
+				ClassMetadata metadata = getClassMetadata(clazz);
 				if (metadata != null) {
 					Serializable id = metadata.getIdentifier(obj, EntityMode.POJO);
 					if (id != null) {
@@ -167,20 +166,24 @@ final class InterceptorUtil {
 	 * Serializes mapped hibernate objects
 	 * 
 	 * @param object the object to serialize
+	 * @param cmd the ClassMedata object for a mapped object
 	 * @return the serialized JSON text
 	 */
-	public static String serializePersistentObject(Object object) {
-		ClassMetadata cmd = Context.getRegisteredComponents(SessionFactory.class).get(0).getClassMetadata(object.getClass());
-		AuditLogDAO dao = Context.getRegisteredComponents(AuditLogDAO.class).get(0);
+	static String serializePersistentObject(Object object, ClassMetadata cmd) {
+		//TODO Might be better to use xstream
 		Map<String, Serializable> propertyNameValueMap = new HashMap<String, Serializable>();
 		propertyNameValueMap.put(cmd.getIdentifierPropertyName(), cmd.getIdentifier(object, EntityMode.POJO));
 		for (String propertyName : cmd.getPropertyNames()) {
-			String serializedValue = serializeObject(cmd.getPropertyValue(object, propertyName, EntityMode.POJO), dao);
+			String serializedValue = serializeObject(cmd.getPropertyValue(object, propertyName, EntityMode.POJO));
 			if (serializedValue != null) {
 				propertyNameValueMap.put(propertyName, serializedValue);
 			}
 		}
 		
 		return serializeToJson(propertyNameValueMap);
+	}
+	
+	static ClassMetadata getClassMetadata(Class<?> clazz) {
+		return Context.getRegisteredComponents(SessionFactory.class).get(0).getClassMetadata(clazz);
 	}
 }
