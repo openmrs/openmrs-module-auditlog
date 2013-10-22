@@ -184,8 +184,9 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		if (start != null)
 			criteria.setFirstResult(start);
 		
-		if (length != null && length > 0)
+		if (length != null && length > 0) {
 			criteria.setMaxResults(length);
+		}
 		
 		//Show the latest logs first
 		criteria.addOrder(Order.desc("dateCreated"));
@@ -272,9 +273,9 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		}
 		
 		//default
-		if (monitoringStrategyCache == null)
+		if (monitoringStrategyCache == null) {
 			monitoringStrategyCache = MonitoringStrategy.NONE;
-		
+		}
 		return monitoringStrategyCache;
 	}
 	
@@ -306,8 +307,9 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 			}
 			
 			//in case implicit classes cache was already created, update it
-			if (implicitlyMonitoredClassnamesCache != null)
+			if (implicitlyMonitoredClassnamesCache != null) {
 				implicitlyMonitoredClassnamesCache.removeAll(monitoredClassnamesCache);
+			}
 		}
 		
 		return monitoredClassnamesCache;
@@ -390,8 +392,9 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 				Collection<ClassMetadata> allClassMetadata = sessionFactory.getAllClassMetadata().values();
 				for (ClassMetadata classMetadata : allClassMetadata) {
 					Class<?> mappedClass = classMetadata.getMappedClass(EntityMode.POJO);
-					if (OpenmrsObject.class.isAssignableFrom(mappedClass))
+					if (OpenmrsObject.class.isAssignableFrom(mappedClass)) {
 						addAssociationTypes(mappedClass);
+					}
 				}
 			}
 		}
@@ -404,11 +407,11 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 */
 	@Override
 	public void globalPropertyChanged(GlobalProperty gp) {
-		if (AuditLogConstants.GP_MONITORED_CLASSES.equals(gp.getProperty()))
+		if (AuditLogConstants.GP_MONITORED_CLASSES.equals(gp.getProperty())) {
 			monitoredClassnamesCache = null;
-		else if (AuditLogConstants.GP_UN_MONITORED_CLASSES.equals(gp.getProperty()))
+		} else if (AuditLogConstants.GP_UN_MONITORED_CLASSES.equals(gp.getProperty())) {
 			unMonitoredClassnamesCache = null;
-		else {
+		} else {
 			//we need to invalidate all caches when the strategy is changed
 			monitoringStrategyCache = null;
 			monitoredClassnamesCache = null;
@@ -422,11 +425,11 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 */
 	@Override
 	public void globalPropertyDeleted(String gpName) {
-		if (AuditLogConstants.GP_MONITORED_CLASSES.equals(gpName))
+		if (AuditLogConstants.GP_MONITORED_CLASSES.equals(gpName)) {
 			monitoredClassnamesCache = null;
-		else if (AuditLogConstants.GP_UN_MONITORED_CLASSES.equals(gpName))
+		} else if (AuditLogConstants.GP_UN_MONITORED_CLASSES.equals(gpName)) {
 			unMonitoredClassnamesCache = null;
-		else {
+		} else {
 			monitoringStrategyCache = null;
 			monitoredClassnamesCache = null;
 			unMonitoredClassnamesCache = null;
@@ -455,8 +458,9 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 * @return a set of found class names
 	 */
 	private Set<Class<?>> getAssociationTypesToMonitorInternal(Class<?> clazz, Set<Class<?>> foundAssocTypes) {
-		if (foundAssocTypes == null)
+		if (foundAssocTypes == null) {
 			foundAssocTypes = new HashSet<Class<?>>();
+		}
 		
 		ClassMetadata cmd = sessionFactory.getClassMetadata(clazz);
 		if (cmd != null) {
@@ -499,9 +503,9 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		
 		if (isNoneExceptStrategy) {
 			for (Class<? extends OpenmrsObject> clazz : clazzes) {
-				if (startMonitoring)
+				if (startMonitoring) {
 					getMonitoredClasses().add(clazz);
-				else {
+				} else {
 					getMonitoredClasses().remove(clazz);
 					//remove subclasses too
 					Set<Class<?>> subclasses = getPersistentConcreteSubclasses(clazz);
@@ -520,8 +524,9 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 					for (Class<?> subclass : subclasses) {
 						getUnMonitoredClasses().remove(subclass);
 					}
-				} else
+				} else {
 					getUnMonitoredClasses().add(clazz);
+				}
 			}
 			
 			gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(getUnMonitoredClasses()), ","));
@@ -559,17 +564,20 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	@SuppressWarnings("unchecked")
 	private Set<Class<?>> getPersistentConcreteSubclassesInternal(Class<?> clazz, Set<Class<?>> foundSubclasses,
 	                                                              Collection<ClassMetadata> mappedClasses) {
-		if (foundSubclasses == null)
+		if (foundSubclasses == null) {
 			foundSubclasses = new HashSet<Class<?>>();
-		if (mappedClasses == null)
+		}
+		if (mappedClasses == null) {
 			mappedClasses = sessionFactory.getAllClassMetadata().values();
+		}
 		
 		if (clazz != null) {
 			for (ClassMetadata cmd : mappedClasses) {
 				Class<?> possibleSubclass = cmd.getMappedClass(EntityMode.POJO);
 				if (!clazz.equals(possibleSubclass) && clazz.isAssignableFrom(possibleSubclass)) {
-					if (!Modifier.isAbstract(possibleSubclass.getModifiers()) && !possibleSubclass.isInterface())
+					if (!Modifier.isAbstract(possibleSubclass.getModifiers()) && !possibleSubclass.isInterface()) {
 						foundSubclasses.add(possibleSubclass);
+					}
 					foundSubclasses.addAll(getPersistentConcreteSubclassesInternal(possibleSubclass, foundSubclasses,
 					    mappedClasses));
 				}

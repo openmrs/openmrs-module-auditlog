@@ -72,13 +72,15 @@ final class InterceptorUtil {
 		List<String> serializedCollectionItems = null;
 		if (collection != null) {
 			for (Object currItem : collection) {
-				if (currItem == null)
+				if (currItem == null) {
 					continue;
+				}
 				
 				String serializedItem = serializeObject(currItem);
 				if (serializedItem != null) {
-					if (serializedCollectionItems == null)
+					if (serializedCollectionItems == null) {
 						serializedCollectionItems = new ArrayList<String>(collection.size());
+					}
 					
 					serializedCollectionItems.add(serializedItem);
 				}
@@ -95,18 +97,21 @@ final class InterceptorUtil {
 	 * @return The serialized map entries
 	 */
 	static String serializeMap(Map<?, ?> map, AuditLogDAO auditLogDao) {
-		if (map == null)
+		if (map == null) {
 			return null;
+		}
 		
 		Map<String, String> serializedMap = null;
 		for (Map.Entry<?, ?> entry : map.entrySet()) {
 			Object key = entry.getKey();
 			Object value = entry.getValue();
-			if (key == null && value == null)
+			if (key == null && value == null) {
 				continue;
+			}
 			
-			if (serializedMap == null)
+			if (serializedMap == null) {
 				serializedMap = new HashMap<String, String>(map.size());
+			}
 			
 			serializedMap.put(serializeObject(key), serializeObject(value));
 		}
@@ -155,8 +160,9 @@ final class InterceptorUtil {
 				}
 			}
 			
-			if (serializedValue == null)
+			if (serializedValue == null) {
 				serializedValue = obj.toString();
+			}
 		}
 		
 		return serializedValue;
