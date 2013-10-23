@@ -34,7 +34,6 @@ import org.hibernate.CallbackException;
 import org.hibernate.EmptyInterceptor;
 import org.hibernate.Transaction;
 import org.hibernate.collection.PersistentCollection;
-import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.type.StringType;
 import org.hibernate.type.TextType;
 import org.hibernate.type.Type;
@@ -506,11 +505,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					auditLog.setSerializedData(InterceptorUtil.serializeToJson(propertyValuesMap));
 				}
 			} else {
-				//TODO Get rid of this if using xstream to serialize object
-				ClassMetadata cmd = InterceptorUtil.getClassMetadata(object.getClass());
-				if (cmd != null) {
-					auditLog.setSerializedData(InterceptorUtil.serializePersistentObject(object, cmd));
-				}
+				auditLog.setSerializedData(InterceptorUtil.serializePersistentObject(object));
 			}
 		}
 		return auditLog;

@@ -73,7 +73,7 @@ final class InterceptorUtil {
 	static String serializeCollection(Collection<?> collection) {
 		List<String> serializedCollectionItems = null;
 		if (CollectionUtils.isNotEmpty(collection)) {
-            serializedCollectionItems = new ArrayList<String>(collection.size());
+			serializedCollectionItems = new ArrayList<String>(collection.size());
 			for (Object collItem : collection) {
 				String serializedItem = serializeObject(collItem);
 				if (serializedItem != null) {
@@ -160,17 +160,20 @@ final class InterceptorUtil {
 	 * Serializes mapped hibernate objects
 	 * 
 	 * @param object the object to serialize
-	 * @param cmd the ClassMedata object for a mapped object
 	 * @return the serialized JSON text
 	 */
-	static String serializePersistentObject(Object object, ClassMetadata cmd) {
+	static String serializePersistentObject(Object object) {
 		//TODO Might be better to use xstream
-		Map<String, Serializable> propertyNameValueMap = new HashMap<String, Serializable>();
-		propertyNameValueMap.put(cmd.getIdentifierPropertyName(), cmd.getIdentifier(object, EntityMode.POJO));
-		for (String propertyName : cmd.getPropertyNames()) {
-			String serializedValue = serializeObject(cmd.getPropertyValue(object, propertyName, EntityMode.POJO));
-			if (serializedValue != null) {
-				propertyNameValueMap.put(propertyName, serializedValue);
+		Map<String, Serializable> propertyNameValueMap = null;
+		ClassMetadata cmd = InterceptorUtil.getClassMetadata(object.getClass());
+		if (cmd != null) {
+			propertyNameValueMap = new HashMap<String, Serializable>();
+			propertyNameValueMap.put(cmd.getIdentifierPropertyName(), cmd.getIdentifier(object, EntityMode.POJO));
+			for (String propertyName : cmd.getPropertyNames()) {
+				String serializedValue = serializeObject(cmd.getPropertyValue(object, propertyName, EntityMode.POJO));
+				if (serializedValue != null) {
+					propertyNameValueMap.put(propertyName, serializedValue);
+				}
 			}
 		}
 		
