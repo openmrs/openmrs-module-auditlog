@@ -22,6 +22,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -30,7 +33,6 @@ import org.hibernate.SessionFactory;
 import org.hibernate.metadata.ClassMetadata;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.api.context.Context;
-import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 
 /**
@@ -70,18 +72,11 @@ final class InterceptorUtil {
 	 */
 	static String serializeCollection(Collection<?> collection) {
 		List<String> serializedCollectionItems = null;
-		if (collection != null) {
-			for (Object currItem : collection) {
-				if (currItem == null) {
-					continue;
-				}
-				
-				String serializedItem = serializeObject(currItem);
+		if (CollectionUtils.isNotEmpty(collection)) {
+            serializedCollectionItems = new ArrayList<String>(collection.size());
+			for (Object collItem : collection) {
+				String serializedItem = serializeObject(collItem);
 				if (serializedItem != null) {
-					if (serializedCollectionItems == null) {
-						serializedCollectionItems = new ArrayList<String>(collection.size());
-					}
-					
 					serializedCollectionItems.add(serializedItem);
 				}
 			}
@@ -96,24 +91,17 @@ final class InterceptorUtil {
 	 * @param map the Map object
 	 * @return The serialized map entries
 	 */
-	static String serializeMap(Map<?, ?> map, AuditLogDAO auditLogDao) {
-		if (map == null) {
-			return null;
-		}
-		
+	static String serializeMap(Map<?, ?> map) {
 		Map<String, String> serializedMap = null;
-		for (Map.Entry<?, ?> entry : map.entrySet()) {
-			Object key = entry.getKey();
-			Object value = entry.getValue();
-			if (key == null && value == null) {
-				continue;
+		if (MapUtils.isNotEmpty(map)) {
+			serializedMap = new HashMap<String, String>(map.size());
+			for (Map.Entry<?, ?> entry : map.entrySet()) {
+				String serializedKey = serializeObject(entry.getKey());
+				String serializedValue = serializeObject(entry.getValue());
+				if (serializedKey != null && serializedValue != null) {
+					serializedMap.put(serializedKey, serializedValue);
+				}
 			}
-			
-			if (serializedMap == null) {
-				serializedMap = new HashMap<String, String>(map.size());
-			}
-			
-			serializedMap.put(serializeObject(key), serializeObject(value));
 		}
 		
 		return serializeToJson(serializedMap);
@@ -150,7 +138,7 @@ final class InterceptorUtil {
 				}
 			}
 			
-			if (serializedValue == null) {
+			if (StringUtils.isBlank(serializedValue)) {
 				ClassMetadata metadata = getClassMetadata(clazz);
 				if (metadata != null) {
 					Serializable id = metadata.getIdentifier(obj, EntityMode.POJO);
@@ -160,7 +148,7 @@ final class InterceptorUtil {
 				}
 			}
 			
-			if (serializedValue == null) {
+			if (StringUtils.isBlank(serializedValue)) {
 				serializedValue = obj.toString();
 			}
 		}
