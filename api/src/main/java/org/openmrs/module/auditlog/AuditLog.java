@@ -58,7 +58,7 @@ public class AuditLog implements Serializable {
 	private Set<AuditLog> childAuditLogs;
 	
 	/**
-	 * Used to store Json for field new and old values for udpated items or last properties values
+	 * Used to store Json for field new and old values for updated items or last properties values
 	 * of deleted items
 	 */
 	private String serializedData;
