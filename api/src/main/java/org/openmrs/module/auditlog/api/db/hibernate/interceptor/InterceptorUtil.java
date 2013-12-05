@@ -129,6 +129,10 @@ final class InterceptorUtil {
 				serializedValue = ((Enum<?>) obj).name();
 			} else if (Class.class.isAssignableFrom(clazz)) {
 				serializedValue = ((Class<?>) obj).getName();
+			} else if (Collection.class.isAssignableFrom(clazz)) {
+				serializedValue = serializeCollection((Collection) obj);
+			} else if (Map.class.isAssignableFrom(clazz)) {
+				serializedValue = serializeMap((Map) obj);
 			} else if (OpenmrsObject.class.isAssignableFrom(clazz)) {
 				try {
 					serializedValue = AuditLogConstants.UUID_LABEL + ((OpenmrsObject) obj).getUuid();

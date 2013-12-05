@@ -32,6 +32,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.CallbackException;
 import org.hibernate.EmptyInterceptor;
+import org.hibernate.Hibernate;
 import org.hibernate.Transaction;
 import org.hibernate.collection.PersistentCollection;
 import org.hibernate.type.StringType;
@@ -57,7 +58,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	
 	private static final Log log = LogFactory.getLog(HibernateAuditLogInterceptor.class);
 	
-	//Use stacks to take care of nested transactions to avoid NPE since on each transaction 
+	//Use stacks to take care of nested transactions to avoid NPE since on each transaction
 	//completion the ThreadLocals get nullified, see code below, i.e a stack of two elements implies
 	//the element at the top of the stack is the inserts made in the inner/nested transaction
 	private ThreadLocal<Stack<HashSet<OpenmrsObject>>> inserts = new ThreadLocal<Stack<HashSet<OpenmrsObject>>>();
@@ -66,7 +67,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	
 	private ThreadLocal<Stack<HashSet<OpenmrsObject>>> deletes = new ThreadLocal<Stack<HashSet<OpenmrsObject>>>();
 	
-	//Mapping between object uuids and maps of their changed property names and their older values, 
+	//Mapping between object uuids and maps of their changed property names and their older values,
 	//the first item in the array is the old value while the the second is the new value
 	private ThreadLocal<Stack<Map<String, Map<String, String[]>>>> objectChangesMap = new ThreadLocal<Stack<Map<String, Map<String, String[]>>>>();
 	
@@ -76,7 +77,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	//Mapping between parent entity uuids and lists of AuditLogs for their collection elements
 	private ThreadLocal<Stack<Map<String, List<AuditLog>>>> ownerUuidChildLogsMap = new ThreadLocal<Stack<Map<String, List<AuditLog>>>>();
 	
-	//Mapping between collection element uuids and their AuditLogs, will use 
+	//Mapping between collection element uuids and their AuditLogs, will use
 	//this to avoid creating logs for collections elements multiple times
 	private ThreadLocal<Stack<Map<String, AuditLog>>> childbjectUuidAuditLogMap = new ThreadLocal<Stack<Map<String, AuditLog>>>();
 	
@@ -207,10 +208,16 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	public void onDelete(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
 		if (isAuditable(entity)) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
-			if (log.isDebugEnabled())
+			if (log.isDebugEnabled()) {
 				log.debug("Creating log entry for deleted object with uuid:" + openmrsObject.getUuid() + " of type:"
 				        + entity.getClass().getName());
-			
+			}
+			for (int i = 0; i < types.length; i++) {
+				if (types[i].isCollectionType()) {
+					//Avoids LazyInitializationException since the parent is already purged
+					Hibernate.initialize(state[i]);
+				}
+			}
 			deletes.get().peek().add(openmrsObject);
 		}
 	}

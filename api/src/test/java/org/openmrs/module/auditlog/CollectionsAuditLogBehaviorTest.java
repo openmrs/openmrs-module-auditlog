@@ -729,4 +729,26 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		}
 		assertEquals(false, auditLogService.isMonitored(User.class));
 	}
+	
+	@Test
+	@NotTransactional
+	public void shouldSerializeMapEntriesAsSerializedDataForADeletedItem() throws Exception {
+		executeDataSet("org/openmrs/api/include/UserServiceTest.xml");
+		UserService us = Context.getUserService();
+		User user = us.getUser(505);
+		assertEquals(1, user.getUserProperties().size());
+		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
+		auditLogService.startMonitoring(User.class);
+		try {
+			assertEquals(true, auditLogService.isMonitored(User.class));
+			us.purgeUser(user);
+			List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, Collections.singletonList(DELETED));
+			assertEquals(1, logs.size());
+			AuditLog al = logs.get(0);
+		}
+		finally {
+			auditLogService.stopMonitoring(User.class);
+			assertEquals(false, auditLogService.isMonitored(User.class));
+		}
+	}
 }
