@@ -512,6 +512,9 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					auditLog.setSerializedData(InterceptorUtil.serializeToJson(propertyValuesMap));
 				}
 			} else {
+				//TODO if one edits and deletes an object in the same API call, the property
+				//value that gets serialized is the new one but actually was never saved
+				//Should we store the value in teh DB or the in teh current session?
 				auditLog.setSerializedData(InterceptorUtil.serializePersistentObject(object));
 			}
 		}
