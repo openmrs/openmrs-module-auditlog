@@ -5,9 +5,6 @@ var dialogWidth = 1140;
 var dialogHeight = 640;
 var childDialogWidth = dialogWidth*0.9;
 var childDialogHeight = dialogHeight*0.9;
-var changesLabel = '<spring:message code="auditlog.changes" />';
-var lastKnownStateLabel = '<spring:message code="auditlog.lastKnownState" />';
-var objectDoesnotExit = '<spring:message code="auditlog.objectDoesnotExist" />';
 
 function auditlog_initTable(){
     $j('#auditlog').dataTable({
@@ -99,7 +96,7 @@ function displayLogDetails(logDetails, isChildLog){
             $j("#auditlog"+idPart+"-changes-summary").html(logDetails.displayString);
         }
         else if(logDetails.action != 'DELETED'){
-            $j("#auditlog"+idPart+"-changes-summary").html("<span class='auditlog_deleted'>"+objectDoesnotExit+"</span>");
+            $j("#auditlog"+idPart+"-changes-summary").html("<span class='auditlog_deleted'>"+auditlog_messages.objectDoesnotExit+"</span>");
         }
 
         if(logDetails.objectId)
@@ -140,11 +137,11 @@ function displayLogDetails(logDetails, isChildLog){
             if(otherDataCount > 0){
                 var otherDataLabel = "";
                 if(isUpdate){
-                    otherDataLabel = changesLabel;
+                    otherDataLabel = auditlog_messages.changesLabel;
                     $j("#auditlog"+idPart+"-changes-table").show();
 
                 }else{
-                    otherDataLabel = lastKnownStateLabel;
+                    otherDataLabel = auditlog_messages.lastKnownStateLabel;
                     $j("#auditlog"+idPart+"-delete-otherData-table").show();
                 }
 
