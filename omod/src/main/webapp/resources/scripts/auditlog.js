@@ -7,7 +7,7 @@ var childDialogWidth = dialogWidth*0.9;
 var childDialogHeight = dialogHeight*0.9;
 
 function auditlog_initTable(){
-    $j('#auditlog').dataTable({
+    $j('#'+auditlog_moduleId).dataTable({
         sPaginationType: "full_numbers",
         iDisplayLength: 15,
         bJQueryUI: true,
@@ -22,13 +22,13 @@ function auditlog_initTable(){
         },
         fnDrawCallback: function( oSettings ) {
             //remove jquery row striping so that we have our custom green for created, pink for deleted etc.
-            $j('table#auditlog tr.odd').removeClass('odd');
-            $j('table#auditlog tr.even').removeClass('even');
+            $j('table#'+auditlog_moduleId+' tr.odd').removeClass('odd');
+            $j('table#'+auditlog_moduleId+' tr.even').removeClass('even');
         }
     });
 
     //setup the dialog to display update changes for each row
-    dialogObj = $j("#auditlog-changes-dialog");
+    dialogObj = $j("#"+auditlog_moduleId+"-changes-dialog");
     dialogObj.dialog({
         autoOpen: false,
         width: dialogWidth+'px',
@@ -36,21 +36,21 @@ function auditlog_initTable(){
         modal: true,
         beforeClose: function(event, ui){
             //reset
-            $j("#auditlog-changes-objectId").html("");
-            $j("#auditlog-changes-summary").html("");
-            $j("#auditlog-changes-objectUuid").html("");
-            $j("#auditlog-changes-openmrsVersion").html("");
-            $j("#auditlog-childLogCount").html("");
+            $j("#"+auditlog_moduleId+"-changes-objectId").html("");
+            $j("#"+auditlog_moduleId+"-changes-summary").html("");
+            $j("#"+auditlog_moduleId+"-changes-objectUuid").html("");
+            $j("#"+auditlog_moduleId+"-changes-openmrsVersion").html("");
+            $j("#"+auditlog_moduleId+"-childLogCount").html("");
             //remove all rows from previous displays except the header rows
-            $j("#auditlog-changes-table tr:gt(0)").remove();
-            $j("#auditlog-delete-otherData-table tr:gt(0)").remove();
-            $j("#auditlog-childAuditLogDetails-table tr:gt(0)").remove();
-            $j("#auditlog-details .auditlog-changes-element").hide();
-            $j("#auditlog-details .auditlog-childAuditLogDetails-element").hide()
+            $j("#"+auditlog_moduleId+"-changes-table tr:gt(0)").remove();
+            $j("#"+auditlog_moduleId+"-delete-otherData-table tr:gt(0)").remove();
+            $j("#"+auditlog_moduleId+"-childAuditLogDetails-table tr:gt(0)").remove();
+            $j("#"+auditlog_moduleId+"-details .auditlog-changes-element").hide();
+            $j("#"+auditlog_moduleId+"-details .auditlog-childAuditLogDetails-element").hide()
         }
     });
 
-    childDialogObj = $j("#auditlog-child-changes-dialog");
+    childDialogObj = $j("#"+auditlog_moduleId+"-child-changes-dialog");
     childDialogObj.dialog({
         autoOpen: false,
         width: childDialogWidth+'px',
@@ -58,17 +58,17 @@ function auditlog_initTable(){
         modal: true,
         beforeClose: function(event, ui){
             //reset
-            $j("#auditlog-child-changes-objectId").html("");
-            $j("#auditlog-child-changes-summary").html("");
-            $j("#auditlog-child-changes-objectUuid").html("");
-            $j("#auditlog-child-changes-openmrsVersion").html("");
-            $j("#auditlog-child-childLogCount").html("");
+            $j("#"+auditlog_moduleId+"-child-changes-objectId").html("");
+            $j("#"+auditlog_moduleId+"-child-changes-summary").html("");
+            $j("#"+auditlog_moduleId+"-child-changes-objectUuid").html("");
+            $j("#"+auditlog_moduleId+"-child-changes-openmrsVersion").html("");
+            $j("#"+auditlog_moduleId+"-child-childLogCount").html("");
             //remove all rows from previous displays except the header rows
-            $j("#auditlog-child-changes-table tr:gt(0)").remove();
-            $j("#auditlog-child-delete-otherData-table tr:gt(0)").remove();
-            $j("#auditlog-child-childAuditLogDetails-table tr:gt(0)").remove();
-            $j("#auditlog-child-details .auditlog-changes-element").hide();
-            $j("#auditlog-child-details .auditlog-childAuditLogDetails-element").hide()
+            $j("#"+auditlog_moduleId+"-child-changes-table tr:gt(0)").remove();
+            $j("#"+auditlog_moduleId+"-child-delete-otherData-table tr:gt(0)").remove();
+            $j("#"+auditlog_moduleId+"-child-childAuditLogDetails-table tr:gt(0)").remove();
+            $j("#"+auditlog_moduleId+"-child-details .auditlog-changes-element").hide();
+            $j("#"+auditlog_moduleId+"-child-details .auditlog-childAuditLogDetails-element").hide()
         }
     });
 }
@@ -89,27 +89,27 @@ function auditlog_showDetails(auditLogUuid, isChildLog){
 
 function displayLogDetails(logDetails, isChildLog){
     var idPart = (isChildLog) ? "-child" : "";
-    $j("#auditlog"+idPart+"-changes-table").hide();
-    $j("#auditlog"+idPart+"-delete-otherData-table").hide();
+    $j("#"+auditlog_moduleId+idPart+"-changes-table").hide();
+    $j("#"+auditlog_moduleId+idPart+"-delete-otherData-table").hide();
     if(logDetails){
         if(logDetails.objectExists == true){
-            $j("#auditlog"+idPart+"-changes-summary").html(logDetails.displayString);
+            $j("#"+auditlog_moduleId+idPart+"-changes-summary").html(logDetails.displayString);
         }
         else if(logDetails.action != 'DELETED'){
-            $j("#auditlog"+idPart+"-changes-summary").html("<span class='auditlog_deleted'>"+auditlog_messages.objectDoesnotExit+"</span>");
+            $j("#"+auditlog_moduleId+idPart+"-changes-summary").html("<span class='auditlog_deleted'>"+auditlog_messages.objectDoesnotExit+"</span>");
         }
 
         if(logDetails.objectId)
-            $j("#auditlog"+idPart+"-changes-objectId").html(logDetails.objectId);
+            $j("#"+auditlog_moduleId+idPart+"-changes-objectId").html(logDetails.objectId);
 
         if(logDetails.objectUuid)
-            $j("#auditlog"+idPart+"-changes-objectUuid").html(logDetails.objectUuid);
+            $j("#"+auditlog_moduleId+idPart+"-changes-objectUuid").html(logDetails.objectUuid);
 
         if(logDetails.classname)
-            $j("#auditlog"+idPart+"-changes-classname").html(logDetails.classname);
+            $j("#"+auditlog_moduleId+idPart+"-changes-classname").html(logDetails.classname);
 
         if(logDetails.openmrsVersion)
-            $j("#auditlog"+idPart+"-changes-openmrsVersion").html(logDetails.openmrsVersion);
+            $j("#"+auditlog_moduleId+idPart+"-changes-openmrsVersion").html(logDetails.openmrsVersion);
 
         if(logDetails.changes){
             var auditLogChanges = logDetails.changes;
@@ -119,14 +119,14 @@ function displayLogDetails(logDetails, isChildLog){
                 otherDataCount++;
                 var currentProperty = auditLogChanges[propertyName];
                 if(isUpdate){
-                    $j("#auditlog"+idPart+"-changes-table tr:last").after(
+                    $j("#"+auditlog_moduleId+idPart+"-changes-table tr:last").after(
                         "<tr>" +
                             "<td class=\"auditlog_align_text_left\" valign=\"top\">"+propertyName+"</td>"+
                             "<td class=\"auditlog_align_text_left\" valign=\"top\">"+currentProperty[0]+"</td>"+
                             "<td class=\"auditlog_align_text_left\" valign=\"top\">"+currentProperty[1]+"</td>" +
                             "</tr>");
                 }else{
-                    $j("#auditlog"+idPart+"-delete-otherData-table tr:last").after(
+                    $j("#"+auditlog_moduleId+idPart+"-delete-otherData-table tr:last").after(
                         "<tr>" +
                             "<td class=\"auditlog_align_text_left\" valign=\"top\">"+propertyName+"</td>"+
                             "<td class=\"auditlog_align_text_left\" valign=\"top\">"+currentProperty+"</td>" +
@@ -138,27 +138,27 @@ function displayLogDetails(logDetails, isChildLog){
                 var otherDataLabel = "";
                 if(isUpdate){
                     otherDataLabel = auditlog_messages.changesLabel;
-                    $j("#auditlog"+idPart+"-changes-table").show();
+                    $j("#"+auditlog_moduleId+idPart+"-changes-table").show();
 
                 }else{
                     otherDataLabel = auditlog_messages.lastKnownStateLabel;
-                    $j("#auditlog"+idPart+"-delete-otherData-table").show();
+                    $j("#"+auditlog_moduleId+idPart+"-delete-otherData-table").show();
                 }
 
-                $j("#auditlog"+idPart+"-otherDataLabel").html("<b>"+otherDataLabel+"</b>");
-                $j("#auditlog"+idPart+"-details .auditlog-changes-element").show();
+                $j("#"+auditlog_moduleId+idPart+"-otherDataLabel").html("<b>"+otherDataLabel+"</b>");
+                $j("#"+auditlog_moduleId+idPart+"-details .auditlog-changes-element").show();
             }
         }
 
         if(logDetails.childAuditLogDetails){
             childAuditLogDetails = logDetails.childAuditLogDetails;
-            $j("#auditlog"+idPart+"-childLogCount").html(childAuditLogDetails.length);
+            $j("#"+auditlog_moduleId+idPart+"-childLogCount").html(childAuditLogDetails.length);
             $j.each(childAuditLogDetails, function(index, detail){
-                $j("#auditlog"+idPart+"-childAuditLogDetails-table tr:last").after(
+                $j("#"+auditlog_moduleId+idPart+"-childAuditLogDetails-table tr:last").after(
                     "<tr class=\"auditlog_"+detail.action+" auditlog_child_log\" onclick=\"auditlog_showDetails('"+detail.uuid+"', true)\">"+
                         "<td class=\"auditlog_align_text_left\" valign=\"top\">"+detail.classname+"</td></tr>");
             });
-            $j("#auditlog"+idPart+"-details .auditlog-childAuditLogDetails-element").show();
+            $j("#"+auditlog_moduleId+idPart+"-details .auditlog-childAuditLogDetails-element").show();
         }
 
         if(isChildLog){
