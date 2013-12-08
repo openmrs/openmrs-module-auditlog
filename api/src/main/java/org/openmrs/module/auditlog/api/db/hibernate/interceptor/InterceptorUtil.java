@@ -52,9 +52,8 @@ final class InterceptorUtil {
 	static String serializeToJson(Object data) {
 		String json = null;
 		if (data != null) {
-			ObjectMapper mapper = new ObjectMapper();
 			try {
-				json = mapper.writeValueAsString(data);
+				json = new ObjectMapper().writeValueAsString(data);
 			}
 			catch (Exception e) {
 				log.error("Failed to generate changes data", e);

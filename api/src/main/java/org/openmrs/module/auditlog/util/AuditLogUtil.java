@@ -122,7 +122,7 @@ public class AuditLogUtil {
 				changes = new ObjectMapper().readValue(auditLog.getSerializedData(), Map.class);
 			}
 			catch (Exception e) {
-				log.warn("Failed to convert changes data to a map", e);
+				log.warn("Failed to convert serialized data to a map", e);
 			}
 		}
 		

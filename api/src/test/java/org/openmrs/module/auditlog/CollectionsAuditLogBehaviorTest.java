@@ -18,6 +18,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.openmrs.module.auditlog.AuditLog.Action.CREATED;
 import static org.openmrs.module.auditlog.AuditLog.Action.DELETED;
 import static org.openmrs.module.auditlog.AuditLog.Action.UPDATED;
@@ -26,6 +27,7 @@ import static org.openmrs.module.auditlog.util.AuditLogConstants.SEPARATOR;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -33,6 +35,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
 import org.openmrs.Cohort;
 import org.openmrs.Concept;
@@ -740,11 +744,24 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
 		auditLogService.startMonitoring(User.class);
 		try {
+			Map.Entry<String, String> entry = user.getUserProperties().entrySet().iterator().next();
+			String userProperties = "{\"" + entry.getKey() + "\"" + MAP_KEY_VALUE_SEPARATOR + "\"" + entry.getValue()
+			        + "\"}";
 			assertEquals(true, auditLogService.isMonitored(User.class));
 			us.purgeUser(user);
 			List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, Collections.singletonList(DELETED));
 			assertEquals(1, logs.size());
 			AuditLog al = logs.get(0);
+			Map<String, Object> propertyNameValueMap = new HashMap<String, Object>();
+			if (StringUtils.isNotBlank(al.getSerializedData())) {
+				try {
+					propertyNameValueMap = new ObjectMapper().readValue(al.getSerializedData(), Map.class);
+				}
+				catch (Exception e) {
+					fail("Failed to convert serialized data to a map");
+				}
+			}
+			assertEquals(userProperties, propertyNameValueMap.get("userProperties"));
 		}
 		finally {
 			auditLogService.stopMonitoring(User.class);

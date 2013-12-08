@@ -334,7 +334,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 								if (entityCollectionsMap.get().peek().get(entity) == null) {
 									entityCollectionsMap.get().peek().put(entity, new ArrayList<Collection<?>>());
 								}
-								
+								//TODO, This should only work for one-to-many and one-to-one associations
 								entityCollectionsMap.get().peek().get(entity).add(collection);
 							}
 						} //else {
