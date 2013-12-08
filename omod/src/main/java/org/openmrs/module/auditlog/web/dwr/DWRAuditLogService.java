@@ -267,17 +267,27 @@ public class DWRAuditLogService {
 		if (includeUuidAndId && OpenmrsObject.class.isAssignableFrom(obj.getClass())) {
 			OpenmrsObject openmrsObj = (OpenmrsObject) obj;
 			String id = "";
+			String uuid = "";
 			try {
-				if (openmrsObj.getId() != null)
-					id = " [" + openmrsObj.getId() + "]";
+				if (openmrsObj.getUuid() != null) {
+					uuid = " [" + openmrsObj.getUuid() + "]";
+				}
 			}
-			catch (UnsupportedOperationException e) {
+			catch (Exception e) {
+				//ignore
+			}
+			try {
+				if (openmrsObj.getId() != null) {
+					id = " [" + openmrsObj.getId() + "]";
+				}
+			}
+			catch (Exception e) {
 				//ignore
 			}
 			if (StringUtils.isBlank(displayString)) {
-				displayString = openmrsObj.getUuid() + id;
+				displayString = uuid + id;
 			} else {
-				displayString = displayString + " - " + openmrsObj.getUuid() + id;
+				displayString = displayString + " - " + uuid + id;
 			}
 		}
 		
