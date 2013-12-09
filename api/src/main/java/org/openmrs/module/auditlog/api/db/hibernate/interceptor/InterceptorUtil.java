@@ -33,6 +33,8 @@ import org.hibernate.SessionFactory;
 import org.hibernate.metadata.ClassMetadata;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.auditlog.AuditLog;
+import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 
 /**
@@ -41,6 +43,35 @@ import org.openmrs.module.auditlog.util.AuditLogConstants;
 final class InterceptorUtil {
 	
 	private static final Log log = LogFactory.getLog(InterceptorUtil.class);
+	
+	private static AuditLogDAO auditLogDao;
+	
+	/**
+	 * @return the dao
+	 */
+	static AuditLogDAO getAuditLogDao() {
+		if (auditLogDao == null) {
+			auditLogDao = Context.getRegisteredComponents(AuditLogDAO.class).get(0);
+		}
+		return auditLogDao;
+	}
+	
+	static void saveAuditLog(AuditLog auditLog) {
+		getAuditLogDao().save(auditLog);
+	}
+	
+	/**
+	 * Checks if a class is marked as monitored or is explicitly monitored
+	 * 
+	 * @param clazz the clazz to check
+	 * @return true if is implicitly monitored otherwise false
+	 */
+	static boolean isMonitored(Class<?> clazz) {
+		if (!OpenmrsObject.class.isAssignableFrom(clazz)) {
+			return false;
+		}
+		return getAuditLogDao().isMonitored(clazz) || getAuditLogDao().isImplicitlyMonitored(clazz);
+	}
 	
 	/**
 	 * Utility method that serializes the passed in data to json, this method asssumes all the

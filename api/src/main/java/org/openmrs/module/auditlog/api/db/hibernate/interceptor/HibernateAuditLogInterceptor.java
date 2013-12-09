@@ -42,7 +42,6 @@ import org.openmrs.OpenmrsObject;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
-import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.util.OpenmrsUtil;
 
 /**
@@ -86,22 +85,10 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	
 	private ThreadLocal<Stack<Date>> date = new ThreadLocal<Stack<Date>>();
 	
-	private AuditLogDAO auditLogDao;
-	
 	//Ignore these properties because they match auditLog.user and auditLog.dateCreated
 	private static final String[] IGNORED_PROPERTIES = new String[] { "changedBy", "dateChanged", "creator", "dateCreated",
 	        "voidedBy", "dateVoided", "retiredBy", "dateRetired", "personChangedBy", "personDateChanged", "personCreator",
 	        "personDateCreated" };
-	
-	/**
-	 * @return the dao
-	 */
-	public AuditLogDAO getAuditLogDao() {
-		if (auditLogDao == null)
-			auditLogDao = Context.getRegisteredComponents(AuditLogDAO.class).get(0);
-		
-		return auditLogDao;
-	}
 	
 	/**
 	 * @see org.hibernate.EmptyInterceptor#afterTransactionBegin(org.hibernate.Transaction)
@@ -127,7 +114,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	 */
 	@Override
 	public boolean onSave(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
-		if (isAuditable(entity)) {
+		if (InterceptorUtil.isMonitored(entity.getClass())) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			if (log.isDebugEnabled())
 				log.debug("Creating log entry for created object with uuid:" + openmrsObject.getUuid() + " of type:"
@@ -147,7 +134,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	public boolean onFlushDirty(Object entity, Serializable id, Object[] currentState, Object[] previousState,
 	                            String[] propertyNames, Type[] types) {
 		
-		if (propertyNames != null && isAuditable(entity)) {
+		if (propertyNames != null && InterceptorUtil.isMonitored(entity.getClass())) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			Map<String, String[]> propertyChangesMap = null;//Map<propertyName, Object[]{currentValue, PreviousValue}>
 			for (int i = 0; i < propertyNames.length; i++) {
@@ -206,7 +193,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	 */
 	@Override
 	public void onDelete(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
-		if (isAuditable(entity)) {
+		if (InterceptorUtil.isMonitored(entity.getClass())) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			if (log.isDebugEnabled()) {
 				log.debug("Creating log entry for deleted object with uuid:" + openmrsObject.getUuid() + " of type:"
@@ -230,7 +217,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	public void onCollectionUpdate(Object collection, Serializable key) throws CallbackException {
 		if (collection != null) {
 			PersistentCollection persistentColl = ((PersistentCollection) collection);
-			if (isAuditable(persistentColl.getOwner())) {
+			if (InterceptorUtil.isMonitored(persistentColl.getOwner().getClass())) {
 				OpenmrsObject owningObject = (OpenmrsObject) persistentColl.getOwner();
 				Map previousStoredSnapshotMap = (Map) persistentColl.getStoredSnapshot();
 				String ownerUuid = owningObject.getUuid();
@@ -267,7 +254,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					previousSerializedItems = InterceptorUtil.serializeMap(previousStoredSnapshotMap);
 					newSerializedItems = InterceptorUtil.serializeMap((Map) collection);
 					//For some reason hibernate ends calling onCollectionUpdate even when the map has
-					//no changes. I think it uses object equality for the map entries and assumes the map has 
+					//no changes. I think it uses object equality for the map entries and assumes the map has
 					//changes. Noticed this happens for user.userProperties and added a unit test to prove it
 					if (previousSerializedItems.equals(newSerializedItems)) {
 						return;
@@ -286,7 +273,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 		//We need to get all collection elements and link their childlogs to the parent's
 		if (collection != null) {
 			PersistentCollection persistentColl = (PersistentCollection) collection;
-			if (isAuditable(persistentColl.getOwner())) {
+			if (InterceptorUtil.isMonitored(persistentColl.getOwner().getClass())) {
 				OpenmrsObject owningObject = (OpenmrsObject) persistentColl.getOwner();
 				if (Collection.class.isAssignableFrom(collection.getClass())) {
 					Collection coll = (Collection) collection;
@@ -317,7 +304,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	@Override
 	public int[] findDirty(Object entity, Serializable id, Object[] currentState, Object[] previousState,
 	                       String[] propertyNames, Type[] types) {
-		if (getAuditLogDao().isMonitored(entity.getClass())) {
+		if (InterceptorUtil.isMonitored(entity.getClass())) {
 			if (entityCollectionsMap.get().peek().get(entity) == null) {
 				//This is the first time we are trying to find collection elements for this object
 				if (log.isDebugEnabled())
@@ -360,7 +347,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			try {
 				//TODO handle daemon or un authenticated operations
 				
-				//If we have any entities in the session that have child collections and there were some updates, 
+				//If we have any entities in the session that have child collections and there were some updates,
 				//check all collection items to find dirty ones so that we can mark the the owners as dirty too
 				//I.e if a ConceptName/Mapping/Description was edited, mark the the Concept as dirty too
 				for (Map.Entry<Object, List<Collection<?>>> entry : entityCollectionsMap.get().peek().entrySet()) {
@@ -391,7 +378,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 									updates.get().peek().add(owner);
 								}
 								
-								if (getAuditLogDao().isMonitored(obj.getClass())) {
+								if (InterceptorUtil.isMonitored(obj.getClass())) {
 									if (ownerUuidChildLogsMap.get().peek().get(owner.getUuid()) == null)
 										ownerUuidChildLogsMap.get().peek().put(owner.getUuid(), new ArrayList<AuditLog>());
 									
@@ -421,7 +408,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 						//this is idea specific to suppress a warning
 						boolean isDelete = OpenmrsUtil.collectionContains(deletes.get().peek(), removed);
 						if (isDelete) {
-							if (getAuditLogDao().isMonitored(removed.getClass())) {
+							if (InterceptorUtil.isMonitored(removed.getClass())) {
 								if (ownerUuidChildLogsMap.get().peek().get(removedItemsOwner.getUuid()) == null)
 									ownerUuidChildLogsMap.get().peek()
 									        .put(removedItemsOwner.getUuid(), new ArrayList<AuditLog>());
@@ -448,7 +435,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				}
 				
 				for (AuditLog al : logs) {
-					getAuditLogDao().save(al);
+					InterceptorUtil.saveAuditLog(al);
 				}
 			}
 			catch (Exception e) {
@@ -519,16 +506,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			}
 		}
 		return auditLog;
-	}
-	
-	/**
-	 * Checks if a class is marked as monitored or is explicitly monitored
-	 * 
-	 * @param entity the entity to check
-	 * @return true if is auditable otherwise false
-	 */
-	private boolean isAuditable(Object entity) {
-		return getAuditLogDao().isMonitored(entity.getClass()) || getAuditLogDao().isImplicitlyMonitored(entity.getClass());
 	}
 	
 	private void initializeStacksIfNecessary() {
