@@ -64,7 +64,7 @@ final class InterceptorUtil {
 	 * Checks if a class is marked as monitored or is explicitly monitored
 	 * 
 	 * @param clazz the clazz to check
-	 * @return true if is implicitly monitored otherwise false
+	 * @return true if is monitored or implicitly monitored otherwise false
 	 */
 	static boolean isMonitored(Class<?> clazz) {
 		if (!OpenmrsObject.class.isAssignableFrom(clazz)) {
