@@ -37,26 +37,26 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.hibernate.persister.collection.CollectionPersister;
 import org.junit.Test;
 import org.openmrs.Cohort;
 import org.openmrs.Concept;
 import org.openmrs.ConceptDescription;
 import org.openmrs.GlobalProperty;
-import org.openmrs.Location;
-import org.openmrs.LocationTag;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.Order;
 import org.openmrs.Patient;
 import org.openmrs.PatientIdentifier;
 import org.openmrs.PatientProgram;
+import org.openmrs.Person;
 import org.openmrs.PersonAddress;
 import org.openmrs.PersonAttribute;
 import org.openmrs.PersonName;
 import org.openmrs.Relationship;
+import org.openmrs.Role;
 import org.openmrs.User;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.CohortService;
-import org.openmrs.api.LocationService;
 import org.openmrs.api.OrderService;
 import org.openmrs.api.PatientService;
 import org.openmrs.api.PersonService;
@@ -75,6 +75,109 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
+	public void shouldCreateAnAuditLogForAParentWhenAMonitoredElementIsRemovedFromAChildCollection() throws Exception {
+		PatientService ps = Context.getPatientService();
+		Patient patient = ps.getPatient(2);
+		ps.savePatient(patient);
+		List<AuditLog> existingUpdateLogs = getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED));
+		assertEquals(0, existingUpdateLogs.size());
+		int originalCount = patient.getNames().size();
+		assertTrue(originalCount > 1);
+		
+		auditLogService.startMonitoring(Patient.class);
+		auditLogService.startMonitoring(PersonName.class);
+		assertTrue(auditLogService.isMonitored(PersonName.class));
+		PersonName nameToRemove = null;
+		for (PersonName name : patient.getNames()) {
+			if (!name.isPreferred()) {
+				nameToRemove = name;
+				break;
+			}
+		}
+		assertNotNull(nameToRemove);
+		String nameUuid = nameToRemove.getUuid();
+		patient.removeName(nameToRemove);
+		ps.savePatient(patient);
+		assertEquals(originalCount - 1, patient.getNames().size());
+		List<AuditLog> patientLogs = getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED));
+		assertEquals(1, patientLogs.size());
+		AuditLog al = patientLogs.get(0);
+		assertEquals(originalCount - 1, patient.getNames().size());
+		assertEquals(-1, AuditLogUtil.getNewValueOfUpdatedItem("names", al).indexOf(nameToRemove.getUuid()));
+		for (PersonName name : patient.getNames()) {
+			assertTrue(AuditLogUtil.getPreviousValueOfUpdatedItem("names", al).indexOf(name.getUuid()) > -1);
+		}
+		
+		List<AuditLog> nameLogs = getAllLogs(nameUuid, PersonName.class, Collections.singletonList(DELETED));
+		assertEquals(1, nameLogs.size());
+		assertEquals(al, nameLogs.get(0).getParentAuditLog());
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldCreateAnAuditLogForAParentWhenAMonitoredElementIsAddedToAChildCollection() throws Exception {
+		Concept concept = conceptService.getConcept(5089);
+		//something with ConceptMaps having blank uuids and now getting set, this should have been
+		//fixed in later versions
+		conceptService.saveConcept(concept);
+		List<AuditLog> existingUpdateLogs = getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED));
+		int originalCount = concept.getDescriptions().size();
+		assertTrue(originalCount == 1);
+		String previousDescriptionUuids = AuditLogConstants.UUID_LABEL + concept.getDescription().getUuid();
+		
+		auditLogService.startMonitoring(ConceptDescription.class);
+		assertTrue(auditLogService.isMonitored(ConceptDescription.class));
+		
+		ConceptDescription cd1 = new ConceptDescription("desc1", Locale.ENGLISH);
+		cd1.setDateCreated(new Date());
+		cd1.setCreator(Context.getAuthenticatedUser());
+		concept.addDescription(cd1);
+		conceptService.saveConcept(concept);
+		
+		List<AuditLog> conceptLogs = getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED));
+		assertEquals(existingUpdateLogs.size() + 1, conceptLogs.size());
+		conceptLogs.removeAll(existingUpdateLogs);
+		assertEquals(1, conceptLogs.size());
+		AuditLog al = conceptLogs.get(0);
+		assertEquals(AuditLogUtil.getNewValueOfUpdatedItem("descriptions", al), "[\"" + previousDescriptionUuids + "\""
+		        + AuditLogConstants.SEPARATOR + "\"" + AuditLogConstants.UUID_LABEL + cd1.getUuid() + "\"]");
+		assertEquals(AuditLogUtil.getPreviousValueOfUpdatedItem("descriptions", al), "[\"" + previousDescriptionUuids
+		        + "\"]");
+		
+		List<AuditLog> descriptionLogs = getAllLogs(cd1.getUuid(), ConceptDescription.class,
+		    Collections.singletonList(CREATED));
+		assertEquals(1, descriptionLogs.size());
+		assertEquals(al, descriptionLogs.get(0).getParentAuditLog());
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldCreateAnAuditLogForTheParentObjectWhenAMonitoredElementInAChildCollectionIsUpdated() throws Exception {
+		Concept concept = conceptService.getConcept(7);
+		assertEquals(0, getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED)).size());
+		
+		int originalDescriptionCount = concept.getDescriptions().size();
+		assertTrue(originalDescriptionCount > 0);
+		
+		auditLogService.startMonitoring(ConceptDescription.class);
+		assertTrue(auditLogService.isMonitored(ConceptDescription.class));
+		
+		ConceptDescription description = concept.getDescription();
+		description.setDescription("another descr");
+		concept = conceptService.saveConcept(concept);
+		assertEquals(originalDescriptionCount, concept.getDescriptions().size());
+		List<AuditLog> conceptLogs = getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED));
+		assertEquals(1, conceptLogs.size());
+		AuditLog al = conceptLogs.get(0);
+		
+		List<AuditLog> descriptionLogs = getAllLogs(description.getUuid(), ConceptDescription.class,
+		    Collections.singletonList(UPDATED));
+		assertEquals(1, descriptionLogs.size());
+		assertEquals(al, descriptionLogs.get(0).getParentAuditLog());
+	}
+	
+	@Test
+	@NotTransactional
 	public void shouldCreateAnAuditLogForAParentWhenAnUnMonitoredElementIsRemovedFromAChildCollection() throws Exception {
 		assertFalse(auditLogService.isMonitored(PersonName.class));
 		PatientService ps = Context.getPatientService();
@@ -86,34 +189,30 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertTrue(originalCount > 1);
 		
 		auditLogService.startMonitoring(Patient.class);
-		try {
-			PersonName nameToRemove = null;
-			for (PersonName name : patient.getNames()) {
-				if (!name.isPreferred()) {
-					nameToRemove = name;
-					break;
-				}
+		PersonName nameToRemove = null;
+		for (PersonName name : patient.getNames()) {
+			if (!name.isPreferred()) {
+				nameToRemove = name;
+				break;
 			}
-			assertNotNull(nameToRemove);
-			String nameUuid = nameToRemove.getUuid();
-			patient.removeName(nameToRemove);
-			ps.savePatient(patient);
-			assertEquals(originalCount - 1, patient.getNames().size());
-			List<AuditLog> patientLogs = getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED));
-			assertEquals(1, patientLogs.size());
-			AuditLog al = patientLogs.get(0);
-			assertEquals(al.getObjectUuid(), patient.getUuid());
-			assertEquals(originalCount - 1, patient.getNames().size());
-			assertEquals(-1, AuditLogUtil.getNewValueOfUpdatedItem("names", al).indexOf(nameToRemove.getUuid()));
-			for (PersonName name : patient.getNames()) {
-				assertTrue(AuditLogUtil.getPreviousValueOfUpdatedItem("names", al).indexOf(name.getUuid()) > -1);
-			}
-			List<AuditLog> nameLogs = getAllLogs(nameUuid, PersonName.class, Collections.singletonList(DELETED));
-			assertEquals(1, nameLogs.size());
 		}
-		finally {
-			auditLogService.stopMonitoring(Patient.class);
+		assertNotNull(nameToRemove);
+		String nameUuid = nameToRemove.getUuid();
+		patient.removeName(nameToRemove);
+		ps.savePatient(patient);
+		assertEquals(originalCount - 1, patient.getNames().size());
+		List<AuditLog> patientLogs = getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED));
+		assertEquals(1, patientLogs.size());
+		AuditLog al = patientLogs.get(0);
+		assertEquals(originalCount - 1, patient.getNames().size());
+		assertEquals(-1, AuditLogUtil.getNewValueOfUpdatedItem("names", al).indexOf(nameToRemove.getUuid()));
+		for (PersonName name : patient.getNames()) {
+			assertTrue(AuditLogUtil.getPreviousValueOfUpdatedItem("names", al).indexOf(name.getUuid()) > -1);
 		}
+		
+		List<AuditLog> nameLogs = getAllLogs(nameUuid, PersonName.class, Collections.singletonList(DELETED));
+		assertEquals(1, nameLogs.size());
+		assertEquals(al, nameLogs.get(0).getParentAuditLog());
 	}
 	
 	@Test
@@ -140,7 +239,6 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		conceptLogs.removeAll(existingUpdateLogs);
 		assertEquals(1, conceptLogs.size());
 		AuditLog al = conceptLogs.get(0);
-		assertEquals(al.getObjectUuid(), concept.getUuid());
 		assertEquals(AuditLogUtil.getNewValueOfUpdatedItem("descriptions", al), "[\"" + previousDescriptionUuids + "\""
 		        + AuditLogConstants.SEPARATOR + "\"" + AuditLogConstants.UUID_LABEL + cd1.getUuid() + "\"]");
 		assertEquals(AuditLogUtil.getPreviousValueOfUpdatedItem("descriptions", al), "[\"" + previousDescriptionUuids
@@ -149,6 +247,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		List<AuditLog> descriptionLogs = getAllLogs(cd1.getUuid(), ConceptDescription.class,
 		    Collections.singletonList(CREATED));
 		assertEquals(1, descriptionLogs.size());
+		assertEquals(al, descriptionLogs.get(0).getParentAuditLog());
 	}
 	
 	@Test
@@ -162,11 +261,18 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		int originalDescriptionCount = concept.getDescriptions().size();
 		assertTrue(originalDescriptionCount > 0);
 		
-		concept.getDescription().setDescription("another descr");
+		ConceptDescription description = concept.getDescription();
+		description.setDescription("another descr");
 		concept = conceptService.saveConcept(concept);
 		assertEquals(originalDescriptionCount, concept.getDescriptions().size());
+		List<AuditLog> conceptLogs = getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED));
+		assertEquals(1, conceptLogs.size());
+		AuditLog al = conceptLogs.get(0);
 		
-		assertEquals(1, getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED)).size());
+		List<AuditLog> descriptionLogs = getAllLogs(description.getUuid(), ConceptDescription.class,
+		    Collections.singletonList(UPDATED));
+		assertEquals(1, descriptionLogs.size());
+		assertEquals(al, descriptionLogs.get(0).getParentAuditLog());
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -199,7 +305,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Test
 	@NotTransactional
-	public void shouldCreateAnAuditLogForAParentWhenAnItemIsAddedToCollectionOfNoneOpenmrsObjects() throws Exception {
+	public void shouldCreateAnAuditLogForAParentWhenAnItemIsAddedToCollectionOfNonOpenmrsObjects() throws Exception {
 		executeDataSet("org/openmrs/api/include/CohortServiceTest-cohort.xml");
 		CohortService cs = Context.getCohortService();
 		final Integer memberId = 5;
@@ -229,7 +335,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Test
 	@NotTransactional
-	public void shouldCreateAnAuditLogForAParentWhenAnItemIsRemovedFromCollectionOfNoneOpenmrsObjects() throws Exception {
+	public void shouldCreateAnAuditLogForAParentWhenAnItemIsRemovedFromCollectionOfNonOpenmrsObjects() throws Exception {
 		executeDataSet("org/openmrs/api/include/CohortServiceTest-cohort.xml");
 		CohortService cs = Context.getCohortService();
 		final Integer memberId = 2;
@@ -258,7 +364,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Test
 	@NotTransactional
-	public void shouldCreateAnAuditLogForAParentWhenAllItemsAreRemovedFromCollectionOfNoneOpenmrsObjects() throws Exception {
+	public void shouldCreateAnAuditLogForAParentWhenAllItemsAreRemovedFromCollectionOfNonOpenmrsObjects() throws Exception {
 		executeDataSet("org/openmrs/api/include/CohortServiceTest-cohort.xml");
 		CohortService cs = Context.getCohortService();
 		final Integer memberId2 = 2;
@@ -292,26 +398,26 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldCreateLogForUnMonitoredTypeIfTheOwningTypeIsMonitoredAndStrategyIsAllExcept() throws Exception {
-		executeDataSet("org/openmrs/api/include/LocationServiceTest-initialData.xml");
-		LocationService ls = Context.getLocationService();
-		assertEquals(0, getAllLogs().size());
-		
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
 		gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
 		as.saveGlobalProperty(gp);
 		assertEquals(MonitoringStrategy.ALL_EXCEPT, auditLogService.getMonitoringStrategy());
-		assertEquals(true, auditLogService.isMonitored(Location.class));
-		assertEquals(true, auditLogService.isMonitored(LocationTag.class));
+		assertEquals(true, auditLogService.isMonitored(Person.class));
+		assertEquals(true, auditLogService.isMonitored(PersonAddress.class));
 		
-		auditLogService.stopMonitoring(LocationTag.class);
-		assertEquals(false, auditLogService.isMonitored(LocationTag.class));
-		Location loc = ls.getLocation(2);
-		LocationTag tag = loc.getTags().iterator().next();
-		tag.setDescription("new");
-		ls.saveLocation(loc);
-		assertEquals(1, getAllLogs(tag.getUuid(), LocationTag.class, Collections.singletonList(UPDATED)).size());
-		assertEquals(1, getAllLogs(loc.getUuid(), Location.class, Collections.singletonList(UPDATED)).size());
+		auditLogService.stopMonitoring(PersonAddress.class);
+		assertEquals(false, auditLogService.isMonitored(PersonAddress.class));
+		PersonService ps = Context.getPersonService();
+		Person person = ps.getPerson(2);
+		PersonAddress address = person.getPersonAddress();
+		address.setAddress1("new");
+		ps.savePerson(person);
+		List<AuditLog> addressLogs = getAllLogs(address.getUuid(), PersonAddress.class, Collections.singletonList(UPDATED));
+		assertEquals(1, addressLogs.size());
+		List<AuditLog> personLogs = getAllLogs(person.getUuid(), Person.class, Collections.singletonList(UPDATED));
+		assertEquals(1, personLogs.size());
+		assertEquals(personLogs.get(0), addressLogs.get(0).getParentAuditLog());
 	}
 	
 	@Test
@@ -767,5 +873,212 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 			auditLogService.stopMonitoring(User.class);
 			assertEquals(false, auditLogService.isMonitored(User.class));
 		}
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldNotLinkChildLogsToThatOfTheOwnerForUpdatedItemsInCollectionMappedAsManyToMany() throws Exception {
+		UserService us = Context.getUserService();
+		User user = us.getUser(501);
+		assertEquals(1, user.getRoles().size());
+		Role role = user.getRoles().iterator().next();
+		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
+		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
+		assertEquals(false, auditLogService.isMonitored(User.class));
+		auditLogService.startMonitoring(User.class);
+		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
+		assertTrue(cp.isManyToMany());
+		assertEquals(true, auditLogService.isMonitored(User.class));
+		
+		user.setUsername("new user name");
+		role.setDescription("Testing");
+		us.saveUser(user, null);
+		
+		List<AuditLog> userLogs = getAllLogs(user.getUuid(), User.class, Collections.singletonList(UPDATED));
+		assertEquals(1, userLogs.size());
+		assertEquals(0, userLogs.get(0).getChildAuditLogs().size());
+		List<AuditLog> roleLogs = getAllLogs(role.getUuid(), Role.class, Collections.singletonList(UPDATED));
+		assertEquals(1, roleLogs.size());
+		assertNull(roleLogs.get(0).getParentAuditLog());
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldNotMarkOwnerAsUpdatedWhenItemIsUpdatedAndIsInACollectionMappedAsManyToMany() throws Exception {
+		UserService us = Context.getUserService();
+		User user = us.getUser(501);
+		assertEquals(1, user.getRoles().size());
+		Role role = user.getRoles().iterator().next();
+		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
+		assertEquals(false, auditLogService.isMonitored(User.class));
+		
+		auditLogService.startMonitoring(User.class);
+		assertEquals(true, auditLogService.isMonitored(User.class));
+		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
+		assertTrue(cp.isManyToMany());
+		role.setDescription("Testing");
+		us.saveUser(user, null);
+		
+		assertEquals(0, getAllLogs(user.getUuid(), User.class, Collections.singletonList(UPDATED)).size());
+		List<AuditLog> roleLogs = getAllLogs(role.getUuid(), Role.class, Collections.singletonList(UPDATED));
+		assertEquals(1, roleLogs.size());
+		assertNull(roleLogs.get(0).getParentAuditLog());
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldNotCreateLogForAnItemRemovedFromACollectionMappedAsManyToMany() throws Exception {
+		UserService us = Context.getUserService();
+		User user = us.getUser(501);
+		assertEquals(1, user.getRoles().size());
+		Role role = user.getRoles().iterator().next();
+		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
+		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
+		assertEquals(false, auditLogService.isMonitored(User.class));
+		auditLogService.startMonitoring(User.class);
+		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
+		assertTrue(cp.isManyToMany());
+		assertEquals(true, auditLogService.isMonitored(User.class));
+		
+		user.removeRole(role);
+		us.saveUser(user, null);
+		
+		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
+		//But should create an audit log for the owner
+		List<AuditLog> userLogs = getAllLogs(user.getUuid(), User.class, Collections.singletonList(UPDATED));
+		assertEquals(1, userLogs.size());
+		AuditLog al = userLogs.get(0);
+		assertEquals(0, al.getChildAuditLogs().size());
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldNotLinkLogsToThatOfTheOwnerForANewItemAddedToACollectionMappedAsManyToMany() throws Exception {
+		UserService us = Context.getUserService();
+		User user = us.getUser(501);
+		assertEquals(1, user.getRoles().size());
+		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
+		assertEquals(false, auditLogService.isMonitored(User.class));
+		auditLogService.startMonitoring(User.class);
+		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
+		assertTrue(cp.isManyToMany());
+		assertEquals(true, auditLogService.isMonitored(User.class));
+		
+		Role role = new Role("new role", "new desc");
+		user.addRole(role);
+		us.saveUser(user, null);
+		
+		List<AuditLog> roleLogs = getAllLogs(role.getUuid(), Role.class, Collections.singletonList(CREATED));
+		assertEquals(1, roleLogs.size());
+		List<AuditLog> userLogs = getAllLogs(user.getUuid(), User.class, Collections.singletonList(UPDATED));
+		assertEquals(1, userLogs.size());
+		AuditLog al = userLogs.get(0);
+		assertEquals(0, al.getChildAuditLogs().size());
+		assertNull(roleLogs.get(0).getParentAuditLog());
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldNotLinkLogsToThatOfTheOwnerForAnExistingItemAddedToACollectionMappedAsManyToMany() throws Exception {
+		UserService us = Context.getUserService();
+		User user = us.getUser(501);
+		Role role = us.getRole("Anonymous");
+		assertNotNull(role);
+		assertFalse(user.getRoles().contains(role));
+		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
+		assertEquals(false, auditLogService.isMonitored(User.class));
+		auditLogService.startMonitoring(User.class);
+		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
+		assertTrue(cp.isManyToMany());
+		assertEquals(true, auditLogService.isMonitored(User.class));
+		
+		user.addRole(role);
+		us.saveUser(user, null);
+		
+		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
+		List<AuditLog> userLogs = getAllLogs(user.getUuid(), User.class, Collections.singletonList(UPDATED));
+		assertEquals(1, userLogs.size());
+		assertEquals(0, userLogs.get(0).getChildAuditLogs().size());
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldNotCreateLogForAnItemRemovedFromACollectionMappedAsManyToManyAndOwnerIsEdited() throws Exception {
+		UserService us = Context.getUserService();
+		User user = us.getUser(501);
+		assertEquals(1, user.getRoles().size());
+		Role role = user.getRoles().iterator().next();
+		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
+		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
+		assertEquals(false, auditLogService.isMonitored(User.class));
+		auditLogService.startMonitoring(User.class);
+		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
+		assertTrue(cp.isManyToMany());
+		assertEquals(true, auditLogService.isMonitored(User.class));
+		
+		user.setUsername("New");
+		user.removeRole(role);
+		us.saveUser(user, null);
+		
+		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
+		//But should create an audit log for the owner
+		List<AuditLog> userLogs = getAllLogs(user.getUuid(), User.class, Collections.singletonList(UPDATED));
+		assertEquals(1, userLogs.size());
+		AuditLog al = userLogs.get(0);
+		assertEquals(0, al.getChildAuditLogs().size());
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldNotLinkLogsToThatOfTheOwnerForANewItemAddedToACollectionMappedAsManyToManyAndOwnerIsEdited()
+	    throws Exception {
+		UserService us = Context.getUserService();
+		User user = us.getUser(501);
+		assertEquals(1, user.getRoles().size());
+		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
+		assertEquals(false, auditLogService.isMonitored(User.class));
+		auditLogService.startMonitoring(User.class);
+		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
+		assertTrue(cp.isManyToMany());
+		assertEquals(true, auditLogService.isMonitored(User.class));
+		
+		user.setUsername("New");
+		Role role = new Role("new role", "new desc");
+		user.addRole(role);
+		us.saveUser(user, null);
+		
+		List<AuditLog> roleLogs = getAllLogs(role.getUuid(), Role.class, Collections.singletonList(CREATED));
+		assertEquals(1, roleLogs.size());
+		List<AuditLog> userLogs = getAllLogs(user.getUuid(), User.class, Collections.singletonList(UPDATED));
+		assertEquals(1, userLogs.size());
+		AuditLog al = userLogs.get(0);
+		assertEquals(0, al.getChildAuditLogs().size());
+		assertNull(roleLogs.get(0).getParentAuditLog());
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldNotLinkLogsToThatOfTheOwnerForAnExistingItemAddedToACollectionMappedAsManyToManyAndOwnerIsEdited()
+	    throws Exception {
+		UserService us = Context.getUserService();
+		User user = us.getUser(501);
+		Role role = us.getRole("Anonymous");
+		assertNotNull(role);
+		assertFalse(user.getRoles().contains(role));
+		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
+		assertEquals(false, auditLogService.isMonitored(User.class));
+		auditLogService.startMonitoring(User.class);
+		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
+		assertTrue(cp.isManyToMany());
+		assertEquals(true, auditLogService.isMonitored(User.class));
+		
+		user.setUsername("New");
+		user.addRole(role);
+		us.saveUser(user, null);
+		
+		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
+		List<AuditLog> userLogs = getAllLogs(user.getUuid(), User.class, Collections.singletonList(UPDATED));
+		assertEquals(1, userLogs.size());
+		assertEquals(0, userLogs.get(0).getChildAuditLogs().size());
 	}
 }

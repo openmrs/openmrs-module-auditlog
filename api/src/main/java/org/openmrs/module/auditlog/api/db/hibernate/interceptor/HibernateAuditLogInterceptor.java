@@ -42,6 +42,7 @@ import org.openmrs.OpenmrsObject;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
+import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.util.OpenmrsUtil;
 
 /**
@@ -321,8 +322,10 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 								if (entityCollectionsMap.get().peek().get(entity) == null) {
 									entityCollectionsMap.get().peek().put(entity, new ArrayList<Collection<?>>());
 								}
-								//TODO, This should only work for one-to-many and one-to-one associations
-								entityCollectionsMap.get().peek().get(entity).add(collection);
+								if (!AuditLogUtil.getCollectionPersister(propertyNames[i], entity.getClass(), null)
+								        .isManyToMany()) {
+									entityCollectionsMap.get().peek().get(entity).add(collection);
+								}
 							}
 						} //else {
 						  //TODO handle maps too because hibernate treats maps to be of CollectionType
@@ -358,7 +361,6 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 							
 							//We handle the removed collections items below because either way they
 							//are nolonger in the current collection
-							//This is an IDEA specific comment to suppress warnings
 							if (isInsert || isUpdate) {
 								OpenmrsObject owner = (OpenmrsObject) entry.getKey();
 								boolean ownerHasUpdates = OpenmrsUtil.collectionContains(updates.get().peek(), owner);
@@ -404,8 +406,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				        .entrySet()) {
 					OpenmrsObject removedItemsOwner = entry.getKey();
 					for (OpenmrsObject removed : entry.getValue()) {
-						//This should fail for collections that don't have all-delete-orphan cascade
-						//this is idea specific to suppress a warning
+						//TODO add test to ensure that this should fail for collections
+						//that don't have all-delete-orphan cascade
 						boolean isDelete = OpenmrsUtil.collectionContains(deletes.get().peek(), removed);
 						if (isDelete) {
 							if (InterceptorUtil.isMonitored(removed.getClass())) {

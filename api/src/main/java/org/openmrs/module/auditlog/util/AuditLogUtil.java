@@ -31,7 +31,12 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.hibernate.MappingException;
+import org.hibernate.SessionFactory;
+import org.hibernate.engine.SessionFactoryImplementor;
+import org.hibernate.persister.collection.CollectionPersister;
 import org.openmrs.api.APIException;
+import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 
 /**
@@ -181,6 +186,34 @@ public class AuditLogUtil {
 			return ((List<String>) changes.get(propertyName)).get(1);
 		}
 		return null;
+	}
+	
+	/**
+	 * Gets the CollectionPersister for the collection matching the specified name in the specified
+	 * class
+	 * 
+	 * @param collPropertyName
+	 * @param clazz
+	 * @should return the collection persister
+	 * @should return the collection persister if the property is declared in a super class
+	 */
+	public static CollectionPersister getCollectionPersister(String collPropertyName, Class<?> clazz,
+	                                                         SessionFactoryImplementor sfi) {
+		if (sfi == null) {
+			sfi = (SessionFactoryImplementor) Context.getRegisteredComponents(SessionFactory.class).get(0);
+		}
+		CollectionPersister cp = null;
+		try {
+			cp = sfi.getCollectionPersister(clazz.getName() + "." + collPropertyName);
+		}
+		catch (MappingException e) {
+			//check the super classes if any
+			if (clazz.getSuperclass() != null) {
+				cp = getCollectionPersister(collPropertyName, clazz.getSuperclass(), sfi);
+			}
+		}
+		
+		return cp;
 	}
 	
 }
