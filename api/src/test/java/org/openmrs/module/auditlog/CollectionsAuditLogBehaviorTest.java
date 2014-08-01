@@ -313,23 +313,16 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		List actions = Collections.singletonList(UPDATED);
 		int count = getAllLogs(c.getUuid(), Cohort.class, actions).size();
 		auditLogService.startMonitoring(Cohort.class);
-		try {
-			assertTrue(auditLogService.isMonitored(Cohort.class));
-			assertFalse(c.contains(memberId));
-			c.addMember(memberId);
-			cs.saveCohort(c);
-			
-			List<AuditLog> logs = getAllLogs(c.getUuid(), Cohort.class, actions);
-			int newCount = logs.size();
-			assertEquals(++count, newCount);
-			assertTrue(AuditLogUtil.getNewValueOfUpdatedItem("memberIds", logs.get(0)).indexOf(memberId.toString()) > -1);
-			assertEquals(-1,
-			    AuditLogUtil.getPreviousValueOfUpdatedItem("memberIds", logs.get(0)).indexOf(memberId.toString()));
-		}
-		finally {
-			auditLogService.stopMonitoring(Cohort.class);
-		}
-		assertFalse(auditLogService.isMonitored(Cohort.class));
+		assertTrue(auditLogService.isMonitored(Cohort.class));
+		assertFalse(c.contains(memberId));
+		c.addMember(memberId);
+		cs.saveCohort(c);
+		
+		List<AuditLog> logs = getAllLogs(c.getUuid(), Cohort.class, actions);
+		int newCount = logs.size();
+		assertEquals(++count, newCount);
+		assertTrue(AuditLogUtil.getNewValueOfUpdatedItem("memberIds", logs.get(0)).indexOf(memberId.toString()) > -1);
+		assertEquals(-1, AuditLogUtil.getPreviousValueOfUpdatedItem("memberIds", logs.get(0)).indexOf(memberId.toString()));
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -343,22 +336,16 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		List actions = Collections.singletonList(UPDATED);
 		int count = getAllLogs(c.getUuid(), Cohort.class, actions).size();
 		auditLogService.startMonitoring(Cohort.class);
-		try {
-			assertTrue(auditLogService.isMonitored(Cohort.class));
-			assertTrue(c.contains(memberId));
-			c.removeMember(memberId);
-			cs.saveCohort(c);
-			
-			List<AuditLog> logs = getAllLogs(c.getUuid(), Cohort.class, actions);
-			int newCount = logs.size();
-			assertEquals(++count, newCount);
-			assertEquals(-1, AuditLogUtil.getNewValueOfUpdatedItem("memberIds", logs.get(0)).indexOf(memberId.toString()));
-			assertTrue(AuditLogUtil.getPreviousValueOfUpdatedItem("memberIds", logs.get(0)).indexOf(memberId.toString()) > -1);
-		}
-		finally {
-			auditLogService.stopMonitoring(Cohort.class);
-		}
-		assertFalse(auditLogService.isMonitored(Cohort.class));
+		assertTrue(auditLogService.isMonitored(Cohort.class));
+		assertTrue(c.contains(memberId));
+		c.removeMember(memberId);
+		cs.saveCohort(c);
+		
+		List<AuditLog> logs = getAllLogs(c.getUuid(), Cohort.class, actions);
+		int newCount = logs.size();
+		assertEquals(++count, newCount);
+		assertEquals(-1, AuditLogUtil.getNewValueOfUpdatedItem("memberIds", logs.get(0)).indexOf(memberId.toString()));
+		assertTrue(AuditLogUtil.getPreviousValueOfUpdatedItem("memberIds", logs.get(0)).indexOf(memberId.toString()) > -1);
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -373,26 +360,20 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		List actions = Collections.singletonList(UPDATED);
 		int count = getAllLogs(c.getUuid(), Cohort.class, actions).size();
 		auditLogService.startMonitoring(Cohort.class);
-		try {
-			assertTrue(auditLogService.isMonitored(Cohort.class));
-			assertEquals(2, c.getMemberIds().size());
-			assertTrue(c.contains(memberId2));
-			assertTrue(c.contains(memberId3));
-			c.getMemberIds().clear();
-			cs.saveCohort(c);
-			
-			List<AuditLog> logs = getAllLogs(c.getUuid(), Cohort.class, actions);
-			int newCount = logs.size();
-			assertEquals(++count, newCount);
-			AuditLog log = logs.get(0);
-			assertNull(AuditLogUtil.getNewValueOfUpdatedItem("memberIds", log));
-			assertTrue(AuditLogUtil.getPreviousValueOfUpdatedItem("memberIds", log).indexOf(memberId2.toString()) > -1);
-			assertTrue(AuditLogUtil.getPreviousValueOfUpdatedItem("memberIds", log).indexOf(memberId3.toString()) > -1);
-		}
-		finally {
-			auditLogService.stopMonitoring(Cohort.class);
-		}
-		assertFalse(auditLogService.isMonitored(Cohort.class));
+		assertTrue(auditLogService.isMonitored(Cohort.class));
+		assertEquals(2, c.getMemberIds().size());
+		assertTrue(c.contains(memberId2));
+		assertTrue(c.contains(memberId3));
+		c.getMemberIds().clear();
+		cs.saveCohort(c);
+		
+		List<AuditLog> logs = getAllLogs(c.getUuid(), Cohort.class, actions);
+		int newCount = logs.size();
+		assertEquals(++count, newCount);
+		AuditLog log = logs.get(0);
+		assertNull(AuditLogUtil.getNewValueOfUpdatedItem("memberIds", log));
+		assertTrue(AuditLogUtil.getPreviousValueOfUpdatedItem("memberIds", log).indexOf(memberId2.toString()) > -1);
+		assertTrue(AuditLogUtil.getPreviousValueOfUpdatedItem("memberIds", log).indexOf(memberId3.toString()) > -1);
 	}
 	
 	@Test
@@ -430,92 +411,84 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		classes.add(Patient.class);
 		
 		auditLogService.startMonitoring(classes);
-		try {
-			patient = ps.savePatient(patient);
-			//Ensure that no log will be created unless we actually perform an update
-			assertEquals(0, getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED)).size());
-			
-			int originalNameCount = patient.getNames().size();
-			assertTrue(originalNameCount > 3);
-			
-			assertTrue(auditLogService.isMonitored(PersonName.class));
-			assertTrue(auditLogService.isMonitored(Patient.class));
-			Iterator<PersonName> it = patient.getNames().iterator();
-			//update some existing names
-			PersonName name1 = it.next();
-			name1.setGivenName("another given name1");
-			PersonName name2 = it.next();
-			name2.setGivenName("another given name2");
-			//remove the next 2
-			PersonName name3 = it.next();
-			it.remove();
-			PersonName name4 = it.next();
-			it.remove();
-			PersonName name5 = new PersonName("another given name5", null, "another family name5");
-			name5.setUuid("6e9226f4-999d-11e2-a6ac-b499bae1ce4e");
-			name5.setDateCreated(new Date());
-			name5.setCreator(Context.getAuthenticatedUser());
-			PersonName name6 = new PersonName("another given name6", null, "another family name6");
-			name6.setUuid("781f01b0-999d-11e2-a6ac-b499bae1ce4e");
-			name6.setDateCreated(new Date());
-			name6.setCreator(Context.getAuthenticatedUser());
-			patient.addName(name5);
-			patient.addName(name6);
-			patient = ps.savePatient(patient);
-			
-			List<AuditLog> personNameAuditLogs1 = getAllLogs(name1.getUuid(), PersonName.class,
-			    Collections.singletonList(UPDATED));
-			assertEquals(1, personNameAuditLogs1.size());
-			AuditLog personNameAuditLog1 = personNameAuditLogs1.get(0);
-			assertNotNull(personNameAuditLog1.getParentAuditLog());
-			
-			List<AuditLog> personNameAuditLogs2 = getAllLogs(name2.getUuid(), PersonName.class,
-			    Collections.singletonList(UPDATED));
-			assertEquals(1, personNameAuditLogs2.size());
-			AuditLog personNameAuditLog2 = personNameAuditLogs2.get(0);
-			assertNotNull(personNameAuditLog2.getParentAuditLog());
-			
-			List<AuditLog> personNameAuditLogs3 = getAllLogs(name3.getUuid(), PersonName.class,
-			    Collections.singletonList(DELETED));
-			assertEquals(1, personNameAuditLogs3.size());
-			AuditLog personNameAuditLog3 = personNameAuditLogs3.get(0);
-			assertNotNull(personNameAuditLog3.getParentAuditLog());
-			
-			List<AuditLog> personNameAuditLogs4 = getAllLogs(name4.getUuid(), PersonName.class,
-			    Collections.singletonList(DELETED));
-			assertEquals(1, personNameAuditLogs4.size());
-			AuditLog personNameAuditLog4 = personNameAuditLogs4.get(0);
-			assertNotNull(personNameAuditLog4.getParentAuditLog());
-			
-			List<AuditLog> personNameAuditLogs5 = getAllLogs(name5.getUuid(), PersonName.class,
-			    Collections.singletonList(CREATED));
-			assertEquals(1, personNameAuditLogs5.size());
-			AuditLog personNameAuditLog5 = personNameAuditLogs5.get(0);
-			assertNotNull(personNameAuditLog5.getParentAuditLog());
-			
-			List<AuditLog> personNameAuditLogs6 = getAllLogs(name6.getUuid(), PersonName.class,
-			    Collections.singletonList(CREATED));
-			assertEquals(1, personNameAuditLogs6.size());
-			AuditLog personNameAuditLog6 = personNameAuditLogs6.get(0);
-			assertNotNull(personNameAuditLog6.getParentAuditLog());
-			
-			List<AuditLog> patientAuditLogs = getAllLogs(patient.getUuid(), Patient.class,
-			    Collections.singletonList(UPDATED));
-			assertEquals(1, patientAuditLogs.size());
-			assertEquals(6, patientAuditLogs.get(0).getChildAuditLogs().size());
-			
-			assertEquals(patientAuditLogs.get(0), personNameAuditLog1.getParentAuditLog());
-			assertEquals(patientAuditLogs.get(0), personNameAuditLog2.getParentAuditLog());
-			assertEquals(patientAuditLogs.get(0), personNameAuditLog3.getParentAuditLog());
-			assertEquals(patientAuditLogs.get(0), personNameAuditLog4.getParentAuditLog());
-			assertEquals(patientAuditLogs.get(0), personNameAuditLog5.getParentAuditLog());
-			assertEquals(patientAuditLogs.get(0), personNameAuditLog6.getParentAuditLog());
-		}
-		finally {
-			auditLogService.stopMonitoring(classes);
-		}
-		assertFalse(auditLogService.isMonitored(PersonName.class));
-		assertFalse(auditLogService.isMonitored(Patient.class));
+		patient = ps.savePatient(patient);
+		//Ensure that no log will be created unless we actually perform an update
+		assertEquals(0, getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED)).size());
+		
+		int originalNameCount = patient.getNames().size();
+		assertTrue(originalNameCount > 3);
+		
+		assertTrue(auditLogService.isMonitored(PersonName.class));
+		assertTrue(auditLogService.isMonitored(Patient.class));
+		Iterator<PersonName> it = patient.getNames().iterator();
+		//update some existing names
+		PersonName name1 = it.next();
+		name1.setGivenName("another given name1");
+		PersonName name2 = it.next();
+		name2.setGivenName("another given name2");
+		//remove the next 2
+		PersonName name3 = it.next();
+		it.remove();
+		PersonName name4 = it.next();
+		it.remove();
+		PersonName name5 = new PersonName("another given name5", null, "another family name5");
+		name5.setUuid("6e9226f4-999d-11e2-a6ac-b499bae1ce4e");
+		name5.setDateCreated(new Date());
+		name5.setCreator(Context.getAuthenticatedUser());
+		PersonName name6 = new PersonName("another given name6", null, "another family name6");
+		name6.setUuid("781f01b0-999d-11e2-a6ac-b499bae1ce4e");
+		name6.setDateCreated(new Date());
+		name6.setCreator(Context.getAuthenticatedUser());
+		patient.addName(name5);
+		patient.addName(name6);
+		patient = ps.savePatient(patient);
+		
+		List<AuditLog> personNameAuditLogs1 = getAllLogs(name1.getUuid(), PersonName.class,
+		    Collections.singletonList(UPDATED));
+		assertEquals(1, personNameAuditLogs1.size());
+		AuditLog personNameAuditLog1 = personNameAuditLogs1.get(0);
+		assertNotNull(personNameAuditLog1.getParentAuditLog());
+		
+		List<AuditLog> personNameAuditLogs2 = getAllLogs(name2.getUuid(), PersonName.class,
+		    Collections.singletonList(UPDATED));
+		assertEquals(1, personNameAuditLogs2.size());
+		AuditLog personNameAuditLog2 = personNameAuditLogs2.get(0);
+		assertNotNull(personNameAuditLog2.getParentAuditLog());
+		
+		List<AuditLog> personNameAuditLogs3 = getAllLogs(name3.getUuid(), PersonName.class,
+		    Collections.singletonList(DELETED));
+		assertEquals(1, personNameAuditLogs3.size());
+		AuditLog personNameAuditLog3 = personNameAuditLogs3.get(0);
+		assertNotNull(personNameAuditLog3.getParentAuditLog());
+		
+		List<AuditLog> personNameAuditLogs4 = getAllLogs(name4.getUuid(), PersonName.class,
+		    Collections.singletonList(DELETED));
+		assertEquals(1, personNameAuditLogs4.size());
+		AuditLog personNameAuditLog4 = personNameAuditLogs4.get(0);
+		assertNotNull(personNameAuditLog4.getParentAuditLog());
+		
+		List<AuditLog> personNameAuditLogs5 = getAllLogs(name5.getUuid(), PersonName.class,
+		    Collections.singletonList(CREATED));
+		assertEquals(1, personNameAuditLogs5.size());
+		AuditLog personNameAuditLog5 = personNameAuditLogs5.get(0);
+		assertNotNull(personNameAuditLog5.getParentAuditLog());
+		
+		List<AuditLog> personNameAuditLogs6 = getAllLogs(name6.getUuid(), PersonName.class,
+		    Collections.singletonList(CREATED));
+		assertEquals(1, personNameAuditLogs6.size());
+		AuditLog personNameAuditLog6 = personNameAuditLogs6.get(0);
+		assertNotNull(personNameAuditLog6.getParentAuditLog());
+		
+		List<AuditLog> patientAuditLogs = getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED));
+		assertEquals(1, patientAuditLogs.size());
+		assertEquals(6, patientAuditLogs.get(0).getChildAuditLogs().size());
+		
+		assertEquals(patientAuditLogs.get(0), personNameAuditLog1.getParentAuditLog());
+		assertEquals(patientAuditLogs.get(0), personNameAuditLog2.getParentAuditLog());
+		assertEquals(patientAuditLogs.get(0), personNameAuditLog3.getParentAuditLog());
+		assertEquals(patientAuditLogs.get(0), personNameAuditLog4.getParentAuditLog());
+		assertEquals(patientAuditLogs.get(0), personNameAuditLog5.getParentAuditLog());
+		assertEquals(patientAuditLogs.get(0), personNameAuditLog6.getParentAuditLog());
 	}
 	
 	@Test
@@ -529,79 +502,72 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertTrue(originalDescriptionCount > 3);
 		
 		auditLogService.startMonitoring(ConceptDescription.class);
-		try {
-			concept = conceptService.saveConcept(concept);
-			//Ensure that no log will be created unless we actually perform an update
-			assertEquals(0, getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED)).size());
-			assertTrue(auditLogService.isMonitored(ConceptDescription.class));
-			Iterator<ConceptDescription> it = concept.getDescriptions().iterator();
-			//update some existing descriptions
-			ConceptDescription cd1 = it.next();
-			cd1.setDescription("another descr1");
-			ConceptDescription cd2 = it.next();
-			cd2.setDescription("another descr2");
-			//remove the next 2
-			ConceptDescription cd3 = it.next();
-			it.remove();
-			ConceptDescription cd4 = it.next();
-			it.remove();
-			ConceptDescription cd5 = new ConceptDescription("yes in japanese", Locale.JAPANESE);
-			cd5.setUuid("6e9226f4-999d-11e2-a6ac-b499bae1ce4e");
-			cd5.setDateCreated(new Date());
-			cd5.setCreator(Context.getAuthenticatedUser());
-			ConceptDescription cd6 = new ConceptDescription("yes in chinese", Locale.CHINESE);
-			cd6.setUuid("781f01b0-999d-11e2-a6ac-b499bae1ce4e");
-			cd6.setDateCreated(new Date());
-			cd6.setCreator(Context.getAuthenticatedUser());
-			concept.addDescription(cd5);
-			concept.addDescription(cd6);
-			concept = conceptService.saveConcept(concept);
-			assertEquals(originalDescriptionCount, concept.getDescriptions().size());
-			List<AuditLog> descriptionAuditLogs1 = getAllLogs(cd1.getUuid(), ConceptDescription.class,
-			    Collections.singletonList(UPDATED));
-			assertEquals(1, descriptionAuditLogs1.size());
-			AuditLog descriptionAuditLog1 = descriptionAuditLogs1.get(0);
-			assertNotNull(descriptionAuditLog1.getParentAuditLog());
-			
-			List<AuditLog> descriptionAuditLogs2 = getAllLogs(cd2.getUuid(), ConceptDescription.class,
-			    Collections.singletonList(UPDATED));
-			assertEquals(1, descriptionAuditLogs2.size());
-			AuditLog descriptionAuditLog2 = descriptionAuditLogs2.get(0);
-			assertNotNull(descriptionAuditLog2.getParentAuditLog());
-			
-			List<AuditLog> descriptionAuditLogs3 = getAllLogs(cd3.getUuid(), ConceptDescription.class,
-			    Collections.singletonList(DELETED));
-			//This is because concept.descriptions cascade option doesn't say delete-orphan
-			assertEquals(0, descriptionAuditLogs3.size());
-			
-			List<AuditLog> descriptionAuditLogs4 = getAllLogs(cd4.getUuid(), ConceptDescription.class,
-			    Collections.singletonList(DELETED));
-			assertEquals(0, descriptionAuditLogs4.size());//same here
-			
-			List<AuditLog> descriptionAuditLogs5 = getAllLogs(cd5.getUuid(), ConceptDescription.class,
-			    Collections.singletonList(CREATED));
-			assertEquals(1, descriptionAuditLogs5.size());
-			AuditLog descriptionAuditLog5 = descriptionAuditLogs5.get(0);
-			assertNotNull(descriptionAuditLog5.getParentAuditLog());
-			
-			List<AuditLog> descriptionAuditLogs6 = getAllLogs(cd6.getUuid(), ConceptDescription.class,
-			    Collections.singletonList(CREATED));
-			assertEquals(1, descriptionAuditLogs6.size());
-			AuditLog descriptionAuditLog6 = descriptionAuditLogs6.get(0);
-			assertNotNull(descriptionAuditLog6.getParentAuditLog());
-			
-			List<AuditLog> conceptAuditLogs = getAllLogs(concept.getUuid(), Concept.class,
-			    Collections.singletonList(UPDATED));
-			assertEquals(1, conceptAuditLogs.size());
-			assertEquals(4, conceptAuditLogs.get(0).getChildAuditLogs().size());
-			
-			assertEquals(conceptAuditLogs.get(0), descriptionAuditLog1.getParentAuditLog());
-			assertEquals(conceptAuditLogs.get(0), descriptionAuditLog2.getParentAuditLog());
-		}
-		finally {
-			auditLogService.stopMonitoring(ConceptDescription.class);
-		}
-		assertFalse(auditLogService.isMonitored(ConceptDescription.class));
+		concept = conceptService.saveConcept(concept);
+		//Ensure that no log will be created unless we actually perform an update
+		assertEquals(0, getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED)).size());
+		assertTrue(auditLogService.isMonitored(ConceptDescription.class));
+		Iterator<ConceptDescription> it = concept.getDescriptions().iterator();
+		//update some existing descriptions
+		ConceptDescription cd1 = it.next();
+		cd1.setDescription("another descr1");
+		ConceptDescription cd2 = it.next();
+		cd2.setDescription("another descr2");
+		//remove the next 2
+		ConceptDescription cd3 = it.next();
+		it.remove();
+		ConceptDescription cd4 = it.next();
+		it.remove();
+		ConceptDescription cd5 = new ConceptDescription("yes in japanese", Locale.JAPANESE);
+		cd5.setUuid("6e9226f4-999d-11e2-a6ac-b499bae1ce4e");
+		cd5.setDateCreated(new Date());
+		cd5.setCreator(Context.getAuthenticatedUser());
+		ConceptDescription cd6 = new ConceptDescription("yes in chinese", Locale.CHINESE);
+		cd6.setUuid("781f01b0-999d-11e2-a6ac-b499bae1ce4e");
+		cd6.setDateCreated(new Date());
+		cd6.setCreator(Context.getAuthenticatedUser());
+		concept.addDescription(cd5);
+		concept.addDescription(cd6);
+		concept = conceptService.saveConcept(concept);
+		assertEquals(originalDescriptionCount, concept.getDescriptions().size());
+		List<AuditLog> descriptionAuditLogs1 = getAllLogs(cd1.getUuid(), ConceptDescription.class,
+		    Collections.singletonList(UPDATED));
+		assertEquals(1, descriptionAuditLogs1.size());
+		AuditLog descriptionAuditLog1 = descriptionAuditLogs1.get(0);
+		assertNotNull(descriptionAuditLog1.getParentAuditLog());
+		
+		List<AuditLog> descriptionAuditLogs2 = getAllLogs(cd2.getUuid(), ConceptDescription.class,
+		    Collections.singletonList(UPDATED));
+		assertEquals(1, descriptionAuditLogs2.size());
+		AuditLog descriptionAuditLog2 = descriptionAuditLogs2.get(0);
+		assertNotNull(descriptionAuditLog2.getParentAuditLog());
+		
+		List<AuditLog> descriptionAuditLogs3 = getAllLogs(cd3.getUuid(), ConceptDescription.class,
+		    Collections.singletonList(DELETED));
+		//This is because concept.descriptions cascade option doesn't say delete-orphan
+		assertEquals(0, descriptionAuditLogs3.size());
+		
+		List<AuditLog> descriptionAuditLogs4 = getAllLogs(cd4.getUuid(), ConceptDescription.class,
+		    Collections.singletonList(DELETED));
+		assertEquals(0, descriptionAuditLogs4.size());//same here
+		
+		List<AuditLog> descriptionAuditLogs5 = getAllLogs(cd5.getUuid(), ConceptDescription.class,
+		    Collections.singletonList(CREATED));
+		assertEquals(1, descriptionAuditLogs5.size());
+		AuditLog descriptionAuditLog5 = descriptionAuditLogs5.get(0);
+		assertNotNull(descriptionAuditLog5.getParentAuditLog());
+		
+		List<AuditLog> descriptionAuditLogs6 = getAllLogs(cd6.getUuid(), ConceptDescription.class,
+		    Collections.singletonList(CREATED));
+		assertEquals(1, descriptionAuditLogs6.size());
+		AuditLog descriptionAuditLog6 = descriptionAuditLogs6.get(0);
+		assertNotNull(descriptionAuditLog6.getParentAuditLog());
+		
+		List<AuditLog> conceptAuditLogs = getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED));
+		assertEquals(1, conceptAuditLogs.size());
+		assertEquals(4, conceptAuditLogs.get(0).getChildAuditLogs().size());
+		
+		assertEquals(conceptAuditLogs.get(0), descriptionAuditLog1.getParentAuditLog());
+		assertEquals(conceptAuditLogs.get(0), descriptionAuditLog2.getParentAuditLog());
 	}
 	
 	@Test
@@ -617,135 +583,124 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		classes.add(Patient.class);
 		
 		auditLogService.startMonitoring(classes);
-		try {
-			patient = ps.savePatient(patient);
-			//Ensure that no log will be created unless we actually perform an update
-			assertEquals(0, getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED)).size());
-			assertTrue(auditLogService.isMonitored(PersonName.class));
-			assertTrue(auditLogService.isMonitored(Patient.class));
-			
-			assertEquals(4, patient.getNames().size());
-			Iterator<PersonName> nameIt = patient.getNames().iterator();
-			PersonName name1 = nameIt.next();
-			PersonName name2 = nameIt.next();
-			PersonName name3 = nameIt.next();
-			PersonName name4 = nameIt.next();
-			
-			assertEquals(1, patient.getAddresses().size());
-			PersonAddress address = patient.getAddresses().iterator().next();
-			
-			assertEquals(2, patient.getIdentifiers().size());
-			Iterator<PatientIdentifier> idIt = patient.getIdentifiers().iterator();
-			PatientIdentifier identifier1 = idIt.next();
-			PatientIdentifier identifier2 = idIt.next();
-			
-			assertEquals(3, patient.getAttributes().size());
-			Iterator<PersonAttribute> attributeIt = patient.getAttributes().iterator();
-			PersonAttribute attribute1 = attributeIt.next();
-			PersonAttribute attribute2 = attributeIt.next();
-			PersonAttribute attribute3 = attributeIt.next();
-			
-			PersonService personService = Context.getPersonService();
-			List<Relationship> relationships = personService.getRelationshipsByPerson(patient);
-			for (Relationship r : relationships) {
-				personService.purgeRelationship(r);
-			}
-			OrderService os = Context.getOrderService();
-			List<Order> orders = os.getOrdersByPatient(patient);
-			for (Order o : orders) {
-				os.purgeOrder(o);
-			}
-			ProgramWorkflowService pws = Context.getProgramWorkflowService();
-			List<PatientProgram> pps = pws.getPatientPrograms(patient, null, null, null, null, null, true);
-			for (PatientProgram pp : pps) {
-				pws.purgePatientProgram(pp);
-			}
-			ps.purgePatient(patient);
-			
-			List<AuditLog> personName1AuditLogs = getAllLogs(name1.getUuid(), PersonName.class,
-			    Collections.singletonList(DELETED));
-			assertEquals(1, personName1AuditLogs.size());
-			AuditLog personName1AuditLog = personName1AuditLogs.get(0);
-			assertNotNull(personName1AuditLog.getParentAuditLog());
-			
-			List<AuditLog> personName2AuditLogs = getAllLogs(name2.getUuid(), PersonName.class,
-			    Collections.singletonList(DELETED));
-			assertEquals(1, personName2AuditLogs.size());
-			AuditLog personName2AuditLog = personName2AuditLogs.get(0);
-			assertNotNull(personName2AuditLog.getParentAuditLog());
-			
-			List<AuditLog> personName3AuditLogs = getAllLogs(name3.getUuid(), PersonName.class,
-			    Collections.singletonList(DELETED));
-			assertEquals(1, personName3AuditLogs.size());
-			AuditLog personName3AuditLog = personName3AuditLogs.get(0);
-			assertNotNull(personName3AuditLog.getParentAuditLog());
-			
-			List<AuditLog> personName4AuditLogs = getAllLogs(name4.getUuid(), PersonName.class,
-			    Collections.singletonList(DELETED));
-			assertEquals(1, personName4AuditLogs.size());
-			AuditLog personName4AuditLog = personName4AuditLogs.get(0);
-			assertNotNull(personName4AuditLog.getParentAuditLog());
-			
-			List<AuditLog> addressAuditLogs = getAllLogs(address.getUuid(), PersonAddress.class,
-			    Collections.singletonList(DELETED));
-			assertEquals(1, addressAuditLogs.size());
-			AuditLog addressAuditLog = addressAuditLogs.get(0);
-			assertNotNull(addressAuditLog.getParentAuditLog());
-			
-			List<AuditLog> id1AuditLogs = getAllLogs(identifier1.getUuid(), PatientIdentifier.class,
-			    Collections.singletonList(DELETED));
-			assertEquals(1, id1AuditLogs.size());
-			AuditLog id1AuditLog = id1AuditLogs.get(0);
-			assertNotNull(id1AuditLog.getParentAuditLog());
-			
-			List<AuditLog> id2AuditLogs = getAllLogs(identifier2.getUuid(), PatientIdentifier.class,
-			    Collections.singletonList(DELETED));
-			assertEquals(1, id2AuditLogs.size());
-			AuditLog id2AuditLog = id2AuditLogs.get(0);
-			assertNotNull(id2AuditLog.getParentAuditLog());
-			
-			List<AuditLog> attribute1AuditLogs = getAllLogs(attribute1.getUuid(), PersonAttribute.class,
-			    Collections.singletonList(DELETED));
-			assertEquals(1, attribute1AuditLogs.size());
-			AuditLog attribute1AuditLog = attribute1AuditLogs.get(0);
-			assertNotNull(attribute1AuditLog.getParentAuditLog());
-			
-			List<AuditLog> attribute2AuditLogs = getAllLogs(attribute2.getUuid(), PersonAttribute.class,
-			    Collections.singletonList(DELETED));
-			assertEquals(1, attribute2AuditLogs.size());
-			AuditLog attribute2AuditLog = attribute2AuditLogs.get(0);
-			assertNotNull(attribute2AuditLog.getParentAuditLog());
-			
-			List<AuditLog> attribute3AuditLogs = getAllLogs(attribute3.getUuid(), PersonAttribute.class,
-			    Collections.singletonList(DELETED));
-			assertEquals(1, attribute3AuditLogs.size());
-			AuditLog attribute3AuditLog = attribute3AuditLogs.get(0);
-			assertNotNull(attribute3AuditLog.getParentAuditLog());
-			
-			List<AuditLog> patientAuditLogs = getAllLogs(patient.getUuid(), Patient.class,
-			    Collections.singletonList(DELETED));
-			assertEquals(1, patientAuditLogs.size());
-			assertEquals(10, patientAuditLogs.get(0).getChildAuditLogs().size());
-			
-			assertEquals(patientAuditLogs.get(0), personName1AuditLog.getParentAuditLog());
-			assertEquals(patientAuditLogs.get(0), personName2AuditLog.getParentAuditLog());
-			assertEquals(patientAuditLogs.get(0), personName3AuditLog.getParentAuditLog());
-			assertEquals(patientAuditLogs.get(0), personName4AuditLog.getParentAuditLog());
-			assertEquals(patientAuditLogs.get(0), addressAuditLog.getParentAuditLog());
-			assertEquals(patientAuditLogs.get(0), id1AuditLog.getParentAuditLog());
-			assertEquals(patientAuditLogs.get(0), id2AuditLog.getParentAuditLog());
-			assertEquals(patientAuditLogs.get(0), attribute1AuditLog.getParentAuditLog());
-			assertEquals(patientAuditLogs.get(0), attribute2AuditLog.getParentAuditLog());
-			assertEquals(patientAuditLogs.get(0), attribute3AuditLog.getParentAuditLog());
+		patient = ps.savePatient(patient);
+		//Ensure that no log will be created unless we actually perform an update
+		assertEquals(0, getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED)).size());
+		assertTrue(auditLogService.isMonitored(PersonName.class));
+		assertTrue(auditLogService.isMonitored(Patient.class));
+		
+		assertEquals(4, patient.getNames().size());
+		Iterator<PersonName> nameIt = patient.getNames().iterator();
+		PersonName name1 = nameIt.next();
+		PersonName name2 = nameIt.next();
+		PersonName name3 = nameIt.next();
+		PersonName name4 = nameIt.next();
+		
+		assertEquals(1, patient.getAddresses().size());
+		PersonAddress address = patient.getAddresses().iterator().next();
+		
+		assertEquals(2, patient.getIdentifiers().size());
+		Iterator<PatientIdentifier> idIt = patient.getIdentifiers().iterator();
+		PatientIdentifier identifier1 = idIt.next();
+		PatientIdentifier identifier2 = idIt.next();
+		
+		assertEquals(3, patient.getAttributes().size());
+		Iterator<PersonAttribute> attributeIt = patient.getAttributes().iterator();
+		PersonAttribute attribute1 = attributeIt.next();
+		PersonAttribute attribute2 = attributeIt.next();
+		PersonAttribute attribute3 = attributeIt.next();
+		
+		PersonService personService = Context.getPersonService();
+		List<Relationship> relationships = personService.getRelationshipsByPerson(patient);
+		for (Relationship r : relationships) {
+			personService.purgeRelationship(r);
 		}
-		finally {
-			auditLogService.stopMonitoring(classes);
+		OrderService os = Context.getOrderService();
+		List<Order> orders = os.getOrdersByPatient(patient);
+		for (Order o : orders) {
+			os.purgeOrder(o);
 		}
-		assertFalse(auditLogService.isMonitored(PersonName.class));
-		assertFalse(auditLogService.isMonitored(Patient.class));
-		assertFalse(auditLogService.isMonitored(PersonAddress.class));
-		assertFalse(auditLogService.isMonitored(PatientIdentifier.class));
-		assertFalse(auditLogService.isMonitored(PersonAttribute.class));
+		ProgramWorkflowService pws = Context.getProgramWorkflowService();
+		List<PatientProgram> pps = pws.getPatientPrograms(patient, null, null, null, null, null, true);
+		for (PatientProgram pp : pps) {
+			pws.purgePatientProgram(pp);
+		}
+		ps.purgePatient(patient);
+		
+		List<AuditLog> personName1AuditLogs = getAllLogs(name1.getUuid(), PersonName.class,
+		    Collections.singletonList(DELETED));
+		assertEquals(1, personName1AuditLogs.size());
+		AuditLog personName1AuditLog = personName1AuditLogs.get(0);
+		assertNotNull(personName1AuditLog.getParentAuditLog());
+		
+		List<AuditLog> personName2AuditLogs = getAllLogs(name2.getUuid(), PersonName.class,
+		    Collections.singletonList(DELETED));
+		assertEquals(1, personName2AuditLogs.size());
+		AuditLog personName2AuditLog = personName2AuditLogs.get(0);
+		assertNotNull(personName2AuditLog.getParentAuditLog());
+		
+		List<AuditLog> personName3AuditLogs = getAllLogs(name3.getUuid(), PersonName.class,
+		    Collections.singletonList(DELETED));
+		assertEquals(1, personName3AuditLogs.size());
+		AuditLog personName3AuditLog = personName3AuditLogs.get(0);
+		assertNotNull(personName3AuditLog.getParentAuditLog());
+		
+		List<AuditLog> personName4AuditLogs = getAllLogs(name4.getUuid(), PersonName.class,
+		    Collections.singletonList(DELETED));
+		assertEquals(1, personName4AuditLogs.size());
+		AuditLog personName4AuditLog = personName4AuditLogs.get(0);
+		assertNotNull(personName4AuditLog.getParentAuditLog());
+		
+		List<AuditLog> addressAuditLogs = getAllLogs(address.getUuid(), PersonAddress.class,
+		    Collections.singletonList(DELETED));
+		assertEquals(1, addressAuditLogs.size());
+		AuditLog addressAuditLog = addressAuditLogs.get(0);
+		assertNotNull(addressAuditLog.getParentAuditLog());
+		
+		List<AuditLog> id1AuditLogs = getAllLogs(identifier1.getUuid(), PatientIdentifier.class,
+		    Collections.singletonList(DELETED));
+		assertEquals(1, id1AuditLogs.size());
+		AuditLog id1AuditLog = id1AuditLogs.get(0);
+		assertNotNull(id1AuditLog.getParentAuditLog());
+		
+		List<AuditLog> id2AuditLogs = getAllLogs(identifier2.getUuid(), PatientIdentifier.class,
+		    Collections.singletonList(DELETED));
+		assertEquals(1, id2AuditLogs.size());
+		AuditLog id2AuditLog = id2AuditLogs.get(0);
+		assertNotNull(id2AuditLog.getParentAuditLog());
+		
+		List<AuditLog> attribute1AuditLogs = getAllLogs(attribute1.getUuid(), PersonAttribute.class,
+		    Collections.singletonList(DELETED));
+		assertEquals(1, attribute1AuditLogs.size());
+		AuditLog attribute1AuditLog = attribute1AuditLogs.get(0);
+		assertNotNull(attribute1AuditLog.getParentAuditLog());
+		
+		List<AuditLog> attribute2AuditLogs = getAllLogs(attribute2.getUuid(), PersonAttribute.class,
+		    Collections.singletonList(DELETED));
+		assertEquals(1, attribute2AuditLogs.size());
+		AuditLog attribute2AuditLog = attribute2AuditLogs.get(0);
+		assertNotNull(attribute2AuditLog.getParentAuditLog());
+		
+		List<AuditLog> attribute3AuditLogs = getAllLogs(attribute3.getUuid(), PersonAttribute.class,
+		    Collections.singletonList(DELETED));
+		assertEquals(1, attribute3AuditLogs.size());
+		AuditLog attribute3AuditLog = attribute3AuditLogs.get(0);
+		assertNotNull(attribute3AuditLog.getParentAuditLog());
+		
+		List<AuditLog> patientAuditLogs = getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(DELETED));
+		assertEquals(1, patientAuditLogs.size());
+		assertEquals(10, patientAuditLogs.get(0).getChildAuditLogs().size());
+		
+		assertEquals(patientAuditLogs.get(0), personName1AuditLog.getParentAuditLog());
+		assertEquals(patientAuditLogs.get(0), personName2AuditLog.getParentAuditLog());
+		assertEquals(patientAuditLogs.get(0), personName3AuditLog.getParentAuditLog());
+		assertEquals(patientAuditLogs.get(0), personName4AuditLog.getParentAuditLog());
+		assertEquals(patientAuditLogs.get(0), addressAuditLog.getParentAuditLog());
+		assertEquals(patientAuditLogs.get(0), id1AuditLog.getParentAuditLog());
+		assertEquals(patientAuditLogs.get(0), id2AuditLog.getParentAuditLog());
+		assertEquals(patientAuditLogs.get(0), attribute1AuditLog.getParentAuditLog());
+		assertEquals(patientAuditLogs.get(0), attribute2AuditLog.getParentAuditLog());
+		assertEquals(patientAuditLogs.get(0), attribute3AuditLog.getParentAuditLog());
 	}
 	
 	@Test
@@ -760,29 +715,22 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		        + "\"";
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
 		auditLogService.startMonitoring(User.class);
-		try {
-			assertEquals(true, auditLogService.isMonitored(User.class));
-			final String newPropKey1 = "locale";
-			final String newPropValue1 = "fr";
-			final String newPropKey2 = "loginAttempts";
-			final String newPropValue2 = "2";
-			user.setUserProperty(newPropKey1, newPropValue1);
-			user.setUserProperty(newPropKey2, newPropValue2);
-			us.saveUser(user, null);
-			List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, null);
-			assertEquals(1, logs.size());
-			AuditLog al = logs.get(0);
-			assertEquals("{" + previousUserProperties + "}",
-			    AuditLogUtil.getPreviousValueOfUpdatedItem("userProperties", al));
-			String expectedNewUserProperties = "{" + previousUserProperties + SEPARATOR + "\"" + newPropKey2 + "\""
-			        + MAP_KEY_VALUE_SEPARATOR + "\"" + newPropValue2 + "\"" + SEPARATOR + "\"" + newPropKey1 + "\""
-			        + MAP_KEY_VALUE_SEPARATOR + "\"" + newPropValue1 + "\"}";
-			assertEquals(expectedNewUserProperties, AuditLogUtil.getNewValueOfUpdatedItem("userProperties", al));
-		}
-		finally {
-			auditLogService.stopMonitoring(User.class);
-		}
-		assertEquals(false, auditLogService.isMonitored(User.class));
+		assertEquals(true, auditLogService.isMonitored(User.class));
+		final String newPropKey1 = "locale";
+		final String newPropValue1 = "fr";
+		final String newPropKey2 = "loginAttempts";
+		final String newPropValue2 = "2";
+		user.setUserProperty(newPropKey1, newPropValue1);
+		user.setUserProperty(newPropKey2, newPropValue2);
+		us.saveUser(user, null);
+		List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, null);
+		assertEquals(1, logs.size());
+		AuditLog al = logs.get(0);
+		assertEquals("{" + previousUserProperties + "}", AuditLogUtil.getPreviousValueOfUpdatedItem("userProperties", al));
+		String expectedNewUserProperties = "{" + previousUserProperties + SEPARATOR + "\"" + newPropKey2 + "\""
+		        + MAP_KEY_VALUE_SEPARATOR + "\"" + newPropValue2 + "\"" + SEPARATOR + "\"" + newPropKey1 + "\""
+		        + MAP_KEY_VALUE_SEPARATOR + "\"" + newPropValue1 + "\"}";
+		assertEquals(expectedNewUserProperties, AuditLogUtil.getNewValueOfUpdatedItem("userProperties", al));
 	}
 	
 	@Test
@@ -797,20 +745,14 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		        + "\"}";
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
 		auditLogService.startMonitoring(User.class);
-		try {
-			assertEquals(true, auditLogService.isMonitored(User.class));
-			user.getUserProperties().clear();//since it is 1, just clear
-			us.saveUser(user, null);
-			List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, null);
-			assertEquals(1, logs.size());
-			AuditLog al = logs.get(0);
-			assertEquals(previousUserProperties, AuditLogUtil.getPreviousValueOfUpdatedItem("userProperties", al));
-			assertNull(AuditLogUtil.getNewValueOfUpdatedItem("userProperties", al));
-		}
-		finally {
-			auditLogService.stopMonitoring(User.class);
-		}
-		assertEquals(false, auditLogService.isMonitored(User.class));
+		assertEquals(true, auditLogService.isMonitored(User.class));
+		user.getUserProperties().clear();//since it is 1, just clear
+		us.saveUser(user, null);
+		List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, null);
+		assertEquals(1, logs.size());
+		AuditLog al = logs.get(0);
+		assertEquals(previousUserProperties, AuditLogUtil.getPreviousValueOfUpdatedItem("userProperties", al));
+		assertNull(AuditLogUtil.getNewValueOfUpdatedItem("userProperties", al));
 	}
 	
 	@Test
@@ -826,18 +768,12 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(value, user.getUserProperties().values().iterator().next());
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
 		auditLogService.startMonitoring(User.class);
-		try {
-			assertEquals(true, auditLogService.isMonitored(User.class));
-			//We are setting the same original value but the string are new objects
-			user.setUserProperty(key, value);
-			us.saveUser(user, null);
-			List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, null);
-			assertEquals(0, logs.size());
-		}
-		finally {
-			auditLogService.stopMonitoring(User.class);
-		}
-		assertEquals(false, auditLogService.isMonitored(User.class));
+		assertEquals(true, auditLogService.isMonitored(User.class));
+		//We are setting the same original value but the string are new objects
+		user.setUserProperty(key, value);
+		us.saveUser(user, null);
+		List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, null);
+		assertEquals(0, logs.size());
 	}
 	
 	@Test
@@ -849,30 +785,23 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(1, user.getUserProperties().size());
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
 		auditLogService.startMonitoring(User.class);
-		try {
-			Map.Entry<String, String> entry = user.getUserProperties().entrySet().iterator().next();
-			String userProperties = "{\"" + entry.getKey() + "\"" + MAP_KEY_VALUE_SEPARATOR + "\"" + entry.getValue()
-			        + "\"}";
-			assertEquals(true, auditLogService.isMonitored(User.class));
-			us.purgeUser(user);
-			List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, Collections.singletonList(DELETED));
-			assertEquals(1, logs.size());
-			AuditLog al = logs.get(0);
-			Map<String, Object> propertyNameValueMap = new HashMap<String, Object>();
-			if (StringUtils.isNotBlank(al.getSerializedData())) {
-				try {
-					propertyNameValueMap = new ObjectMapper().readValue(al.getSerializedData(), Map.class);
-				}
-				catch (Exception e) {
-					fail("Failed to convert serialized data to a map");
-				}
+		Map.Entry<String, String> entry = user.getUserProperties().entrySet().iterator().next();
+		String userProperties = "{\"" + entry.getKey() + "\"" + MAP_KEY_VALUE_SEPARATOR + "\"" + entry.getValue() + "\"}";
+		assertEquals(true, auditLogService.isMonitored(User.class));
+		us.purgeUser(user);
+		List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, Collections.singletonList(DELETED));
+		assertEquals(1, logs.size());
+		AuditLog al = logs.get(0);
+		Map<String, Object> propertyNameValueMap = new HashMap<String, Object>();
+		if (StringUtils.isNotBlank(al.getSerializedData())) {
+			try {
+				propertyNameValueMap = new ObjectMapper().readValue(al.getSerializedData(), Map.class);
 			}
-			assertEquals(userProperties, propertyNameValueMap.get("userProperties"));
+			catch (Exception e) {
+				fail("Failed to convert serialized data to a map");
+			}
 		}
-		finally {
-			auditLogService.stopMonitoring(User.class);
-			assertEquals(false, auditLogService.isMonitored(User.class));
-		}
+		assertEquals(userProperties, propertyNameValueMap.get("userProperties"));
 	}
 	
 	/**
