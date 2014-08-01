@@ -875,19 +875,25 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		}
 	}
 	
+	/**
+	 * This tests assumes that the owner has other changes
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	@NotTransactional
-	public void shouldNotLinkChildLogsToThatOfTheOwnerForUpdatedItemsInCollectionMappedAsManyToMany() throws Exception {
+	public void shouldNotLinkChildLogsToThatOfAnEditedOwnerForUpdatedItemsInACollectionMappedAsManyToMany() throws Exception {
 		UserService us = Context.getUserService();
 		User user = us.getUser(501);
 		assertEquals(1, user.getRoles().size());
 		Role role = user.getRoles().iterator().next();
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
 		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
-		assertEquals(false, auditLogService.isMonitored(User.class));
-		auditLogService.startMonitoring(User.class);
 		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
 		assertTrue(cp.isManyToMany());
+		assertEquals(false, auditLogService.isMonitored(User.class));
+		
+		auditLogService.startMonitoring(User.class);
 		assertEquals(true, auditLogService.isMonitored(User.class));
 		
 		user.setUsername("new user name");
@@ -902,6 +908,11 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertNull(roleLogs.get(0).getParentAuditLog());
 	}
 	
+	/**
+	 * This tests assumes that the owner has no other changes
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	@NotTransactional
 	public void shouldNotMarkOwnerAsUpdatedWhenItemIsUpdatedAndIsInACollectionMappedAsManyToMany() throws Exception {
@@ -910,12 +921,13 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(1, user.getRoles().size());
 		Role role = user.getRoles().iterator().next();
 		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
+		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
+		assertTrue(cp.isManyToMany());
 		assertEquals(false, auditLogService.isMonitored(User.class));
 		
 		auditLogService.startMonitoring(User.class);
 		assertEquals(true, auditLogService.isMonitored(User.class));
-		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
-		assertTrue(cp.isManyToMany());
+		
 		role.setDescription("Testing");
 		us.saveUser(user, null);
 		
@@ -925,19 +937,25 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertNull(roleLogs.get(0).getParentAuditLog());
 	}
 	
+	/**
+	 * This tests assumes that the owner has no other changes
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	@NotTransactional
-	public void shouldNotCreateLogForAnItemRemovedFromACollectionMappedAsManyToMany() throws Exception {
+	public void shouldCreateLogForTheOwnerAndNotTheItemThatIsRemovedFromACollectionMappedAsManyToMany() throws Exception {
 		UserService us = Context.getUserService();
 		User user = us.getUser(501);
 		assertEquals(1, user.getRoles().size());
 		Role role = user.getRoles().iterator().next();
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
 		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
-		assertEquals(false, auditLogService.isMonitored(User.class));
-		auditLogService.startMonitoring(User.class);
 		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
 		assertTrue(cp.isManyToMany());
+		assertEquals(false, auditLogService.isMonitored(User.class));
+		
+		auditLogService.startMonitoring(User.class);
 		assertEquals(true, auditLogService.isMonitored(User.class));
 		
 		user.removeRole(role);
@@ -951,6 +969,44 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(0, al.getChildAuditLogs().size());
 	}
 	
+	/**
+	 * This tests assumes that the owner has other changes
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	@NotTransactional
+	public void shouldNotCreateLogForAnItemRemovedFromACollectionMappedAsManyToManyAndOwnerIsEdited() throws Exception {
+		UserService us = Context.getUserService();
+		User user = us.getUser(501);
+		assertEquals(1, user.getRoles().size());
+		Role role = user.getRoles().iterator().next();
+		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
+		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
+		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
+		assertTrue(cp.isManyToMany());
+		assertEquals(false, auditLogService.isMonitored(User.class));
+		
+		auditLogService.startMonitoring(User.class);
+		assertEquals(true, auditLogService.isMonitored(User.class));
+		
+		user.setUsername("New");
+		user.removeRole(role);
+		us.saveUser(user, null);
+		
+		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
+		//But should create an audit log for the owner
+		List<AuditLog> userLogs = getAllLogs(user.getUuid(), User.class, Collections.singletonList(UPDATED));
+		assertEquals(1, userLogs.size());
+		AuditLog al = userLogs.get(0);
+		assertEquals(0, al.getChildAuditLogs().size());
+	}
+	
+	/**
+	 * This tests assumes that the owner has no other changes and the collection item is new
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	@NotTransactional
 	public void shouldNotLinkLogsToThatOfTheOwnerForANewItemAddedToACollectionMappedAsManyToMany() throws Exception {
@@ -958,10 +1014,11 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		User user = us.getUser(501);
 		assertEquals(1, user.getRoles().size());
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
-		assertEquals(false, auditLogService.isMonitored(User.class));
-		auditLogService.startMonitoring(User.class);
 		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
 		assertTrue(cp.isManyToMany());
+		assertEquals(false, auditLogService.isMonitored(User.class));
+		
+		auditLogService.startMonitoring(User.class);
 		assertEquals(true, auditLogService.isMonitored(User.class));
 		
 		Role role = new Role("new role", "new desc");
@@ -977,6 +1034,11 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertNull(roleLogs.get(0).getParentAuditLog());
 	}
 	
+	/**
+	 * This tests assumes that the owner has no other changes and collection item exists
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	@NotTransactional
 	public void shouldNotLinkLogsToThatOfTheOwnerForAnExistingItemAddedToACollectionMappedAsManyToMany() throws Exception {
@@ -986,10 +1048,11 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertNotNull(role);
 		assertFalse(user.getRoles().contains(role));
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
-		assertEquals(false, auditLogService.isMonitored(User.class));
-		auditLogService.startMonitoring(User.class);
 		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
 		assertTrue(cp.isManyToMany());
+		assertEquals(false, auditLogService.isMonitored(User.class));
+		
+		auditLogService.startMonitoring(User.class);
 		assertEquals(true, auditLogService.isMonitored(User.class));
 		
 		user.addRole(role);
@@ -1001,33 +1064,11 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(0, userLogs.get(0).getChildAuditLogs().size());
 	}
 	
-	@Test
-	@NotTransactional
-	public void shouldNotCreateLogForAnItemRemovedFromACollectionMappedAsManyToManyAndOwnerIsEdited() throws Exception {
-		UserService us = Context.getUserService();
-		User user = us.getUser(501);
-		assertEquals(1, user.getRoles().size());
-		Role role = user.getRoles().iterator().next();
-		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
-		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
-		assertEquals(false, auditLogService.isMonitored(User.class));
-		auditLogService.startMonitoring(User.class);
-		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
-		assertTrue(cp.isManyToMany());
-		assertEquals(true, auditLogService.isMonitored(User.class));
-		
-		user.setUsername("New");
-		user.removeRole(role);
-		us.saveUser(user, null);
-		
-		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
-		//But should create an audit log for the owner
-		List<AuditLog> userLogs = getAllLogs(user.getUuid(), User.class, Collections.singletonList(UPDATED));
-		assertEquals(1, userLogs.size());
-		AuditLog al = userLogs.get(0);
-		assertEquals(0, al.getChildAuditLogs().size());
-	}
-	
+	/**
+	 * This tests assumes that the owner has other changes and collection item is new
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	@NotTransactional
 	public void shouldNotLinkLogsToThatOfTheOwnerForANewItemAddedToACollectionMappedAsManyToManyAndOwnerIsEdited()
@@ -1036,10 +1077,11 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		User user = us.getUser(501);
 		assertEquals(1, user.getRoles().size());
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
-		assertEquals(false, auditLogService.isMonitored(User.class));
-		auditLogService.startMonitoring(User.class);
 		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
 		assertTrue(cp.isManyToMany());
+		assertEquals(false, auditLogService.isMonitored(User.class));
+		
+		auditLogService.startMonitoring(User.class);
 		assertEquals(true, auditLogService.isMonitored(User.class));
 		
 		user.setUsername("New");
@@ -1056,6 +1098,11 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertNull(roleLogs.get(0).getParentAuditLog());
 	}
 	
+	/**
+	 * This tests assumes that the owner has other changes and collection item exists
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	@NotTransactional
 	public void shouldNotLinkLogsToThatOfTheOwnerForAnExistingItemAddedToACollectionMappedAsManyToManyAndOwnerIsEdited()
@@ -1066,10 +1113,11 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertNotNull(role);
 		assertFalse(user.getRoles().contains(role));
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
-		assertEquals(false, auditLogService.isMonitored(User.class));
-		auditLogService.startMonitoring(User.class);
 		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
 		assertTrue(cp.isManyToMany());
+		assertEquals(false, auditLogService.isMonitored(User.class));
+		
+		auditLogService.startMonitoring(User.class);
 		assertEquals(true, auditLogService.isMonitored(User.class));
 		
 		user.setUsername("New");
