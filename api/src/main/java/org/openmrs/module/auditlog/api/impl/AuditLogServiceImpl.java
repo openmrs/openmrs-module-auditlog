@@ -197,4 +197,14 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 		
 		return dao.getAuditLogs(uuid, clazzes, actions, startDate, endDate, excludeChildAuditLogs, null, null);
 	}
+	
+	/**
+	 * @see AuditLogService#getAuditLogs(org.openmrs.OpenmrsObject, java.util.List, java.util.Date,
+	 *      java.util.Date, boolean)
+	 */
+	@Override
+	public List<AuditLog> getAuditLogs(OpenmrsObject object, List<Action> actions, Date startDate, Date endDate,
+	                                   boolean excludeChildAuditLogs) {
+		return getAuditLogs(object.getUuid(), object.getClass(), actions, startDate, endDate, excludeChildAuditLogs);
+	}
 }

@@ -171,7 +171,7 @@ public interface AuditLogService extends OpenmrsService {
 	
 	/**
 	 * Gets all audit logs for the object that matches the specified uuid and class that match the
-	 * the other specified arguments
+	 * other specified arguments
 	 * 
 	 * @param uuid the uuid of the object to match against
 	 * @param clazz the Class of the object to match against
@@ -188,4 +188,20 @@ public interface AuditLogService extends OpenmrsService {
 	@Authorized(AuditLogConstants.PRIV_GET_AUDITLOGS)
 	public List<AuditLog> getAuditLogs(String uuid, Class<? extends OpenmrsObject> clazz, List<Action> actions,
 	                                   Date startDate, Date endDate, boolean excludeChildAuditLogs);
+	
+	/**
+	 * Gets all audit logs for the object that match the other specified arguments
+	 * 
+	 * @param object the uuid of the object to match against
+	 * @param actions the actions to match against
+	 * @param startDate the start date to match against
+	 * @param endDate the end date to match against
+	 * @param excludeChildAuditLogs specifies if AuditLogs for collection items should excluded or
+	 *            not
+	 * @return a list of audit logs
+	 * @should get all logs for the specified object
+	 */
+	@Authorized(AuditLogConstants.PRIV_GET_AUDITLOGS)
+	public List<AuditLog> getAuditLogs(OpenmrsObject object, List<Action> actions, Date startDate, Date endDate,
+	                                   boolean excludeChildAuditLogs);
 }

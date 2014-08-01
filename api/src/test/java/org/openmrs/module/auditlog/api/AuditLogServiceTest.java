@@ -762,14 +762,27 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#getAuditLogs(String, Class, java.util.List, java.util.Date, java.util.Date, boolean)}
+	 * @verifies exclude child logs for object if excludeChildAuditLogs is set to true
+	 * @see AuditLogService#getAuditLogs(String, Class, java.util.List, java.util.Date,
+	 *      java.util.Date, boolean)
 	 */
 	@Test
-	@Verifies(value = "should exclude child logs for object if excludeChildAuditLogsis set to true", method = "getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date,null)")
-	public void getAuditLogs_shouldExcludeChildLogsForObjectIfExcludeChildAuditLogsisSetToTrue() throws Exception {
+	public void getAuditLogs_shouldExcludeChildLogsForObjectIfExcludeChildAuditLogsIsSetToTrue() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		assertEquals(0,
 		    service.getAuditLogs("d607c80f-1ea9-4da3-bb88-6276ce8868de", ConceptDescription.class, null, null, null, true)
 		            .size());
+	}
+	
+	/**
+	 * @verifies get all logs for the specified object
+	 * @see AuditLogService#getAuditLogs(org.openmrs.OpenmrsObject, java.util.List, java.util.Date,
+	 *      java.util.Date, boolean)
+	 */
+	@Test
+	public void getAuditLogs_shouldGetAllLogsForTheSpecifiedObject() throws Exception {
+		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
+		OpenmrsObject obj = service.getObjectByUuid(ConceptNumeric.class, "c607c80f-1ea9-4da3-bb88-6276ce8868dd");
+		assertEquals(2, service.getAuditLogs(obj, null, null, null, false).size());
 	}
 }
