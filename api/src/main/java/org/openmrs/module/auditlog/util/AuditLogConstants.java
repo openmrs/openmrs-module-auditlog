@@ -14,7 +14,7 @@
 package org.openmrs.module.auditlog.util;
 
 /**
- * Constants used by the audit log module.
+ * Constants used by the module.
  */
 public final class AuditLogConstants {
 	
@@ -25,7 +25,7 @@ public final class AuditLogConstants {
 	public static final String ID_LABEL = "id:";
 	
 	public static final String SEPARATOR = ",";
-
+	
 	public static final String MAP_KEY_VALUE_SEPARATOR = ":";
 	
 	public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
@@ -42,10 +42,8 @@ public final class AuditLogConstants {
 	/* MODULE PRIVILEGES */
 	public static final String PRIV_GET_AUDITLOGS = "Get Audit Logs";
 	
-	public static final String PRIV_VIEW_AUDITLOG = "View Audit Log";
-	
 	public static final String PRIV_MANAGE_AUDITLOG = "Manage Audit Log";
 	
-	public static final String PRIV_VIEW_ITEMS = "View Items";
+	public static final String PRIV_GET_ITEMS = "Get Items";
 	
 }

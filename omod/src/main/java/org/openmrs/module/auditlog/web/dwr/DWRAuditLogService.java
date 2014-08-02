@@ -36,6 +36,7 @@ import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
+import org.openmrs.module.auditlog.web.util.AuditLogWebConstants;
 import org.openmrs.util.Reflect;
 
 /**
@@ -62,7 +63,7 @@ public class DWRAuditLogService {
 	@SuppressWarnings("unchecked")
 	public AuditLogDetails getAuditLogDetails(String auditLogUuid) {
 		
-		Context.requirePrivilege(AuditLogConstants.PRIV_VIEW_AUDITLOG);
+		Context.requirePrivilege(AuditLogWebConstants.PRIV_VIEW_AUDITLOG);
 		
 		if (StringUtils.isNotBlank(auditLogUuid)) {
 			AuditLog auditLog = getService().getObjectByUuid(AuditLog.class, auditLogUuid);

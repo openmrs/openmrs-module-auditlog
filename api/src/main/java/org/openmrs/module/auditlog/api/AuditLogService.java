@@ -81,7 +81,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @return the matching saved object
 	 * @should get the saved object matching the specified arguments
 	 */
-	@Authorized(AuditLogConstants.PRIV_VIEW_ITEMS)
+	@Authorized(AuditLogConstants.PRIV_GET_ITEMS)
 	public <T> T getObjectById(Class<T> clazz, Integer id);
 	
 	/**
@@ -91,7 +91,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @return the matching saved object
 	 * @should get the saved object matching the specified arguments
 	 */
-	@Authorized(AuditLogConstants.PRIV_VIEW_ITEMS)
+	@Authorized(AuditLogConstants.PRIV_GET_ITEMS)
 	public <T> T getObjectByUuid(Class<T> clazz, String uuid);
 	
 	/**
