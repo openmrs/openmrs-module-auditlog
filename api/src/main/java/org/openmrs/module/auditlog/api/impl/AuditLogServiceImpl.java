@@ -180,7 +180,6 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 * @see org.openmrs.module.auditlog.api.AuditLogService#getAuditLogs(String, Class, List, Date,
 	 *      Date, boolean)
 	 */
-	@SuppressWarnings("rawtypes")
 	@Override
 	@Transactional(readOnly = true)
 	public List<AuditLog> getAuditLogs(String uuid, Class<? extends OpenmrsObject> clazz, List<Action> actions,
