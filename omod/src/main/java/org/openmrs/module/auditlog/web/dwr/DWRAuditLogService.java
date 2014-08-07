@@ -49,8 +49,9 @@ public class DWRAuditLogService {
 	private AuditLogService service;
 	
 	private AuditLogService getService() {
-		if (service == null)
+		if (service == null) {
 			service = Context.getService(AuditLogService.class);
+		}
 		return service;
 	}
 	
@@ -251,19 +252,22 @@ public class DWRAuditLogService {
 		} else if (Obs.class.isAssignableFrom(obj.getClass())) {
 			Obs obs = (Obs) obj;
 			if (obs.getConcept() != null) {
-				if (obs.getConcept().getName() != null)
+				if (obs.getConcept().getName() != null) {
 					displayString += obs.getConcept().getName().getName();
+				}
 			}
 			
 			displayString += obs.getValueAsString(Context.getLocale());
 		} else if (OpenmrsMetadata.class.isAssignableFrom(obj.getClass())) {
 			OpenmrsMetadata metadataObj = (OpenmrsMetadata) obj;
-			if (StringUtils.isNotBlank(metadataObj.getName()))
+			if (StringUtils.isNotBlank(metadataObj.getName())) {
 				displayString += metadataObj.getName();
+			}
 		}
 		
-		if (StringUtils.isBlank(displayString))
+		if (StringUtils.isBlank(displayString)) {
 			displayString += obj.toString();
+		}
 		
 		if (includeUuidAndId && OpenmrsObject.class.isAssignableFrom(obj.getClass())) {
 			OpenmrsObject openmrsObj = (OpenmrsObject) obj;

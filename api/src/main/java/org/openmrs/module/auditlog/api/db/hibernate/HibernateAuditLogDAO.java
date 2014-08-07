@@ -163,27 +163,28 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	public List<AuditLog> getAuditLogs(String uuid, List<String> classnames, List<Action> actions, Date startDate,
 	                                   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length) {
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(AuditLog.class);
-		if (uuid != null)
+		if (uuid != null) {
 			criteria.add(Restrictions.eq("objectUuid", uuid));
+		}
 		
-		if (classnames != null)
+		if (classnames != null) {
 			criteria.add(Restrictions.in("className", classnames));
-		
-		if (actions != null)
+		}
+		if (actions != null) {
 			criteria.add(Restrictions.in("action", actions));
-		
-		if (excludeChildAuditLogs)
+		}
+		if (excludeChildAuditLogs) {
 			criteria.add(Restrictions.isNull("parentAuditLog"));
-		
-		if (startDate != null)
+		}
+		if (startDate != null) {
 			criteria.add(Restrictions.ge("dateCreated", startDate));
-		
-		if (endDate != null)
+		}
+		if (endDate != null) {
 			criteria.add(Restrictions.le("dateCreated", endDate));
-		
-		if (start != null)
+		}
+		if (start != null) {
 			criteria.setFirstResult(start);
-		
+		}
 		if (length != null && length > 0) {
 			criteria.setMaxResults(length);
 		}

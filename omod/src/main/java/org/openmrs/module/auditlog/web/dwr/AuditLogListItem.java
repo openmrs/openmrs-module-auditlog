@@ -42,11 +42,13 @@ public class AuditLogListItem {
 	public AuditLogListItem(AuditLog auditLog) {
 		auditLogId = auditLog.getAuditLogId();
 		classname = auditLog.getClassName();
-		if (classname.indexOf(".") > -1)
+		if (classname.indexOf(".") > -1) {
 			simpleClassname = classname.substring(classname.indexOf(".") + 1);
+		}
 		//If it is a nested class, use the simple name of the nested class
-		if (simpleClassname.indexOf("$") > -1)
+		if (simpleClassname.indexOf("$") > -1) {
 			simpleClassname = simpleClassname.substring(simpleClassname.indexOf("$") + 1);
+		}
 		objectUuid = auditLog.getObjectUuid();
 		action = auditLog.getAction().toString();
 		if (auditLog.getUser() == null) {
@@ -56,8 +58,9 @@ public class AuditLogListItem {
 				if (auditLog.getUser().getPersonName() != null) {
 					userDetails = auditLog.getUser().getPersonName().getFullName();
 				}
-				if (StringUtils.isNotBlank(auditLog.getUser().getUsername()))
+				if (StringUtils.isNotBlank(auditLog.getUser().getUsername())) {
 					userDetails = userDetails + "[" + auditLog.getUser().getUsername() + "]";
+				}
 			}
 		}
 		

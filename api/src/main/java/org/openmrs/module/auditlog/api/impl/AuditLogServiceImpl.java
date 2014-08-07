@@ -36,8 +36,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogService {
 	
-	//private static final Log log = LogFactory.getLog(AuditLogServiceImpl.class);
-	
 	private AuditLogDAO dao;
 	
 	/**
@@ -72,9 +70,11 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	@Transactional(readOnly = true)
 	public List<AuditLog> getAuditLogs(List<Class<? extends OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
 	                                   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length) {
-		if (OpenmrsUtil.compareWithNullAsEarliest(startDate, new Date()) > 0)
+		if (OpenmrsUtil.compareWithNullAsEarliest(startDate, new Date()) > 0) {
 			throw new APIException(Context.getMessageSourceService().getMessage(
 			    AuditLogConstants.MODULE_ID + ".exception.startDateInFuture"));
+		}
+		
 		List<String> classesToMatch = null;
 		if (clazzes != null) {
 			classesToMatch = new ArrayList<String>();
@@ -107,8 +107,9 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	@Override
 	@Transactional(readOnly = true)
 	public <T> T getObjectByUuid(Class<T> clazz, String uuid) {
-		if (StringUtils.isBlank(uuid))
+		if (StringUtils.isBlank(uuid)) {
 			return null;
+		}
 		
 		return dao.getObjectByUuid(clazz, uuid);
 	}
@@ -185,8 +186,9 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	public List<AuditLog> getAuditLogs(String uuid, Class<? extends OpenmrsObject> clazz, List<Action> actions,
 	                                   Date startDate, Date endDate, boolean excludeChildAuditLogs) {
 		
-		if (StringUtils.isBlank(uuid) || clazz == null)
+		if (StringUtils.isBlank(uuid) || clazz == null) {
 			throw new APIException("class and uuid are required when fetching AuditLogs for an object");
+		}
 		
 		List<String> clazzes = new ArrayList<String>();
 		clazzes.add(clazz.getName());

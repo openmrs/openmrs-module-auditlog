@@ -117,9 +117,10 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	public boolean onSave(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
 		if (InterceptorUtil.isMonitored(entity.getClass())) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
-			if (log.isDebugEnabled())
+			if (log.isDebugEnabled()) {
 				log.debug("Creating log entry for created object with uuid:" + openmrsObject.getUuid() + " of type:"
 				        + entity.getClass().getName());
+			}
 			
 			inserts.get().peek().add(openmrsObject);
 		}
@@ -141,8 +142,9 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			for (int i = 0; i < propertyNames.length; i++) {
 				//we need to ignore dateChanged and changedBy fields in any case they
 				//are actually part of the Auditlog in form of user and dateCreated
-				if (ArrayUtils.contains(IGNORED_PROPERTIES, propertyNames[i]))
+				if (ArrayUtils.contains(IGNORED_PROPERTIES, propertyNames[i])) {
 					continue;
+				}
 				
 				Object previousValue = (previousState != null) ? previousState[i] : null;
 				Object currentValue = (currentState != null) ? currentState[i] : null;
@@ -152,20 +154,24 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					if (StringType.class.getName().equals(types[i].getClass().getName())
 					        || TextType.class.getName().equals(types[i].getClass().getName())) {
 						String currentStateString = null;
-						if (currentValue != null && !StringUtils.isBlank(currentValue.toString()))
+						if (currentValue != null && !StringUtils.isBlank(currentValue.toString())) {
 							currentStateString = currentValue.toString();
+						}
 						
 						String previousValueString = null;
-						if (previousValue != null && !StringUtils.isBlank(previousValue.toString()))
+						if (previousValue != null && !StringUtils.isBlank(previousValue.toString())) {
 							previousValueString = previousValue.toString();
+						}
 						
 						//TODO Case sensibility here should be configurable via a GP by admin
-						if (OpenmrsUtil.nullSafeEqualsIgnoreCase(previousValueString, currentStateString))
+						if (OpenmrsUtil.nullSafeEqualsIgnoreCase(previousValueString, currentStateString)) {
 							continue;
+						}
 					}
 					
-					if (propertyChangesMap == null)
+					if (propertyChangesMap == null) {
 						propertyChangesMap = new HashMap<String, String[]>();
+					}
 					
 					String serializedPreviousValue = InterceptorUtil.serializeObject(previousValue);
 					String serializedCurrentValue = InterceptorUtil.serializeObject(currentValue);
@@ -176,9 +182,10 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			}
 			
 			if (MapUtils.isNotEmpty(propertyChangesMap)) {
-				if (log.isDebugEnabled())
+				if (log.isDebugEnabled()) {
 					log.debug("Creating log entry for updated object with uuid:" + openmrsObject.getUuid() + " of type:"
 					        + entity.getClass().getName());
+				}
 				
 				updates.get().peek().add(openmrsObject);
 				objectChangesMap.get().peek().put(openmrsObject.getUuid(), propertyChangesMap);
@@ -308,8 +315,9 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 		if (InterceptorUtil.isMonitored(entity.getClass())) {
 			if (entityCollectionsMap.get().peek().get(entity) == null) {
 				//This is the first time we are trying to find collection elements for this object
-				if (log.isDebugEnabled())
+				if (log.isDebugEnabled()) {
 					log.debug("Finding collections for object:" + entity.getClass() + " #" + id);
+				}
 				
 				for (int i = 0; i < propertyNames.length; i++) {
 					if (types[i].isCollectionType()) {
@@ -344,8 +352,9 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	@Override
 	public void beforeTransactionCompletion(Transaction tx) {
 		try {
-			if (inserts.get().peek().isEmpty() && updates.get().peek().isEmpty() && deletes.get().peek().isEmpty())
+			if (inserts.get().peek().isEmpty() && updates.get().peek().isEmpty() && deletes.get().peek().isEmpty()) {
 				return;
+			}
 			
 			try {
 				//TODO handle daemon or un authenticated operations
@@ -381,8 +390,9 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 								}
 								
 								if (InterceptorUtil.isMonitored(obj.getClass())) {
-									if (ownerUuidChildLogsMap.get().peek().get(owner.getUuid()) == null)
+									if (ownerUuidChildLogsMap.get().peek().get(owner.getUuid()) == null) {
 										ownerUuidChildLogsMap.get().peek().put(owner.getUuid(), new ArrayList<AuditLog>());
+									}
 									
 									OpenmrsObject collElement = (OpenmrsObject) obj;
 									AuditLog childLog = instantiateAuditLog(collElement, isInsert ? Action.CREATED

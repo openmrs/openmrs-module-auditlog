@@ -40,8 +40,9 @@ public class ViewAuditLogFormController {
 	 */
 	@RequestMapping(VIEW_AUDIT_LOG_FORM)
 	public void showForm(ModelMap model) {
-		if (log.isDebugEnabled())
+		if (log.isDebugEnabled()) {
 			log.debug("Fetching audit log entries...");
+		}
 		
 		model.addAttribute("auditLogs",
 		    Context.getService(AuditLogService.class).getAuditLogs(null, null, null, null, true, null, null));

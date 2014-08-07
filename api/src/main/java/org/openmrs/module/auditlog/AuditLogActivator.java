@@ -29,8 +29,9 @@ public class AuditLogActivator extends BaseModuleActivator {
 	 */
 	@Override
 	public void willStart() {
-		if (log.isDebugEnabled())
+		if (log.isDebugEnabled()) {
 			log.debug("Starting Audit Log Module...");
+		}
 	}
 	
 	/**
@@ -38,8 +39,9 @@ public class AuditLogActivator extends BaseModuleActivator {
 	 */
 	@Override
 	public void started() {
-		if (log.isInfoEnabled())
+		if (log.isInfoEnabled()) {
 			log.info("Started Audit Log Module...");
+		}
 	}
 	
 	/**
@@ -47,8 +49,9 @@ public class AuditLogActivator extends BaseModuleActivator {
 	 */
 	@Override
 	public void willStop() {
-		if (log.isDebugEnabled())
+		if (log.isDebugEnabled()) {
 			log.debug("Stopping Audit Log Module...");
+		}
 	}
 	
 	/**
@@ -56,7 +59,8 @@ public class AuditLogActivator extends BaseModuleActivator {
 	 */
 	@Override
 	public void stopped() {
-		if (log.isInfoEnabled())
+		if (log.isInfoEnabled()) {
 			log.info("Stopped Audit Log Module...");
+		}
 	}
 }

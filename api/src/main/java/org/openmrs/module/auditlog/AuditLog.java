@@ -65,7 +65,6 @@ public class AuditLog implements Serializable {
 	
 	public enum Action {
 		CREATED, UPDATED, DELETED
-		//, REVERTED
 	}
 	
 	/**
@@ -223,9 +222,9 @@ public class AuditLog implements Serializable {
 	 * @return the childAuditLogs
 	 */
 	public Set<AuditLog> getChildAuditLogs() {
-		if (childAuditLogs == null)
+		if (childAuditLogs == null) {
 			childAuditLogs = new LinkedHashSet<AuditLog>();
-		
+		}
 		return childAuditLogs;
 	}
 	
@@ -272,8 +271,9 @@ public class AuditLog implements Serializable {
 	 * @param auditLog the AuditLog to add
 	 */
 	public void addChildAuditLog(AuditLog auditLog) {
-		if (auditLog == null)
+		if (auditLog == null) {
 			return;
+		}
 		auditLog.setParentAuditLog(this);
 		getChildAuditLogs().add(auditLog);
 	}
@@ -293,8 +293,9 @@ public class AuditLog implements Serializable {
 	 */
 	@Override
 	public int hashCode() {
-		if (getUuid() == null)
+		if (getUuid() == null) {
 			return super.hashCode();
+		}
 		return getUuid().hashCode();
 	}
 	
