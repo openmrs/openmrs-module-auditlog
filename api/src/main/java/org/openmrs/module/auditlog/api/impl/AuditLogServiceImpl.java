@@ -204,6 +204,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 *      java.util.Date, boolean)
 	 */
 	@Override
+	@Transactional(readOnly = true)
 	public List<AuditLog> getAuditLogs(OpenmrsObject object, List<Action> actions, Date startDate, Date endDate,
 	                                   boolean excludeChildAuditLogs) {
 		return getAuditLogs(object.getUuid(), object.getClass(), actions, startDate, endDate, excludeChildAuditLogs);

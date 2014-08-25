@@ -46,7 +46,6 @@ import org.openmrs.module.auditlog.MonitoringStrategy;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
-import org.springframework.transaction.annotation.Transactional;
 
 public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener {
 	
@@ -159,7 +158,6 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	@Transactional(readOnly = true)
 	public List<AuditLog> getAuditLogs(String uuid, List<String> classnames, List<Action> actions, Date startDate,
 	                                   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length) {
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(AuditLog.class);
@@ -199,7 +197,6 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 * @see AuditLogDAO#save(Object)
 	 */
 	@Override
-	@Transactional
 	public <T> T save(T object) {
 		if (object instanceof AuditLog) {
 			AuditLog auditLog = (AuditLog) object;
@@ -218,7 +215,6 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 * @see AuditLogDAO#delete(Object)
 	 */
 	@Override
-	@Transactional
 	public void delete(Object object) {
 		sessionFactory.getCurrentSession().delete(object);
 	}
@@ -228,7 +224,6 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	@Transactional(readOnly = true)
 	public <T> T getObjectById(Class<T> clazz, Integer id) {
 		return (T) sessionFactory.getCurrentSession().get(clazz, id);
 	}
