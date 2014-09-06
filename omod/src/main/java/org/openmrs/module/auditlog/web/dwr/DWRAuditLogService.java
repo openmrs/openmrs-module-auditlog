@@ -73,69 +73,63 @@ public class DWRAuditLogService {
 				boolean objectExists = false;
 				String objectId = null;
 				Map<String, Object> otherData = new HashMap<String, Object>();
-				try {
-					Class<? extends OpenmrsObject> clazz = (Class<? extends OpenmrsObject>) Context.loadClass(auditLog
-					        .getClassName());
-					if (!auditLog.getAction().equals(Action.DELETED)) {
-						
-						OpenmrsObject obj = getService().getObjectByUuid(clazz, auditLog.getObjectUuid());
-						if (obj != null) {
-							objectExists = true;
-							//some objects don't support this method e.g GlobalProperties
-							if (!GlobalProperty.class.isAssignableFrom(obj.getClass())) {
-								try {
-									objectId = obj.getId() != null ? obj.getId().toString() : "";
-								}
-								catch (UnsupportedOperationException e) {
-									//ignore
-								}
-								displayString = getDisplayString(obj, false);
-							} else {
-								displayString += ((GlobalProperty) obj).getProperty();
+				Class<? extends OpenmrsObject> clazz = auditLog.getType();
+				if (!auditLog.getAction().equals(Action.DELETED)) {
+					
+					OpenmrsObject obj = getService().getObjectByUuid(clazz, auditLog.getObjectUuid());
+					if (obj != null) {
+						objectExists = true;
+						//some objects don't support this method e.g GlobalProperties
+						if (!GlobalProperty.class.isAssignableFrom(obj.getClass())) {
+							try {
+								objectId = obj.getId() != null ? obj.getId().toString() : "";
 							}
-						}
-						
-						if (auditLog.getAction().equals(Action.UPDATED)) {
-							Map<String, List> changes = AuditLogUtil.getChangesOfUpdatedItem(auditLog);
-							if (changes.size() > 0) {
-								for (Map.Entry<String, List> entry : changes.entrySet()) {
-									String propertyName = entry.getKey();
-									String previousValue = null;
-									String newValueDisplay = "";
-									String preValueDisplay = "";
-									String newValue = null;
-									if (CollectionUtils.isNotEmpty(entry.getValue())) {
-										newValue = AuditLogUtil.getNewValueOfUpdatedItem(propertyName, auditLog);
-										previousValue = AuditLogUtil.getPreviousValueOfUpdatedItem(propertyName, auditLog);
-										if (StringUtils.isNotBlank(newValue) || StringUtils.isNotBlank(previousValue)) {
-											newValueDisplay += getPrettyPropertyValue(propertyName, newValue, clazz);
-											preValueDisplay += getPrettyPropertyValue(propertyName, previousValue, clazz);
-										}
-									}
-									
-									otherData.put(propertyName, new String[] { newValueDisplay, preValueDisplay });
-								}
+							catch (UnsupportedOperationException e) {
+								//ignore
 							}
-						}
-						
-					} else {
-						Map<String, String> changes = AuditLogUtil.getLastStateOfDeletedItem(auditLog);
-						for (Map.Entry<String, String> entry : changes.entrySet()) {
-							otherData.put(entry.getKey(), getPrettyPropertyValue(entry.getKey(), entry.getValue(), clazz));
+							displayString = getDisplayString(obj, false);
+						} else {
+							displayString += ((GlobalProperty) obj).getProperty();
 						}
 					}
-				}
-				catch (ClassNotFoundException e) {
-					log.error("Cannot log class:" + auditLog.getClassName());
+					
+					if (auditLog.getAction().equals(Action.UPDATED)) {
+						Map<String, List> changes = AuditLogUtil.getChangesOfUpdatedItem(auditLog);
+						if (changes.size() > 0) {
+							for (Map.Entry<String, List> entry : changes.entrySet()) {
+								String propertyName = entry.getKey();
+								String previousValue = null;
+								String newValueDisplay = "";
+								String preValueDisplay = "";
+								String newValue = null;
+								if (CollectionUtils.isNotEmpty(entry.getValue())) {
+									newValue = AuditLogUtil.getNewValueOfUpdatedItem(propertyName, auditLog);
+									previousValue = AuditLogUtil.getPreviousValueOfUpdatedItem(propertyName, auditLog);
+									if (StringUtils.isNotBlank(newValue) || StringUtils.isNotBlank(previousValue)) {
+										newValueDisplay += getPrettyPropertyValue(propertyName, newValue, clazz);
+										preValueDisplay += getPrettyPropertyValue(propertyName, previousValue, clazz);
+									}
+								}
+								
+								otherData.put(propertyName, new String[] { newValueDisplay, preValueDisplay });
+							}
+						}
+					}
+					
+				} else {
+					Map<String, String> changes = AuditLogUtil.getLastStateOfDeletedItem(auditLog);
+					for (Map.Entry<String, String> entry : changes.entrySet()) {
+						otherData.put(entry.getKey(), getPrettyPropertyValue(entry.getKey(), entry.getValue(), clazz));
+					}
 				}
 				
 				AuditLogDetails details = new AuditLogDetails(displayString, auditLog.getObjectUuid(),
-				        auditLog.getClassName(), auditLog.getAction().name(), objectId, auditLog.getUuid(),
+				        auditLog.getSimpleTypeName(), auditLog.getAction().name(), objectId, auditLog.getUuid(),
 				        auditLog.getOpenmrsVersion(), objectExists, otherData);
 				if (auditLog.hasChildLogs()) {
 					List<AuditLogDetails> childDetails = new ArrayList<AuditLogDetails>();
 					for (AuditLog childLog : auditLog.getChildAuditLogs()) {
-						childDetails.add(new AuditLogDetails(null, childLog.getUuid(), childLog.getSimpleClassname(),
+						childDetails.add(new AuditLogDetails(null, childLog.getUuid(), childLog.getSimpleTypeName(),
 						        childLog.getAction().name(), null, childLog.getUuid(), auditLog.getOpenmrsVersion(), false,
 						        null));
 					}

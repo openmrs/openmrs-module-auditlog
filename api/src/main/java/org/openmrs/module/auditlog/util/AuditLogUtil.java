@@ -35,6 +35,7 @@ import org.hibernate.MappingException;
 import org.hibernate.SessionFactory;
 import org.hibernate.engine.SessionFactoryImplementor;
 import org.hibernate.persister.collection.CollectionPersister;
+import org.openmrs.OpenmrsObject;
 import org.openmrs.api.APIException;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
@@ -52,7 +53,7 @@ public class AuditLogUtil {
 	 * @param clazzes
 	 * @return
 	 */
-	public static List<String> getAsListOfClassnames(Set<Class<?>> clazzes) {
+	public static List<String> getAsListOfClassnames(Set<Class<? extends OpenmrsObject>> clazzes) {
 		List<String> classnames = new ArrayList<String>(clazzes.size());
 		for (Class<?> clazz : clazzes) {
 			classnames.add(clazz.getName());

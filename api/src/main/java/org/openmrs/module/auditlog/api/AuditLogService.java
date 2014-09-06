@@ -41,7 +41,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should false if the class is not monitored
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public boolean isMonitored(Class<?> clazz);
+	public boolean isMonitored(Class<? extends OpenmrsObject> clazz);
 	
 	/**
 	 * Fetches the audit log entries matching the specified arguments
@@ -157,7 +157,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should return a set of monitored classes
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public Set<Class<?>> getMonitoredClasses();
+	public Set<Class<? extends OpenmrsObject>> getMonitoredClasses();
 	
 	/**
 	 * Convenience method that returns a set of un monitored classes as specified by the
@@ -167,7 +167,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should return a set of un monitored classes
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public Set<Class<?>> getUnMonitoredClasses();
+	public Set<Class<? extends OpenmrsObject>> getUnMonitoredClasses();
 	
 	/**
 	 * Gets all audit logs for the object that matches the specified uuid and class that match the

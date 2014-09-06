@@ -45,6 +45,7 @@ import org.openmrs.DrugOrder;
 import org.openmrs.EncounterType;
 import org.openmrs.GlobalProperty;
 import org.openmrs.Location;
+import org.openmrs.OpenmrsObject;
 import org.openmrs.Order;
 import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.APIException;
@@ -353,7 +354,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		assertFalse(auditLogService.isMonitored(DrugOrder.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORED_CLASSES);
-		Set<Class<?>> monitoredClasses = new HashSet<Class<?>>();
+		Set<Class<? extends OpenmrsObject>> monitoredClasses = new HashSet<Class<? extends OpenmrsObject>>();
 		monitoredClasses.addAll(auditLogService.getMonitoredClasses());
 		monitoredClasses.add(Order.class);
 		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), SEPARATOR));
@@ -370,7 +371,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		assertTrue(auditLogService.isMonitored(ConceptComplex.class));
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORED_CLASSES);
-		Set<Class<?>> monitoredClasses = new HashSet<Class<?>>();
+		Set<Class<? extends OpenmrsObject>> monitoredClasses = new HashSet<Class<? extends OpenmrsObject>>();
 		monitoredClasses.addAll(auditLogService.getMonitoredClasses());
 		monitoredClasses.remove(Concept.class);
 		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), SEPARATOR));

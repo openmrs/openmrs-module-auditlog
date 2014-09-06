@@ -39,7 +39,7 @@
                          src="<openmrs:contextPath />/moduleResources/${moduleId}/images/${auditLog.action}.gif" />
                 </td>
                 <td>
-                    ${auditLog.simpleClassname}
+                    ${auditLog.type.simpleName}
                     <c:if test="${fn:length(auditLog.childAuditLogs) > 0}"> (${fn:length(auditLog.childAuditLogs)})</c:if>
                 </td>
                 <td>
@@ -72,10 +72,6 @@
     <tr>
         <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.id" /></th>
         <td id="${moduleId}-changes-objectId" width="100%"></td>
-    </tr>
-    <tr>
-        <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.classname" /></th>
-        <td id="${moduleId}-changes-classname" width="100%"></td>
     </tr>
     <tr>
         <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.summary" /></th>
@@ -160,10 +156,6 @@
     <tr>
         <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.id" /></th>
         <td id="${moduleId}-child-changes-objectId" width="100%"></td>
-    </tr>
-    <tr>
-        <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.classname" /></th>
-        <td id="${moduleId}-child-changes-classname" width="100%"></td>
     </tr>
     <tr>
         <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.summary" /></th>

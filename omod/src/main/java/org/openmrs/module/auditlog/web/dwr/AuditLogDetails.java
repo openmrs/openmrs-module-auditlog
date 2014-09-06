@@ -37,7 +37,7 @@ public class AuditLogDetails {
 	//The uuid of the updated/deleted/created object
 	private String objectUuid;
 	
-	private String classname;
+	private String simpleTypeName;
 	
 	private String action;
 	
@@ -57,12 +57,12 @@ public class AuditLogDetails {
 	/**
 	 * Convenience constructor that created an {@link AuditLogDetails} from an {@link AuditLog}
 	 */
-	public AuditLogDetails(String displayString, String objectUuid, String classname, String action, String objectId,
+	public AuditLogDetails(String displayString, String objectUuid, String simpleTypeName, String action, String objectId,
 	    String uuid, String openmrsVersion, boolean objectExists, Map<String, Object> changes) {
 		this.displayString = displayString;
 		this.objectExists = objectExists;
 		this.objectUuid = objectUuid;
-		this.classname = classname;
+		this.simpleTypeName = simpleTypeName;
 		this.action = action;
 		this.objectId = objectId;
 		this.uuid = uuid;
@@ -113,17 +113,17 @@ public class AuditLogDetails {
 	}
 	
 	/**
-	 * @return the classname
+	 * @return the simpleTypeName
 	 */
-	public String getClassname() {
-		return classname;
+	public String getSimpleTypeName() {
+		return simpleTypeName;
 	}
 	
 	/**
-	 * @param classname the classname to set
+	 * @param simpleTypeName the simpleTypeName to set
 	 */
-	public void setClassname(String classname) {
-		this.classname = classname;
+	public void setSimpleTypeName(String simpleTypeName) {
+		this.simpleTypeName = simpleTypeName;
 	}
 	
 	/**

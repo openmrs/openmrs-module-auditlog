@@ -9,7 +9,7 @@
         See http://www.liquibase.org/manual/home#available_database_refactorings
         for a list of supported elements and attributes
     -->
- 	<changeSet id="auditlog-20120418-2056" author="wyclif">
+ 	<changeSet id="auditlog-20120418-2057" author="wyclif">
  		<preConditions onFail="MARK_RAN">
 			<not><tableExists tableName="auditlog_audit_log" /></not>
 		</preConditions>
@@ -18,7 +18,7 @@
 			<column name="audit_log_id" type="int" autoIncrement="true" >
 				<constraints nullable="false" primaryKey="true" />
 			</column>			
-			<column name="class_name" type="varchar(512)"><constraints nullable="false" /></column>
+			<column name="type" type="varchar(512)"><constraints nullable="false" /></column>
 			<column name="object_uuid" type="varchar(38)"><constraints nullable="false" /></column>
 			<column name="action" type="varchar(50)"><constraints nullable="false" /></column>
 			<column name="user_id" type="int" />

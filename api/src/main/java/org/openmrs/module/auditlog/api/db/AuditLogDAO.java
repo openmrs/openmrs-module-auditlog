@@ -17,7 +17,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-import org.openmrs.Concept;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
@@ -47,8 +46,10 @@ public interface AuditLogDAO {
 	 * Fetches the audit log entries matching the specified arguments
 	 * 
 	 * @param uuid the uuid to match against
-	 * @param classnames the class names to match against e.g for objects of type {@link Concept}
-	 * @param actions the list of {@link Action}s to match against
+	 * @param types the class names to match against e.g for objects of type
+	 *            {@link org.openmrs.Concept}
+	 * @param actions the list of {@link org.openmrs.module.auditlog.AuditLog.Action}s to match
+	 *            against
 	 * @param startDate the creation date of the log entries to return should be after or equal to
 	 *            this date
 	 * @param endDate the creation date of the log entries to return should be before or equal to
@@ -60,8 +61,9 @@ public interface AuditLogDAO {
 	 *            <code>null<code>)
 	 * @return list of auditlogs
 	 */
-	public List<AuditLog> getAuditLogs(String uuid, List<String> classnames, List<Action> actions, Date startDate,
-	                                   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length);
+	public List<AuditLog> getAuditLogs(String uuid, List<Class<? extends OpenmrsObject>> types, List<Action> actions,
+	                                   Date startDate, Date endDate, boolean excludeChildAuditLogs, Integer start,
+	                                   Integer length);
 	
 	/**
 	 * Saves the specified object to the database
@@ -104,12 +106,12 @@ public interface AuditLogDAO {
 	/**
 	 * @see org.openmrs.module.auditlog.api.AuditLogService#getMonitoredClasses()
 	 */
-	public Set<Class<?>> getMonitoredClasses();
+	public Set<Class<? extends OpenmrsObject>> getMonitoredClasses();
 	
 	/**
 	 * @see org.openmrs.module.auditlog.api.AuditLogService#getUnMonitoredClasses()
 	 */
-	public Set<Class<?>> getUnMonitoredClasses();
+	public Set<Class<? extends OpenmrsObject>> getUnMonitoredClasses();
 	
 	/**
 	 * Gets a set of concrete subclasses for the specified class recursively, note that interfaces
@@ -120,7 +122,7 @@ public interface AuditLogDAO {
 	 * @should return a list of subclasses for the specified type
 	 * @should exclude interfaces and abstract classes
 	 */
-	public Set<Class<?>> getPersistentConcreteSubclasses(Class<?> clazz);
+	public Set<Class<? extends OpenmrsObject>> getPersistentConcreteSubclasses(Class<? extends OpenmrsObject> clazz);
 	
 	/**
 	 * Finds all the types for associations to monitor in as recursive way i.e if a Persistent type
@@ -130,7 +132,7 @@ public interface AuditLogDAO {
 	 * @param clazz the Class to match against
 	 * @return a set of found class names
 	 */
-	public Set<Class<?>> getAssociationTypesToMonitor(Class<?> clazz);
+	public Set<Class<? extends OpenmrsObject>> getAssociationTypesToMonitor(Class<? extends OpenmrsObject> clazz);
 	
 	/**
 	 * Gets implicitly monitored classes, this are generated as a result of their owning entity
@@ -141,5 +143,5 @@ public interface AuditLogDAO {
 	 * @return a set of implicitly monitored classes
 	 * @should return a set of implicitly monitored classes
 	 */
-	public Set<Class<?>> getImplicitlyMonitoredClasses();
+	public Set<Class<? extends OpenmrsObject>> getImplicitlyMonitoredClasses();
 }

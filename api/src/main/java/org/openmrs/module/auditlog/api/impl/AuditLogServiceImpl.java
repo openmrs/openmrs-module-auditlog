@@ -54,9 +54,10 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	
 	/**
 	 * @see AuditLogService#isMonitored(Class)
+	 * @param clazz
 	 */
 	@Transactional(readOnly = true)
-	public boolean isMonitored(Class<?> clazz) {
+	public boolean isMonitored(Class<? extends OpenmrsObject> clazz) {
 		return dao.isMonitored(clazz);
 	}
 	
@@ -75,15 +76,13 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 			    AuditLogConstants.MODULE_ID + ".exception.startDateInFuture"));
 		}
 		
-		List<String> classesToMatch = null;
+		List<Class<? extends OpenmrsObject>> classesToMatch = null;
 		if (clazzes != null) {
-			classesToMatch = new ArrayList<String>();
+			classesToMatch = new ArrayList<Class<? extends OpenmrsObject>>();
 			for (Class clazz : clazzes) {
-				if (OpenmrsObject.class.isAssignableFrom(clazz)) {
-					classesToMatch.add(clazz.getName());
-					for (Class subclass : dao.getPersistentConcreteSubclasses(clazz)) {
-						classesToMatch.add(subclass.getName());
-					}
+				classesToMatch.add(clazz);
+				for (Class subclass : dao.getPersistentConcreteSubclasses(clazz)) {
+					classesToMatch.add(subclass);
 				}
 			}
 		}
@@ -164,7 +163,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public Set<Class<?>> getMonitoredClasses() {
+	public Set<Class<? extends OpenmrsObject>> getMonitoredClasses() {
 		return dao.getMonitoredClasses();
 	}
 	
@@ -173,7 +172,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public Set<Class<?>> getUnMonitoredClasses() {
+	public Set<Class<? extends OpenmrsObject>> getUnMonitoredClasses() {
 		return dao.getUnMonitoredClasses();
 	}
 	
@@ -190,10 +189,10 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 			throw new APIException("class and uuid are required when fetching AuditLogs for an object");
 		}
 		
-		List<String> clazzes = new ArrayList<String>();
-		clazzes.add(clazz.getName());
+		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
+		clazzes.add(clazz);
 		for (Class subclass : dao.getPersistentConcreteSubclasses(clazz)) {
-			clazzes.add(subclass.getName());
+			clazzes.add(subclass);
 		}
 		
 		return dao.getAuditLogs(uuid, clazzes, actions, startDate, endDate, excludeChildAuditLogs, null, null);

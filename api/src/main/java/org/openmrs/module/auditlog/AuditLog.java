@@ -22,6 +22,7 @@ import java.util.UUID;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.openmrs.OpenmrsObject;
 import org.openmrs.User;
 import org.openmrs.util.OpenmrsConstants;
 
@@ -39,7 +40,7 @@ public class AuditLog implements Serializable {
 	private Integer auditLogId;
 	
 	//the fully qualified java class name of the create/updated/deleted object
-	private String className;
+	private Class<? extends OpenmrsObject> type;
 	
 	//the uuid of the created/updated/deleted object
 	private String objectUuid;
@@ -77,15 +78,15 @@ public class AuditLog implements Serializable {
 	/**
 	 * Convenience constructor
 	 * 
-	 * @param className the fully qualified classname of the Object type
+	 * @param type the fully qualified classname of the Object type
 	 * @param objectUuid the id of the object
 	 * @param action the operation performed on the object
 	 * @param user the user that triggered the operation
 	 * @param dateCreated the date when the operation was done
 	 */
-	public AuditLog(String className, String objectUuid, Action action, User user, Date dateCreated) {
+	public AuditLog(Class<? extends OpenmrsObject> type, String objectUuid, Action action, User user, Date dateCreated) {
 		this();
-		this.className = className;
+		this.type = type;
 		this.objectUuid = objectUuid;
 		this.action = action;
 		this.user = user;
@@ -107,17 +108,17 @@ public class AuditLog implements Serializable {
 	}
 	
 	/**
-	 * @return the className
+	 * @return the type
 	 */
-	public String getClassName() {
-		return className;
+	public Class<? extends OpenmrsObject> getType() {
+		return type;
 	}
 	
 	/**
-	 * @param className the className to set
+	 * @param type the type to set
 	 */
-	public void setClassName(String className) {
-		this.className = className;
+	public void setType(Class<? extends OpenmrsObject> type) {
+		this.type = type;
 	}
 	
 	/**
@@ -255,9 +256,8 @@ public class AuditLog implements Serializable {
 	 * 
 	 * @return the classname
 	 */
-	public String getSimpleClassname() {
-		String section = getClassName().substring(getClassName().lastIndexOf(".") + 1);
-		String[] sections = StringUtils.splitByCharacterTypeCamelCase(section);
+	public String getSimpleTypeName() {
+		String[] sections = StringUtils.splitByCharacterTypeCamelCase(getType().getSimpleName());
 		for (int i = 0; i < sections.length; i++) {
 			sections[i] = StringUtils.capitalize(sections[i]);
 		}
@@ -304,7 +304,7 @@ public class AuditLog implements Serializable {
 	 */
 	@Override
 	public String toString() {
-		return action + " " + className + " " + objectUuid;
+		return action + " " + type + " " + objectUuid;
 	}
 	
 	public boolean hasChildLogs() {

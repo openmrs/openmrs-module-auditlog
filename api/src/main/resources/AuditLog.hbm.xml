@@ -15,7 +15,7 @@
 		
 		<discriminator column="audit_log_id" insert="false" />
 		
-		<property name="className" type="string" column="class_name" length="512" not-null="true" />
+		<property name="type" type="class" length="512" not-null="true" />
 		
 		<property name="objectUuid" type="string" column="object_uuid" length="38" not-null="true" />
 		

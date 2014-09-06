@@ -501,8 +501,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	 * @return the created AuditLog
 	 */
 	private AuditLog instantiateAuditLog(OpenmrsObject object, Action action) {
-		AuditLog auditLog = new AuditLog(object.getClass().getName(), object.getUuid(), action,
-		        Context.getAuthenticatedUser(), date.get().peek());
+		AuditLog auditLog = new AuditLog(object.getClass(), object.getUuid(), action, Context.getAuthenticatedUser(), date
+		        .get().peek());
 		if (action == Action.UPDATED || action == Action.DELETED) {
 			Map<String, String[]> propertyValuesMap = null;
 			if (action == Action.UPDATED) {

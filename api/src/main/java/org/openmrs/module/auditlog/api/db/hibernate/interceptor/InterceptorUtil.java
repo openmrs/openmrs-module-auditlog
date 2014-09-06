@@ -67,9 +67,6 @@ final class InterceptorUtil {
 	 * @return true if is monitored or implicitly monitored otherwise false
 	 */
 	static boolean isMonitored(Class<?> clazz) {
-		if (!OpenmrsObject.class.isAssignableFrom(clazz)) {
-			return false;
-		}
 		return getAuditLogDao().isMonitored(clazz) || getAuditLogDao().isImplicitlyMonitored(clazz);
 	}
 	

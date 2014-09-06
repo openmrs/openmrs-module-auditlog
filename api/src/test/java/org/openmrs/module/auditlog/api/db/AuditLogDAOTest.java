@@ -57,7 +57,7 @@ public class AuditLogDAOTest extends BaseModuleContextSensitiveTest {
 	@Test
 	@Verifies(value = "should return a list of subclasses for the specified type", method = "getPersistentConcreteSubclasses(Class<*>)")
 	public void getPersistentConcreteSubclasses_shouldReturnAListOfSubclassesForTheSpecifiedType() throws Exception {
-		Set<Class<?>> subclasses = dao.getPersistentConcreteSubclasses(Concept.class);
+		Set<Class<? extends OpenmrsObject>> subclasses = dao.getPersistentConcreteSubclasses(Concept.class);
 		assertEquals(2, subclasses.size());
 		assertTrue(subclasses.contains(ConceptNumeric.class));
 		assertTrue(subclasses.contains(ConceptComplex.class));
@@ -69,7 +69,7 @@ public class AuditLogDAOTest extends BaseModuleContextSensitiveTest {
 	@Test
 	@Verifies(value = "should exclude interfaces and abstract classes", method = "getPersistentConcreteSubclasses(Class<*>)")
 	public void getPersistentConcreteSubclasses_shouldExcludeInterfacesAndAbstractClasses() throws Exception {
-		Set<Class<?>> subclasses = dao.getPersistentConcreteSubclasses(OpenmrsObject.class);
+		Set<Class<? extends OpenmrsObject>> subclasses = dao.getPersistentConcreteSubclasses(OpenmrsObject.class);
 		for (Class<?> clazz : subclasses) {
 			assertFalse("Found interface:" + clazz.getName() + ", interfaces should be excluded",
 			    Modifier.isInterface(clazz.getModifiers()));
@@ -90,7 +90,7 @@ public class AuditLogDAOTest extends BaseModuleContextSensitiveTest {
 		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
 		classes.add(Concept.class);
 		dao.startMonitoring(classes);
-		Set<Class<?>> implicitlyMonitoredClasses = dao.getImplicitlyMonitoredClasses();
+		Set<Class<? extends OpenmrsObject>> implicitlyMonitoredClasses = dao.getImplicitlyMonitoredClasses();
 		assertEquals(6, implicitlyMonitoredClasses.size());
 		assertTrue(implicitlyMonitoredClasses.contains(ConceptName.class));
 		assertTrue(implicitlyMonitoredClasses.contains(ConceptDescription.class));

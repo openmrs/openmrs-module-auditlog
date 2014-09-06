@@ -41,10 +41,8 @@ public class AuditLogListItem {
 	 */
 	public AuditLogListItem(AuditLog auditLog) {
 		auditLogId = auditLog.getAuditLogId();
-		classname = auditLog.getClassName();
-		if (classname.indexOf(".") > -1) {
-			simpleClassname = classname.substring(classname.indexOf(".") + 1);
-		}
+		classname = auditLog.getType().getName();
+		simpleClassname = auditLog.getType().getSimpleName();
 		//If it is a nested class, use the simple name of the nested class
 		if (simpleClassname.indexOf("$") > -1) {
 			simpleClassname = simpleClassname.substring(simpleClassname.indexOf("$") + 1);

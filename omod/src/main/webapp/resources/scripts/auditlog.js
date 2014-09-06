@@ -105,9 +105,6 @@ function displayLogDetails(logDetails, isChildLog){
         if(logDetails.objectUuid)
             $j("#"+auditlog_moduleId+idPart+"-changes-objectUuid").html(logDetails.objectUuid);
 
-        if(logDetails.classname)
-            $j("#"+auditlog_moduleId+idPart+"-changes-classname").html(logDetails.classname);
-
         if(logDetails.openmrsVersion)
             $j("#"+auditlog_moduleId+idPart+"-changes-openmrsVersion").html(logDetails.openmrsVersion);
 
@@ -156,7 +153,7 @@ function displayLogDetails(logDetails, isChildLog){
             $j.each(childAuditLogDetails, function(index, detail){
                 $j("#"+auditlog_moduleId+idPart+"-childAuditLogDetails-table tr:last").after(
                     "<tr class=\"auditlog_"+detail.action+" auditlog_child_log\" onclick=\"auditlog_showDetails('"+detail.uuid+"', true)\">"+
-                        "<td class=\"auditlog_align_text_left\" valign=\"top\">"+detail.classname+"</td></tr>");
+                        "<td class=\"auditlog_align_text_left\" valign=\"top\">"+detail.simpleTypeName+"</td></tr>");
             });
             $j("#"+auditlog_moduleId+idPart+"-details .auditlog-childAuditLogDetails-element").show();
         }
