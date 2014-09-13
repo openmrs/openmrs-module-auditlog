@@ -467,14 +467,24 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 			for (Type type : cmd.getPropertyTypes()) {
 				//If this is a OneToOne or a collection type
 				if (type.isCollectionType() || OneToOneType.class.isAssignableFrom(type.getClass())) {
+					CollectionType collType = (CollectionType) type;
+					boolean isManyToManyColl = false;
+					if (collType.isCollectionType()) {
+						collType = (CollectionType) type;
+						isManyToManyColl = ((SessionFactoryImplementor) sessionFactory).getCollectionPersister(
+						    collType.getRole()).isManyToMany();
+					}
 					Class<? extends OpenmrsObject> assocType = type.getReturnedClass();
 					if (type.isCollectionType()) {
-						assocType = ((CollectionType) type).getElementType((SessionFactoryImplementor) sessionFactory)
-						        .getReturnedClass();
+						assocType = collType.getElementType((SessionFactoryImplementor) sessionFactory).getReturnedClass();
 					}
 					if (!foundAssocTypes.contains(assocType)) {
-						foundAssocTypes.add(assocType);
-						foundAssocTypes.addAll(getAssociationTypesToMonitorInternal(assocType, foundAssocTypes));
+						//Don't implicitly monitor types for many to many collections items
+						if (!type.isCollectionType() || (type.isCollectionType() && !isManyToManyColl)) {
+							foundAssocTypes.add(assocType);
+							//Recursively inspect each association type
+							foundAssocTypes.addAll(getAssociationTypesToMonitorInternal(assocType, foundAssocTypes));
+						}
 					}
 				}
 			}

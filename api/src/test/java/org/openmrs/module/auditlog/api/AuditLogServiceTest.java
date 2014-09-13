@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.hibernate.persister.collection.CollectionPersister;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.openmrs.Cohort;
@@ -38,16 +40,22 @@ import org.openmrs.ConceptNumeric;
 import org.openmrs.DrugOrder;
 import org.openmrs.EncounterType;
 import org.openmrs.GlobalProperty;
+import org.openmrs.Location;
+import org.openmrs.LocationTag;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.Order;
 import org.openmrs.PatientIdentifierType;
+import org.openmrs.Person;
+import org.openmrs.PersonName;
 import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.MonitoringStrategy;
+import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
+import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.openmrs.test.Verifies;
 import org.openmrs.util.OpenmrsUtil;
@@ -84,6 +92,10 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 			gp.setPropertyValue(propertyValue);
 		}
 		as.saveGlobalProperty(gp);
+	}
+	
+	private AuditLogDAO getAuditLogDAO() {
+		return Context.getRegisteredComponents(AuditLogDAO.class).get(0);
 	}
 	
 	/**
@@ -784,5 +796,58 @@ public class AuditLogServiceTest extends BaseModuleContextSensitiveTest {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		OpenmrsObject obj = service.getObjectByUuid(ConceptNumeric.class, "c607c80f-1ea9-4da3-bb88-6276ce8868dd");
 		assertEquals(2, service.getAuditLogs(obj, null, null, null, false).size());
+	}
+	
+	/**
+	 * @verifies also mark association types as monitored
+	 * @see AuditLogService#startMonitoring(java.util.Set>)
+	 */
+	@Test
+	public void startMonitoring_shouldAlsoMarkAssociationTypesAsMonitored() throws Exception {
+		assertFalse(service.isMonitored(Person.class));
+		assertFalse(service.isMonitored(PersonName.class));
+		assertFalse(getAuditLogDAO().isImplicitlyMonitored(PersonName.class));
+		
+		service.startMonitoring(Person.class);
+		
+		assertTrue(service.isMonitored(Person.class));
+		assertFalse(service.isMonitored(PersonName.class));
+		assertTrue(getAuditLogDAO().isImplicitlyMonitored(PersonName.class));
+	}
+	
+	/**
+	 * @verifies not mark association types for many to many collections as monitored
+	 * @see AuditLogService#startMonitoring(java.util.Set>)
+	 */
+	@Test
+	public void startMonitoring_shouldNotMarkAssociationTypesForManyToManyCollectionsAsMonitored() throws Exception {
+		assertFalse(service.isMonitored(Location.class));
+		assertFalse(service.isMonitored(LocationTag.class));
+		assertFalse(getAuditLogDAO().isImplicitlyMonitored(LocationTag.class));
+		CollectionPersister cp = AuditLogUtil.getCollectionPersister("tags", Location.class, null);
+		Assert.assertTrue(cp.isManyToMany());
+		
+		service.startMonitoring(Location.class);
+		
+		assertTrue(service.isMonitored(Location.class));
+		assertFalse(service.isMonitored(LocationTag.class));
+		assertFalse(getAuditLogDAO().isImplicitlyMonitored(LocationTag.class));
+	}
+	
+	/**
+	 * @verifies remove association types from monitored classes
+	 * @see AuditLogService#stopMonitoring(java.util.Set>)
+	 */
+	@Test
+	public void stopMonitoring_shouldRemoveAssociationTypesFromMonitoredClasses() throws Exception {
+		assertTrue(service.isMonitored(Concept.class));
+		assertFalse(service.isMonitored(ConceptName.class));
+		assertTrue(getAuditLogDAO().isImplicitlyMonitored(ConceptName.class));
+		
+		service.stopMonitoring(Concept.class);
+		
+		assertFalse(service.isMonitored(Concept.class));
+		assertFalse(service.isMonitored(ConceptName.class));
+		assertFalse(getAuditLogDAO().isImplicitlyMonitored(ConceptName.class));
 	}
 }

@@ -113,6 +113,8 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should update the un monitored class names global property if the strategy is all_except
 	 * @should mark a class and its known subclasses as monitored
 	 * @should mark a class and its known subclasses as monitored for all_except strategy
+	 * @should also mark association types as monitored
+	 * @should not mark association types for many to many collections as monitored
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
 	public void startMonitoring(Set<Class<? extends OpenmrsObject>> clazzes);
@@ -136,6 +138,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should update the un monitored class names global property if the strategy is all_except
 	 * @should mark a class and its known subclasses as un monitored
 	 * @should mark a class and its known subclasses as un monitored for all_except strategy
+	 * @should remove association types from monitored classes
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
 	public void stopMonitoring(Set<Class<? extends OpenmrsObject>> clazzes);

@@ -821,9 +821,12 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
 		assertTrue(cp.isManyToMany());
 		assertEquals(false, auditLogService.isMonitored(User.class));
+		assertEquals(false, auditLogService.isMonitored(Role.class));
 		
 		auditLogService.startMonitoring(User.class);
+		auditLogService.startMonitoring(Role.class);
 		assertEquals(true, auditLogService.isMonitored(User.class));
+		assertEquals(true, auditLogService.isMonitored(Role.class));
 		
 		user.setUsername("new user name");
 		role.setDescription("Testing");
@@ -853,9 +856,12 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
 		assertTrue(cp.isManyToMany());
 		assertEquals(false, auditLogService.isMonitored(User.class));
+		assertEquals(false, auditLogService.isMonitored(Role.class));
 		
 		auditLogService.startMonitoring(User.class);
+		auditLogService.startMonitoring(Role.class);
 		assertEquals(true, auditLogService.isMonitored(User.class));
+		assertEquals(true, auditLogService.isMonitored(Role.class));
 		
 		role.setDescription("Testing");
 		us.saveUser(user, null);
@@ -946,9 +952,12 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
 		assertTrue(cp.isManyToMany());
 		assertEquals(false, auditLogService.isMonitored(User.class));
+		assertEquals(false, auditLogService.isMonitored(Role.class));
 		
 		auditLogService.startMonitoring(User.class);
+		auditLogService.startMonitoring(Role.class);
 		assertEquals(true, auditLogService.isMonitored(User.class));
+		assertEquals(true, auditLogService.isMonitored(Role.class));
 		
 		Role role = new Role("new role", "new desc");
 		user.addRole(role);
@@ -1009,9 +1018,12 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
 		assertTrue(cp.isManyToMany());
 		assertEquals(false, auditLogService.isMonitored(User.class));
+		assertEquals(false, auditLogService.isMonitored(Role.class));
 		
 		auditLogService.startMonitoring(User.class);
+		auditLogService.startMonitoring(Role.class);
 		assertEquals(true, auditLogService.isMonitored(User.class));
+		assertEquals(true, auditLogService.isMonitored(Role.class));
 		
 		user.setUsername("New");
 		Role role = new Role("new role", "new desc");

@@ -91,13 +91,14 @@ public class AuditLogDAOTest extends BaseModuleContextSensitiveTest {
 		classes.add(Concept.class);
 		dao.startMonitoring(classes);
 		Set<Class<? extends OpenmrsObject>> implicitlyMonitoredClasses = dao.getImplicitlyMonitoredClasses();
-		assertEquals(6, implicitlyMonitoredClasses.size());
+		assertEquals(5, implicitlyMonitoredClasses.size());
 		assertTrue(implicitlyMonitoredClasses.contains(ConceptName.class));
 		assertTrue(implicitlyMonitoredClasses.contains(ConceptDescription.class));
 		assertTrue(implicitlyMonitoredClasses.contains(ConceptMap.class));
 		assertTrue(implicitlyMonitoredClasses.contains(ConceptSet.class));
 		assertTrue(implicitlyMonitoredClasses.contains(ConceptAnswer.class));
-		assertTrue(implicitlyMonitoredClasses.contains(ConceptNameTag.class));
+		//ConceptName.tags is mapped as many-to-many
+		assertFalse(implicitlyMonitoredClasses.contains(ConceptNameTag.class));
 	}
 	
 	/**
