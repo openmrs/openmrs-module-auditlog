@@ -26,9 +26,9 @@
         <thead>
         <tr>
             <th class="ui-state-default"></th>
-            <th class="ui-state-default">Item (<spring:message code="${moduleId}.numberOfLinkedAuditLogs" />)</th>
-            <th class="ui-state-default">User (username)</th>
-            <th class="ui-state-default">Date Of Occurence</th>
+            <th class="ui-state-default"><spring:message code="${moduleId}.item" /> (<spring:message code="${moduleId}.numberOfAssociatedAuditLogs" />)</th>
+            <th class="ui-state-default"><spring:message code="${moduleId}.userAndUserName" /></th>
+            <th class="ui-state-default"><spring:message code="${moduleId}.dateOfOccurence" /></th>
         </tr>
         </thead>
         <tbody>
@@ -121,11 +121,11 @@
     <tr class="${moduleId}-childAuditLogDetails-element"><td colspan="2">&nbsp;</td></tr>
     <tr class="${moduleId}-childAuditLogDetails-element">
         <td valign="top" colspan="2">
-            <b><spring:message code="${moduleId}.linkedAuditLogDetails" />
+            <b><spring:message code="${moduleId}.associatedLogDetails" />
                 (<span id="${moduleId}-childLogCount"></span>)
             </b>
             <img align="top" src="<openmrs:contextPath />/images/help.gif" border="0"
-                 title="<openmrs:message code="${moduleId}.linkedAuditLogDetails.help" />" />
+                 title="<openmrs:message code="${moduleId}.associatedLogDetails.help" />" />
         </td>
     </tr>
     <tr class="${moduleId}-childAuditLogDetails-element">
@@ -146,7 +146,7 @@
 
 <%-- Dialog to display auditlog details for a child auditlog --%>
 
-<div id="${moduleId}-child-changes-dialog" class="${moduleId}_align_text_left" title="<spring:message code="${moduleId}.linkedLogDetails" />">
+<div id="${moduleId}-child-changes-dialog" class="${moduleId}_align_text_left" title="<spring:message code="${moduleId}.associatedLogDetails" />">
 <br />
 <table id="${moduleId}-child-details" width="100%" cellpadding="0" cellspacing="5">
     <tr>
@@ -205,11 +205,11 @@
     <tr class="${moduleId}-childAuditLogDetails-element"><td colspan="2">&nbsp;</td></tr>
     <tr class="${moduleId}-childAuditLogDetails-element">
         <td valign="top" colspan="2">
-            <b><spring:message code="${moduleId}.linkedAuditLogDetails" />
+            <b><spring:message code="${moduleId}.associatedLogDetails" />
                 (<span id="${moduleId}-child-childLogCount"></span>)
             </b>
             <img align="top" src="<openmrs:contextPath />/images/help.gif" border="0"
-                 title="<openmrs:message code="${moduleId}.linkedAuditLogDetails.help" />" />
+                 title="<openmrs:message code="${moduleId}.associatedLogDetails.help" />" />
         </td>
     </tr>
     <tr class="${moduleId}-childAuditLogDetails-element">
