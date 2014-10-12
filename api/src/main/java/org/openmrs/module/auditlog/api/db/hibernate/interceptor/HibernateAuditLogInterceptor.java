@@ -32,9 +32,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.CallbackException;
 import org.hibernate.EmptyInterceptor;
+import org.hibernate.EntityMode;
 import org.hibernate.Hibernate;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.collection.PersistentCollection;
+import org.hibernate.engine.SessionImplementor;
+import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.type.StringType;
 import org.hibernate.type.TextType;
 import org.hibernate.type.Type;
@@ -44,6 +49,7 @@ import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.util.OpenmrsUtil;
+import org.springframework.orm.hibernate3.SessionFactoryUtils;
 
 /**
  * A hibernate {@link org.hibernate.Interceptor} implementation, intercepts any database inserts,
@@ -137,6 +143,23 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	                            String[] propertyNames, Type[] types) {
 		
 		if (propertyNames != null && InterceptorUtil.isMonitored(entity.getClass())) {
+			if (previousState == null) {
+				//This is a detached object, load the previous state in a separate session
+				Session tmpSession = null;
+				SessionFactory sf = InterceptorUtil.getSessionFactory();
+				try {
+					tmpSession = SessionFactoryUtils.getNewSession(sf);
+					Object obj = tmpSession.get(entity.getClass(), id);
+					EntityPersister ep = ((SessionImplementor) tmpSession).getEntityPersister(null, obj);
+					previousState = ep.getPropertyValues(obj, EntityMode.POJO);
+				}
+				finally {
+					if (tmpSession != null) {
+						SessionFactoryUtils.closeSession(tmpSession);
+					}
+				}
+				
+			}
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			Map<String, String[]> propertyChangesMap = null;//Map<propertyName, Object[]{currentValue, PreviousValue}>
 			for (int i = 0; i < propertyNames.length; i++) {

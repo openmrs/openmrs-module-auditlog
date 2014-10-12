@@ -214,4 +214,8 @@ final class InterceptorUtil {
 	static ClassMetadata getClassMetadata(Class<?> clazz) {
 		return Context.getRegisteredComponents(SessionFactory.class).get(0).getClassMetadata(clazz);
 	}
+	
+	static SessionFactory getSessionFactory() {
+		return Context.getRegisteredComponents(SessionFactory.class).get(0);
+	}
 }
