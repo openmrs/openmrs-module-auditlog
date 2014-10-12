@@ -39,7 +39,7 @@
                          src="<openmrs:contextPath />/moduleResources/${moduleId}/images/${auditLog.action}.gif" />
                 </td>
                 <td>
-                    ${auditLog.type.simpleName}
+                    ${auditLog.simpleTypeName}
                     <c:if test="${fn:length(auditLog.childAuditLogs) > 0}"> (${fn:length(auditLog.childAuditLogs)})</c:if>
                 </td>
                 <td>

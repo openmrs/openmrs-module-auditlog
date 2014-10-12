@@ -258,10 +258,6 @@ public class AuditLog implements Serializable {
 	 */
 	public String getSimpleTypeName() {
 		String[] sections = StringUtils.splitByCharacterTypeCamelCase(getType().getSimpleName());
-		for (int i = 0; i < sections.length; i++) {
-			sections[i] = StringUtils.capitalize(sections[i]);
-		}
-		
 		return StringUtils.join(sections, " ");
 	}
 	
