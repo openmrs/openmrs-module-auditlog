@@ -251,50 +251,14 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			if (InterceptorUtil.isMonitored(persistentColl.getOwner().getClass())) {
 				OpenmrsObject owningObject = (OpenmrsObject) persistentColl.getOwner();
 				Map previousStoredSnapshotMap = (Map) persistentColl.getStoredSnapshot();
-				String ownerUuid = owningObject.getUuid();
-				String propertyName = persistentColl.getRole().substring(persistentColl.getRole().lastIndexOf('.') + 1);
-				
-				if (objectChangesMap.get().peek().get(ownerUuid) == null) {
-					objectChangesMap.get().peek().put(ownerUuid, new HashMap<String, String[]>());
-				}
-				
-				String previousSerializedItems = null;
-				String newSerializedItems = null;
+				Object previousCollOrMap;
 				if (Collection.class.isAssignableFrom(collection.getClass())) {
-					Collection currentColl = (Collection) collection;
-					previousSerializedItems = InterceptorUtil.serializeCollection(previousStoredSnapshotMap.values());
-					newSerializedItems = InterceptorUtil.serializeCollection(currentColl);
-					
-					//Track removed items so that when we create logs for them,
-					//and link them to the parent's log
-					Set<Object> removedItems = new HashSet<Object>();
-					removedItems.addAll(CollectionUtils.subtract(previousStoredSnapshotMap.values(), currentColl));
-					if (!removedItems.isEmpty()) {
-						Class<?> elementClass = removedItems.iterator().next().getClass();
-						if (OpenmrsObject.class.isAssignableFrom(elementClass)) {
-							if (entityRemovedChildrenMap.get().peek().get(owningObject) == null) {
-								entityRemovedChildrenMap.get().peek().put(owningObject, new HashSet<OpenmrsObject>());
-							}
-							for (Object removedItem : removedItems) {
-								OpenmrsObject removed = (OpenmrsObject) removedItem;
-								entityRemovedChildrenMap.get().peek().get(owningObject).add(removed);
-							}
-						}
-					}
-				} else if (Map.class.isAssignableFrom(collection.getClass())) {
-					previousSerializedItems = InterceptorUtil.serializeMap(previousStoredSnapshotMap);
-					newSerializedItems = InterceptorUtil.serializeMap((Map) collection);
-					//For some reason hibernate ends calling onCollectionUpdate even when the map has
-					//no changes. I think it uses object equality for the map entries and assumes the map has
-					//changes. Noticed this happens for user.userProperties and added a unit test to prove it
-					if (previousSerializedItems.equals(newSerializedItems)) {
-						return;
-					}
+					previousCollOrMap = previousStoredSnapshotMap.values();
+				} else {
+					previousCollOrMap = previousStoredSnapshotMap;
 				}
 				
-				updates.get().peek().add(owningObject);
-				objectChangesMap.get().peek().get(ownerUuid)
-				        .put(propertyName, new String[] { newSerializedItems, previousSerializedItems });
+				handledUpdatedCollection(collection, previousCollOrMap, owningObject, persistentColl.getRole());
 			}
 		}
 	}
@@ -601,5 +565,55 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 		if (date.get().empty()) {
 			date.remove();
 		}
+	}
+	
+	private void handledUpdatedCollection(Object currentCollOrMap, Object previousCollOrMap, OpenmrsObject owningObject,
+	                                      String role) {
+		
+		String ownerUuid = owningObject.getUuid();
+		String propertyName = role.substring(role.lastIndexOf('.') + 1);
+		
+		if (objectChangesMap.get().peek().get(ownerUuid) == null) {
+			objectChangesMap.get().peek().put(ownerUuid, new HashMap<String, String[]>());
+		}
+		
+		String previousSerializedItems = null;
+		String newSerializedItems = null;
+		if (Collection.class.isAssignableFrom(currentCollOrMap.getClass())) {
+			Collection cColl = (Collection) currentCollOrMap;
+			Collection pColl = (Collection) previousCollOrMap;
+			previousSerializedItems = InterceptorUtil.serializeCollection(pColl);
+			newSerializedItems = InterceptorUtil.serializeCollection(cColl);
+			
+			//Track removed items so that when we create logs for them,
+			//and link them to the parent's log
+			Set<Object> removedItems = new HashSet<Object>();
+			removedItems.addAll(CollectionUtils.subtract(pColl, cColl));
+			if (!removedItems.isEmpty()) {
+				Class<?> elementClass = removedItems.iterator().next().getClass();
+				if (OpenmrsObject.class.isAssignableFrom(elementClass)) {
+					if (entityRemovedChildrenMap.get().peek().get(owningObject) == null) {
+						entityRemovedChildrenMap.get().peek().put(owningObject, new HashSet<OpenmrsObject>());
+					}
+					for (Object removedItem : removedItems) {
+						OpenmrsObject removed = (OpenmrsObject) removedItem;
+						entityRemovedChildrenMap.get().peek().get(owningObject).add(removed);
+					}
+				}
+			}
+		} else if (Map.class.isAssignableFrom(currentCollOrMap.getClass())) {
+			previousSerializedItems = InterceptorUtil.serializeMap((Map) previousCollOrMap);
+			newSerializedItems = InterceptorUtil.serializeMap((Map) currentCollOrMap);
+			//For some reason hibernate ends calling onCollectionUpdate even when the map has
+			//no changes. I think it uses object equality for the map entries and assumes the map has
+			//changes. Noticed this happens for user.userProperties and added a unit test to prove it
+			if (previousSerializedItems.equals(newSerializedItems)) {
+				return;
+			}
+		}
+		
+		updates.get().peek().add(owningObject);
+		objectChangesMap.get().peek().get(ownerUuid)
+		        .put(propertyName, new String[] { newSerializedItems, previousSerializedItems });
 	}
 }
