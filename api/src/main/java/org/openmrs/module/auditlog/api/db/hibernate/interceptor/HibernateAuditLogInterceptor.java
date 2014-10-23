@@ -275,6 +275,22 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					if (!coll.isEmpty()) {
 						Class<?> elementClass = coll.iterator().next().getClass();
 						if (OpenmrsObject.class.isAssignableFrom(elementClass)) {
+							String role = persistentColl.getRole();
+							String propertyName = role.substring(role.lastIndexOf('.') + 1);
+							Object currentCollection = InterceptorUtil.getClassMetadata(owningObject.getClass())
+							        .getPropertyValue(owningObject, propertyName, EntityMode.POJO);
+							
+							//Hibernate calls onCollectionRemove whenever the underlying collection is replaced with a
+							//new instance i.e one calls the collection's setter and passes in a new instance even if the
+							//new collection contains some elements, we want to treat this as regular collection update,
+							//Except if onCollectionRemove is called because the owner got purged from the DB.
+							//I believe hibernate calls onDelete for the owner before onCollectionRemove for all its
+							//collections so we can guarantee that the owner is already in the 'deletes' thread local
+							boolean isOwnerDeleted = OpenmrsUtil.collectionContains(deletes.get().peek(), owningObject);
+							if (!isOwnerDeleted && currentCollection != null && ((Collection) currentCollection).size() > 0) {
+								handledUpdatedCollection(currentCollection, collection, owningObject, role);
+								return;
+							}
 							if (entityRemovedChildrenMap.get().peek().get(owningObject) == null) {
 								entityRemovedChildrenMap.get().peek().put(owningObject, new HashSet<OpenmrsObject>());
 							}
