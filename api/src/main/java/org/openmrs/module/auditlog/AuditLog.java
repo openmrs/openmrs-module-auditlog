@@ -24,7 +24,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.User;
-import org.openmrs.util.OpenmrsConstants;
 
 /**
  * Encapsulates data for a single audit log entry
@@ -54,6 +53,8 @@ public class AuditLog implements Serializable {
 	
 	private String openmrsVersion;
 	
+	private String moduleVersion;
+	
 	private AuditLog parentAuditLog;
 	
 	private Set<AuditLog> childAuditLogs;
@@ -72,7 +73,6 @@ public class AuditLog implements Serializable {
 	 * Default constructor
 	 */
 	public AuditLog() {
-		openmrsVersion = OpenmrsConstants.OPENMRS_VERSION_SHORT;
 	}
 	
 	/**
@@ -189,6 +189,20 @@ public class AuditLog implements Serializable {
 	 */
 	public void setOpenmrsVersion(String openmrsVersion) {
 		this.openmrsVersion = openmrsVersion;
+	}
+	
+	/**
+	 * @return moduleVersion
+	 */
+	public String getModuleVersion() {
+		return moduleVersion;
+	}
+	
+	/**
+	 * @param moduleVersion the moduleVersion to set to
+	 */
+	public void setModuleVersion(String moduleVersion) {
+		this.moduleVersion = moduleVersion;
 	}
 	
 	/**

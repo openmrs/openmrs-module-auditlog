@@ -9,7 +9,7 @@
         See http://www.liquibase.org/manual/home#available_database_refactorings
         for a list of supported elements and attributes
     -->
- 	<changeSet id="auditlog-20120418-2057" author="wyclif">
+ 	<changeSet id="auditlog-20120418-2058" author="wyclif">
  		<preConditions onFail="MARK_RAN">
 			<not><tableExists tableName="auditlog_audit_log" /></not>
 		</preConditions>
@@ -25,6 +25,7 @@
 			<column name="serialized_data" type="mediumtext" />
 			<column name="date_created" type="DATETIME"><constraints nullable="false" /></column>
             <column name="openmrs_version" type="varchar(50)"><constraints nullable="false" /></column>
+            <column name="module_version" type="varchar(50)"><constraints nullable="false" /></column>
 			<column name="parent_auditlog_id" type="int" />
 			<column name="uuid" type="varchar(38)"><constraints nullable="false" unique="true" /></column>
 		</createTable>

@@ -13,6 +13,13 @@
  */
 package org.openmrs.module.auditlog.util;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
+import org.apache.commons.io.IOUtils;
+import org.openmrs.api.APIException;
+
 /**
  * Constants used by the module.
  */
@@ -45,5 +52,28 @@ public final class AuditLogConstants {
 	public static final String PRIV_MANAGE_AUDITLOG = "Manage Audit Log";
 	
 	public static final String PRIV_GET_ITEMS = "Get Items";
+	
+	public static final String MODULE_VERSION;
+	
+	static {
+		InputStream file = AuditLogConstants.class.getClassLoader().getResourceAsStream(
+		    "org/openmrs/module/auditlog/util/module.properties");
+		if (file == null) {
+			throw new APIException("Unable to find the module.properties file");
+		}
+		
+		try {
+			Properties props = new Properties();
+			props.load(file);
+			file.close();
+			MODULE_VERSION = props.getProperty("moduleVersion");
+		}
+		catch (IOException e) {
+			throw new APIException("Unable to parse the module.properties file", e);
+		}
+		finally {
+			IOUtils.closeQuietly(file);
+		}
+	}
 	
 }

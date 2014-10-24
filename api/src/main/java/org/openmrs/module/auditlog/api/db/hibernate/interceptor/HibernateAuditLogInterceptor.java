@@ -47,7 +47,9 @@ import org.openmrs.OpenmrsObject;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
+import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
+import org.openmrs.util.OpenmrsConstants;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.orm.hibernate3.SessionFactoryUtils;
 
@@ -506,6 +508,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	private AuditLog instantiateAuditLog(OpenmrsObject object, Action action) {
 		AuditLog auditLog = new AuditLog(object.getClass(), object.getUuid(), action, Context.getAuthenticatedUser(), date
 		        .get().peek());
+		auditLog.setOpenmrsVersion(OpenmrsConstants.OPENMRS_VERSION_SHORT);
+		auditLog.setModuleVersion(AuditLogConstants.MODULE_VERSION);
 		if (action == Action.UPDATED || action == Action.DELETED) {
 			Map<String, String[]> propertyValuesMap = null;
 			if (action == Action.UPDATED) {
