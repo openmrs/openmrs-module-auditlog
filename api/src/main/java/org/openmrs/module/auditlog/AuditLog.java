@@ -20,8 +20,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.User;
 
@@ -31,8 +29,6 @@ import org.openmrs.User;
 public class AuditLog implements Serializable {
 	
 	private static final long serialVersionUID = 1L;
-	
-	private static final Log log = LogFactory.getLog(AuditLog.class);
 	
 	private String uuid = UUID.randomUUID().toString();
 	
