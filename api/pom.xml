@@ -70,16 +70,6 @@
 			<resource>
 				<directory>src/main/resources</directory>
 				<filtering>true</filtering>
-                <includes>
-                    <include>org/openmrs/module/auditlog/util/module.properties</include>
-                </includes>
-			</resource>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-                <excludes>
-                    <exclude>org/openmrs/module/auditlog/util/module.properties</exclude>
-                </excludes>
 			</resource>
 		</resources>
 
