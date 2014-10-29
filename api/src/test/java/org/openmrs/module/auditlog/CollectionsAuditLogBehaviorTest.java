@@ -25,6 +25,7 @@ import static org.openmrs.module.auditlog.AuditLog.Action.UPDATED;
 import static org.openmrs.module.auditlog.util.AuditLogConstants.MAP_KEY_VALUE_SEPARATOR;
 import static org.openmrs.module.auditlog.util.AuditLogConstants.SEPARATOR;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -1171,7 +1172,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	}
 	
 	/**
-	 * For this test we remove the item by replacing the collection with a nw instance that doesn't
+	 * For this test we remove the item by replacing the collection with a new instance that doesn't
 	 * contain it
 	 * 
 	 * @throws Exception
@@ -1230,5 +1231,178 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(0, tagLogs.size());
 		tagLogs = getAllLogs(keptTag.getUuid(), LocationTag.class, null);
 		assertEquals(0, tagLogs.size());
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldCreateAnAuditLogForADetachedParentWhenACollectionNotMappedAsAllDeleteOrphanIsUpdated()
+	    throws Exception {
+		PatientService ps = Context.getPatientService();
+		Patient patient = ps.getPatient(2);
+		ps.savePatient(patient);
+		List<AuditLog> existingUpdateLogs = getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED));
+		assertEquals(0, existingUpdateLogs.size());
+		int originalCount = patient.getNames().size();
+		assertTrue(originalCount > 1);
+		
+		auditLogService.startMonitoring(Patient.class);
+		auditLogService.startMonitoring(PersonName.class);
+		assertTrue(auditLogService.isMonitored(PersonName.class));
+		PersonName nameToRemove = null;
+		for (PersonName name : patient.getNames()) {
+			if (!name.isPreferred()) {
+				nameToRemove = name;
+				break;
+			}
+		}
+		assertNotNull(nameToRemove);
+		String nameUuid = nameToRemove.getUuid();
+		patient.removeName(nameToRemove);
+		Context.evictFromSession(patient);
+		ps.savePatient(patient);
+		assertEquals(originalCount - 1, patient.getNames().size());
+		List<AuditLog> patientLogs = getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED));
+		assertEquals(1, patientLogs.size());
+		AuditLog al = patientLogs.get(0);
+		assertEquals(originalCount - 1, patient.getNames().size());
+		assertEquals(-1, AuditLogUtil.getNewValueOfUpdatedItem("names", al).indexOf(nameToRemove.getUuid()));
+		for (PersonName name : patient.getNames()) {
+			assertTrue(AuditLogUtil.getPreviousValueOfUpdatedItem("names", al).indexOf(name.getUuid()) > -1);
+		}
+		
+		List<AuditLog> nameLogs = getAllLogs(nameUuid, PersonName.class, Collections.singletonList(DELETED));
+		assertEquals(1, nameLogs.size());
+		assertEquals(al, nameLogs.get(0).getParentAuditLog());
+	}
+	
+	/**
+	 * For this test we remove the item by replacing the collection with a new instance that doesn't
+	 * contain it
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	@NotTransactional
+	public void shouldCreateAnAuditLogForADetachedParentWhenACollectionMappedAsAllDeleteOrphanIsCleared() throws Exception {
+		executeDataSet("org/openmrs/api/include/LocationServiceTest-initialData.xml");
+		LocationService ls = Context.getLocationService();
+		Location location = ls.getLocation(2);
+		ls.saveLocation(location);
+		List<AuditLog> existingUpdateLogs = getAllLogs(location.getUuid(), Location.class,
+		    Collections.singletonList(UPDATED));
+		assertEquals(0, existingUpdateLogs.size());
+		Set<LocationTag> previousTags = location.getTags();
+		assertEquals(2, previousTags.size());
+		
+		auditLogService.startMonitoring(Location.class);
+		auditLogService.startMonitoring(LocationTag.class);
+		assertTrue(auditLogService.isMonitored(Location.class));
+		assertTrue(auditLogService.isMonitored(LocationTag.class));
+		location.getTags().clear();
+		Context.evictFromSession(location);
+		ls.saveLocation(location);
+		
+		List<AuditLog> patientLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+		assertEquals(1, patientLogs.size());
+		AuditLog al = patientLogs.get(0);
+		assertEquals(0, al.getChildAuditLogs().size());
+		for (LocationTag tag : previousTags) {
+			assertEquals(-1, AuditLogUtil.getNewValueOfUpdatedItem("tags", al).indexOf(tag.getUuid()));
+			assertTrue(AuditLogUtil.getPreviousValueOfUpdatedItem("tags", al).indexOf(tag.getUuid()) > -1);
+		}
+		List<Class<? extends OpenmrsObject>> classes = new ArrayList<Class<? extends OpenmrsObject>>();
+		classes.add(LocationTag.class);
+		List<AuditLog.Action> actions = new ArrayList<AuditLog.Action>();
+		actions.add(DELETED);
+		List<AuditLog> logs = auditLogService.getAuditLogs(classes, actions, null, null, false, null, null);
+		assertEquals(0, logs.size());
+	}
+	
+	/**
+	 * For this test we remove the item by replacing the collection with a new instance that doesn't
+	 * contain it
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	@NotTransactional
+	public void shouldCreateAnAuditLogForADetachedParentWhenACollectionMappedAsAllDeleteOrphanIsReplaceWithANewInstance()
+	    throws Exception {
+		executeDataSet("org/openmrs/api/include/LocationServiceTest-initialData.xml");
+		LocationService ls = Context.getLocationService();
+		Location location = ls.getLocation(2);
+		ls.saveLocation(location);
+		List<AuditLog> existingUpdateLogs = getAllLogs(location.getUuid(), Location.class,
+		    Collections.singletonList(UPDATED));
+		assertEquals(0, existingUpdateLogs.size());
+		Set<LocationTag> previousTags = location.getTags();
+		assertEquals(2, previousTags.size());
+		
+		auditLogService.startMonitoring(Location.class);
+		auditLogService.startMonitoring(LocationTag.class);
+		assertTrue(auditLogService.isMonitored(Location.class));
+		assertTrue(auditLogService.isMonitored(LocationTag.class));
+		location.setTags(new HashSet<LocationTag>());
+		Context.evictFromSession(location);
+		ls.saveLocation(location);
+		
+		List<AuditLog> patientLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+		assertEquals(1, patientLogs.size());
+		AuditLog al = patientLogs.get(0);
+		assertEquals(0, al.getChildAuditLogs().size());
+		assertNull(AuditLogUtil.getNewValueOfUpdatedItem("tags", al));
+		for (LocationTag tag : previousTags) {
+			assertTrue(AuditLogUtil.getPreviousValueOfUpdatedItem("tags", al).indexOf(tag.getUuid()) > -1);
+		}
+		List<Class<? extends OpenmrsObject>> classes = new ArrayList<Class<? extends OpenmrsObject>>();
+		classes.add(LocationTag.class);
+		List<AuditLog.Action> actions = new ArrayList<AuditLog.Action>();
+		actions.add(DELETED);
+		List<AuditLog> logs = auditLogService.getAuditLogs(classes, actions, null, null, false, null, null);
+		assertEquals(0, logs.size());
+	}
+	
+	/**
+	 * For this test we remove the item by replacing the collection with a new instance that doesn't
+	 * contain it
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	@NotTransactional
+	public void shouldCreateAnAuditLogForADetachedParentWhenACollectionMappedAsAllDeleteOrphanIsRemovedBySettingItToNull()
+	    throws Exception {
+		executeDataSet("org/openmrs/api/include/LocationServiceTest-initialData.xml");
+		LocationService ls = Context.getLocationService();
+		Location location = ls.getLocation(2);
+		ls.saveLocation(location);
+		List<AuditLog> existingUpdateLogs = getAllLogs(location.getUuid(), Location.class,
+		    Collections.singletonList(UPDATED));
+		assertEquals(0, existingUpdateLogs.size());
+		Set<LocationTag> previousTags = location.getTags();
+		assertEquals(2, previousTags.size());
+		
+		auditLogService.startMonitoring(Location.class);
+		auditLogService.startMonitoring(LocationTag.class);
+		assertTrue(auditLogService.isMonitored(Location.class));
+		assertTrue(auditLogService.isMonitored(LocationTag.class));
+		location.setTags(null);
+		Context.evictFromSession(location);
+		ls.saveLocation(location);
+		
+		List<AuditLog> patientLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+		assertEquals(1, patientLogs.size());
+		AuditLog al = patientLogs.get(0);
+		assertEquals(0, al.getChildAuditLogs().size());
+		assertNull(AuditLogUtil.getNewValueOfUpdatedItem("tags", al));
+		for (LocationTag tag : previousTags) {
+			assertTrue(AuditLogUtil.getPreviousValueOfUpdatedItem("tags", al).indexOf(tag.getUuid()) > -1);
+		}
+		List<Class<? extends OpenmrsObject>> classes = new ArrayList<Class<? extends OpenmrsObject>>();
+		classes.add(LocationTag.class);
+		List<AuditLog.Action> actions = new ArrayList<AuditLog.Action>();
+		actions.add(DELETED);
+		List<AuditLog> logs = auditLogService.getAuditLogs(classes, actions, null, null, false, null, null);
+		assertEquals(0, logs.size());
 	}
 }

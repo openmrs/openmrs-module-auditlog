@@ -16,6 +16,7 @@ package org.openmrs.module.auditlog.api.db.hibernate.interceptor;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,6 +40,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.collection.PersistentCollection;
 import org.hibernate.engine.SessionImplementor;
+import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.type.StringType;
 import org.hibernate.type.TextType;
@@ -279,8 +281,16 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 						if (OpenmrsObject.class.isAssignableFrom(elementClass)) {
 							String role = persistentColl.getRole();
 							String propertyName = role.substring(role.lastIndexOf('.') + 1);
-							Object currentCollection = InterceptorUtil.getClassMetadata(owningObject.getClass())
-							        .getPropertyValue(owningObject, propertyName, EntityMode.POJO);
+							ClassMetadata cmd = InterceptorUtil.getClassMetadata(owningObject.getClass());
+							Object currentCollection = cmd.getPropertyValue(owningObject, propertyName, EntityMode.POJO);
+							if (currentCollection == null) {
+								Class<?> propertyClass = cmd.getPropertyType(propertyName).getReturnedClass();
+								if (Set.class.isAssignableFrom(propertyClass)) {
+									currentCollection = Collections.EMPTY_SET;
+								} else if (List.class.isAssignableFrom(propertyClass)) {
+									currentCollection = Collections.EMPTY_LIST;
+								}
+							}
 							
 							//Hibernate calls onCollectionRemove whenever the underlying collection is replaced with a
 							//new instance i.e one calls the collection's setter and passes in a new instance even if the
@@ -289,7 +299,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 							//I believe hibernate calls onDelete for the owner before onCollectionRemove for all its
 							//collections so we can guarantee that the owner is already in the 'deletes' thread local
 							boolean isOwnerDeleted = OpenmrsUtil.collectionContains(deletes.get().peek(), owningObject);
-							if (!isOwnerDeleted && currentCollection != null && ((Collection) currentCollection).size() > 0) {
+							if (!isOwnerDeleted) {
 								handledUpdatedCollection(currentCollection, collection, owningObject, role);
 								return;
 							}
@@ -302,6 +312,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 							}
 						}
 					}
+				} else {
+					//TODO: Handle other persistent collections like bags
 				}
 			}
 		}
