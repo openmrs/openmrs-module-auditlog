@@ -17,28 +17,28 @@ import org.openmrs.OpenmrsObject;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 
 /**
- * Enumeration of the monitoring strategies that can be used to declare which object types to
- * monitor and exclude. <b>Note</b> that only {@link OpenmrsObject}s can be monitored
+ * Enumeration of the auditing strategies that can be used to declare which object types to audit
+ * and exclude. <b>Note</b> that only {@link OpenmrsObject}s can be audited
  */
-public enum MonitoringStrategy {
+public enum AuditingStrategy {
 	
 	/**
-	 * All {@link OpenmrsObject} objects are monitored for this strategy
+	 * All {@link OpenmrsObject} objects are audited for this strategy
 	 */
 	ALL(AuditLogConstants.MODULE_ID + ".all", AuditLogConstants.MODULE_ID + ".description"),
-
+	
 	/**
 	 * Same as {@link #ALL} with the option of defining which classes to ignore
 	 */
 	ALL_EXCEPT(AuditLogConstants.MODULE_ID + ".allExcept", AuditLogConstants.MODULE_ID + ".allExcept.description"),
-
+	
 	/**
-	 * Nothing gets monitored for this strategy
+	 * Nothing gets audited for this strategy
 	 */
 	NONE("general.none", AuditLogConstants.MODULE_ID + ".none.description"),
-
+	
 	/**
-	 * Same as {@link #NONE_EXCEPT} with the option of defining which classes to monitor
+	 * Same as {@link #NONE_EXCEPT} with the option of defining which classes to audit
 	 */
 	NONE_EXCEPT(AuditLogConstants.MODULE_ID + ".noneExcept", AuditLogConstants.MODULE_ID + ".noneExcept.description");
 	
@@ -50,7 +50,7 @@ public enum MonitoringStrategy {
 	 * @param displayText
 	 * @param description
 	 */
-	private MonitoringStrategy(String displayText, String description) {
+	private AuditingStrategy(String displayText, String description) {
 		this.displayText = displayText;
 		this.description = description;
 	}

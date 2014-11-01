@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <dataset>
-	<global_property property="${project.parent.artifactId}.monitoringStrategy" property_value="NONE_EXCEPT" uuid="abc05786-9019-11e1-aaa4-00248140a5eb" />
-	<global_property property="${project.parent.artifactId}.monitoredClasses" property_value="org.openmrs.Concept, org.openmrs.EncounterType,org.openmrs.PatientIdentifierType" uuid="bbc05786-9019-11e1-aaa4-00248140a5eb" />
-	<global_property property="${project.parent.artifactId}.unMonitoredClasses" property_value="org.openmrs.EncounterType" uuid="cbc05786-9019-11e1-aaa4-00248140a5eb" />
+	<global_property property="${project.parent.artifactId}.auditingStrategy" property_value="NONE_EXCEPT" uuid="abc05786-9019-11e1-aaa4-00248140a5eb" />
+	<global_property property="${project.parent.artifactId}.auditedClasses" property_value="org.openmrs.Concept, org.openmrs.EncounterType,org.openmrs.PatientIdentifierType" uuid="bbc05786-9019-11e1-aaa4-00248140a5eb" />
+	<global_property property="${project.parent.artifactId}.unAuditedClasses" property_value="org.openmrs.EncounterType" uuid="cbc05786-9019-11e1-aaa4-00248140a5eb" />
 	
 	<concept_description concept_description_id="100" concept_id="7" description="Yes in french" locale="fr" creator="1" date_created="2008-08-15 13:52:53.0" uuid="ce3321b3-c1c7-4339-aaca-1b60db12e1df"/>
 	<concept_description concept_description_id="101" concept_id="7" description="Yes in spanish" locale="es" creator="1" date_created="2008-08-15 13:52:53.0" uuid="de3321b3-c1c7-4339-aaca-1b60db12e1df"/>

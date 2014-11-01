@@ -80,7 +80,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldCreateAnAuditLogForAParentWhenAMonitoredElementIsRemovedFromAChildCollection() throws Exception {
+	public void shouldCreateAnAuditLogForAParentWhenAnAuditedElementIsRemovedFromAChildCollection() throws Exception {
 		PatientService ps = Context.getPatientService();
 		Patient patient = ps.getPatient(2);
 		ps.savePatient(patient);
@@ -89,9 +89,9 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		int originalCount = patient.getNames().size();
 		assertTrue(originalCount > 1);
 		
-		auditLogService.startMonitoring(Patient.class);
-		auditLogService.startMonitoring(PersonName.class);
-		assertTrue(auditLogService.isMonitored(PersonName.class));
+		auditLogService.startAuditing(Patient.class);
+		auditLogService.startAuditing(PersonName.class);
+		assertTrue(auditLogService.isAudited(PersonName.class));
 		PersonName nameToRemove = null;
 		for (PersonName name : patient.getNames()) {
 			if (!name.isPreferred()) {
@@ -120,7 +120,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldCreateAnAuditLogForAParentWhenAMonitoredElementIsAddedToAChildCollection() throws Exception {
+	public void shouldCreateAnAuditLogForAParentWhenAnAuditedElementIsAddedToAChildCollection() throws Exception {
 		Concept concept = conceptService.getConcept(5089);
 		//something with ConceptMaps having blank uuids and now getting set, this should have been
 		//fixed in later versions
@@ -130,8 +130,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertTrue(originalCount == 1);
 		String previousDescriptionUuids = AuditLogConstants.UUID_LABEL + concept.getDescription().getUuid();
 		
-		auditLogService.startMonitoring(ConceptDescription.class);
-		assertTrue(auditLogService.isMonitored(ConceptDescription.class));
+		auditLogService.startAuditing(ConceptDescription.class);
+		assertTrue(auditLogService.isAudited(ConceptDescription.class));
 		
 		ConceptDescription cd1 = new ConceptDescription("desc1", Locale.ENGLISH);
 		cd1.setDateCreated(new Date());
@@ -157,15 +157,15 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldCreateAnAuditLogForTheParentObjectWhenAMonitoredElementInAChildCollectionIsUpdated() throws Exception {
+	public void shouldCreateAnAuditLogForTheParentObjectWhenAnAuditedElementInAChildCollectionIsUpdated() throws Exception {
 		Concept concept = conceptService.getConcept(7);
 		assertEquals(0, getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED)).size());
 		
 		int originalDescriptionCount = concept.getDescriptions().size();
 		assertTrue(originalDescriptionCount > 0);
 		
-		auditLogService.startMonitoring(ConceptDescription.class);
-		assertTrue(auditLogService.isMonitored(ConceptDescription.class));
+		auditLogService.startAuditing(ConceptDescription.class);
+		assertTrue(auditLogService.isAudited(ConceptDescription.class));
 		
 		ConceptDescription description = concept.getDescription();
 		description.setDescription("another descr");
@@ -183,8 +183,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldCreateAnAuditLogForAParentWhenAnUnMonitoredElementIsRemovedFromAChildCollection() throws Exception {
-		assertFalse(auditLogService.isMonitored(PersonName.class));
+	public void shouldCreateAnAuditLogForAParentWhenAnUnAuditedElementIsRemovedFromAChildCollection() throws Exception {
+		assertFalse(auditLogService.isAudited(PersonName.class));
 		PatientService ps = Context.getPatientService();
 		Patient patient = ps.getPatient(2);
 		ps.savePatient(patient);
@@ -193,7 +193,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		int originalCount = patient.getNames().size();
 		assertTrue(originalCount > 1);
 		
-		auditLogService.startMonitoring(Patient.class);
+		auditLogService.startAuditing(Patient.class);
 		PersonName nameToRemove = null;
 		for (PersonName name : patient.getNames()) {
 			if (!name.isPreferred()) {
@@ -222,8 +222,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldCreateAnAuditLogForAParentWhenAnUnMonitoredElementIsAddedToAChildCollection() throws Exception {
-		assertFalse(auditLogService.isMonitored(ConceptDescription.class));
+	public void shouldCreateAnAuditLogForAParentWhenAnUnAuditedElementIsAddedToAChildCollection() throws Exception {
+		assertFalse(auditLogService.isAudited(ConceptDescription.class));
 		Concept concept = conceptService.getConcept(5089);
 		//something with ConceptMaps having blank uuids and now getting set, this should have been
 		//fixed in later versions
@@ -257,9 +257,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldCreateAnAuditLogForTheParentObjectWhenAnUnMonitoredElementInAChildCollectionIsUpdated()
-	    throws Exception {
-		assertFalse(auditLogService.isMonitored(ConceptDescription.class));
+	public void shouldCreateAnAuditLogForTheParentObjectWhenAnUnAuditedElementInAChildCollectionIsUpdated() throws Exception {
+		assertFalse(auditLogService.isAudited(ConceptDescription.class));
 		Concept concept = conceptService.getConcept(7);
 		assertEquals(0, getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED)).size());
 		
@@ -317,8 +316,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		Cohort c = cs.getCohort(1);
 		List actions = Collections.singletonList(UPDATED);
 		int count = getAllLogs(c.getUuid(), Cohort.class, actions).size();
-		auditLogService.startMonitoring(Cohort.class);
-		assertTrue(auditLogService.isMonitored(Cohort.class));
+		auditLogService.startAuditing(Cohort.class);
+		assertTrue(auditLogService.isAudited(Cohort.class));
 		assertFalse(c.contains(memberId));
 		c.addMember(memberId);
 		cs.saveCohort(c);
@@ -340,8 +339,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		Cohort c = cs.getCohort(1);
 		List actions = Collections.singletonList(UPDATED);
 		int count = getAllLogs(c.getUuid(), Cohort.class, actions).size();
-		auditLogService.startMonitoring(Cohort.class);
-		assertTrue(auditLogService.isMonitored(Cohort.class));
+		auditLogService.startAuditing(Cohort.class);
+		assertTrue(auditLogService.isAudited(Cohort.class));
 		assertTrue(c.contains(memberId));
 		c.removeMember(memberId);
 		cs.saveCohort(c);
@@ -364,8 +363,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		Cohort c = cs.getCohort(1);
 		List actions = Collections.singletonList(UPDATED);
 		int count = getAllLogs(c.getUuid(), Cohort.class, actions).size();
-		auditLogService.startMonitoring(Cohort.class);
-		assertTrue(auditLogService.isMonitored(Cohort.class));
+		auditLogService.startAuditing(Cohort.class);
+		assertTrue(auditLogService.isAudited(Cohort.class));
 		assertEquals(2, c.getMemberIds().size());
 		assertTrue(c.contains(memberId2));
 		assertTrue(c.contains(memberId3));
@@ -383,17 +382,17 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldCreateLogForUnMonitoredTypeIfTheOwningTypeIsMonitoredAndStrategyIsAllExcept() throws Exception {
+	public void shouldCreateLogForUnAuditedTypeIfTheOwningTypeIsAuditedAndStrategyIsAllExcept() throws Exception {
 		AdministrationService as = Context.getAdministrationService();
-		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
-		gp.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITING_STRATEGY);
+		gp.setPropertyValue(AuditingStrategy.ALL_EXCEPT.name());
 		as.saveGlobalProperty(gp);
-		assertEquals(MonitoringStrategy.ALL_EXCEPT, auditLogService.getMonitoringStrategy());
-		assertEquals(true, auditLogService.isMonitored(Person.class));
-		assertEquals(true, auditLogService.isMonitored(PersonAddress.class));
+		assertEquals(AuditingStrategy.ALL_EXCEPT, auditLogService.getAuditingStrategy());
+		assertEquals(true, auditLogService.isAudited(Person.class));
+		assertEquals(true, auditLogService.isAudited(PersonAddress.class));
 		
-		auditLogService.stopMonitoring(PersonAddress.class);
-		assertEquals(false, auditLogService.isMonitored(PersonAddress.class));
+		auditLogService.stopAuditing(PersonAddress.class);
+		assertEquals(false, auditLogService.isAudited(PersonAddress.class));
 		PersonService ps = Context.getPersonService();
 		Person person = ps.getPerson(2);
 		PersonAddress address = person.getPersonAddress();
@@ -415,7 +414,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		classes.add(PersonName.class);
 		classes.add(Patient.class);
 		
-		auditLogService.startMonitoring(classes);
+		auditLogService.startAuditing(classes);
 		patient = ps.savePatient(patient);
 		//Ensure that no log will be created unless we actually perform an update
 		assertEquals(0, getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED)).size());
@@ -423,8 +422,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		int originalNameCount = patient.getNames().size();
 		assertTrue(originalNameCount > 3);
 		
-		assertTrue(auditLogService.isMonitored(PersonName.class));
-		assertTrue(auditLogService.isMonitored(Patient.class));
+		assertTrue(auditLogService.isAudited(PersonName.class));
+		assertTrue(auditLogService.isAudited(Patient.class));
 		Iterator<PersonName> it = patient.getNames().iterator();
 		//update some existing names
 		PersonName name1 = it.next();
@@ -506,11 +505,11 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		int originalDescriptionCount = concept.getDescriptions().size();
 		assertTrue(originalDescriptionCount > 3);
 		
-		auditLogService.startMonitoring(ConceptDescription.class);
+		auditLogService.startAuditing(ConceptDescription.class);
 		concept = conceptService.saveConcept(concept);
 		//Ensure that no log will be created unless we actually perform an update
 		assertEquals(0, getAllLogs(concept.getUuid(), Concept.class, Collections.singletonList(UPDATED)).size());
-		assertTrue(auditLogService.isMonitored(ConceptDescription.class));
+		assertTrue(auditLogService.isAudited(ConceptDescription.class));
 		Iterator<ConceptDescription> it = concept.getDescriptions().iterator();
 		//update some existing descriptions
 		ConceptDescription cd1 = it.next();
@@ -587,12 +586,12 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		classes.add(PatientIdentifier.class);
 		classes.add(Patient.class);
 		
-		auditLogService.startMonitoring(classes);
+		auditLogService.startAuditing(classes);
 		patient = ps.savePatient(patient);
 		//Ensure that no log will be created unless we actually perform an update
 		assertEquals(0, getAllLogs(patient.getUuid(), Patient.class, Collections.singletonList(UPDATED)).size());
-		assertTrue(auditLogService.isMonitored(PersonName.class));
-		assertTrue(auditLogService.isMonitored(Patient.class));
+		assertTrue(auditLogService.isAudited(PersonName.class));
+		assertTrue(auditLogService.isAudited(Patient.class));
 		
 		assertEquals(4, patient.getNames().size());
 		Iterator<PersonName> nameIt = patient.getNames().iterator();
@@ -719,8 +718,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		String previousUserProperties = "\"" + entry.getKey() + "\"" + MAP_KEY_VALUE_SEPARATOR + "\"" + entry.getValue()
 		        + "\"";
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
-		auditLogService.startMonitoring(User.class);
-		assertEquals(true, auditLogService.isMonitored(User.class));
+		auditLogService.startAuditing(User.class);
+		assertEquals(true, auditLogService.isAudited(User.class));
 		final String newPropKey1 = "locale";
 		final String newPropValue1 = "fr";
 		final String newPropKey2 = "loginAttempts";
@@ -751,8 +750,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		String previousUserProperties = "{\"" + entry.getKey() + "\"" + MAP_KEY_VALUE_SEPARATOR + "\"" + entry.getValue()
 		        + "\"}";
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
-		auditLogService.startMonitoring(User.class);
-		assertEquals(true, auditLogService.isMonitored(User.class));
+		auditLogService.startAuditing(User.class);
+		assertEquals(true, auditLogService.isAudited(User.class));
 		user.getUserProperties().clear();//since it is 1, just clear
 		us.saveUser(user, null);
 		List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, null);
@@ -774,8 +773,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		String previousUserProperties = "{\"" + entry.getKey() + "\"" + MAP_KEY_VALUE_SEPARATOR + "\"" + entry.getValue()
 		        + "\"}";
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
-		auditLogService.startMonitoring(User.class);
-		assertEquals(true, auditLogService.isMonitored(User.class));
+		auditLogService.startAuditing(User.class);
+		assertEquals(true, auditLogService.isAudited(User.class));
 		Map<String, String> newProperties = new HashMap<String, String>();
 		final String newKey = "this is new";
 		final String newValue = "this is the value";
@@ -804,8 +803,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		String previousUserProperties = "{\"" + entry.getKey() + "\"" + MAP_KEY_VALUE_SEPARATOR + "\"" + entry.getValue()
 		        + "\"}";
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
-		auditLogService.startMonitoring(User.class);
-		assertEquals(true, auditLogService.isMonitored(User.class));
+		auditLogService.startAuditing(User.class);
+		assertEquals(true, auditLogService.isAudited(User.class));
 		user.setUserProperties(null);
 		//Should work even for detached owners
 		Context.evictFromSession(user);
@@ -829,8 +828,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(key, user.getUserProperties().keySet().iterator().next());
 		assertEquals(value, user.getUserProperties().values().iterator().next());
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
-		auditLogService.startMonitoring(User.class);
-		assertEquals(true, auditLogService.isMonitored(User.class));
+		auditLogService.startAuditing(User.class);
+		assertEquals(true, auditLogService.isAudited(User.class));
 		//We are setting the same original value but the string are new objects
 		user.setUserProperty(key, value);
 		us.saveUser(user, null);
@@ -846,10 +845,10 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		User user = us.getUser(505);
 		assertEquals(1, user.getUserProperties().size());
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
-		auditLogService.startMonitoring(User.class);
+		auditLogService.startAuditing(User.class);
 		Map.Entry<String, String> entry = user.getUserProperties().entrySet().iterator().next();
 		String userProperties = "{\"" + entry.getKey() + "\"" + MAP_KEY_VALUE_SEPARATOR + "\"" + entry.getValue() + "\"}";
-		assertEquals(true, auditLogService.isMonitored(User.class));
+		assertEquals(true, auditLogService.isAudited(User.class));
 		us.purgeUser(user);
 		List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, Collections.singletonList(DELETED));
 		assertEquals(1, logs.size());
@@ -882,13 +881,13 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
 		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
 		assertTrue(cp.isManyToMany());
-		assertEquals(false, auditLogService.isMonitored(User.class));
-		assertEquals(false, auditLogService.isMonitored(Role.class));
+		assertEquals(false, auditLogService.isAudited(User.class));
+		assertEquals(false, auditLogService.isAudited(Role.class));
 		
-		auditLogService.startMonitoring(User.class);
-		auditLogService.startMonitoring(Role.class);
-		assertEquals(true, auditLogService.isMonitored(User.class));
-		assertEquals(true, auditLogService.isMonitored(Role.class));
+		auditLogService.startAuditing(User.class);
+		auditLogService.startAuditing(Role.class);
+		assertEquals(true, auditLogService.isAudited(User.class));
+		assertEquals(true, auditLogService.isAudited(Role.class));
 		
 		user.setUsername("new user name");
 		role.setDescription("Testing");
@@ -917,13 +916,13 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
 		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
 		assertTrue(cp.isManyToMany());
-		assertEquals(false, auditLogService.isMonitored(User.class));
-		assertEquals(false, auditLogService.isMonitored(Role.class));
+		assertEquals(false, auditLogService.isAudited(User.class));
+		assertEquals(false, auditLogService.isAudited(Role.class));
 		
-		auditLogService.startMonitoring(User.class);
-		auditLogService.startMonitoring(Role.class);
-		assertEquals(true, auditLogService.isMonitored(User.class));
-		assertEquals(true, auditLogService.isMonitored(Role.class));
+		auditLogService.startAuditing(User.class);
+		auditLogService.startAuditing(Role.class);
+		assertEquals(true, auditLogService.isAudited(User.class));
+		assertEquals(true, auditLogService.isAudited(Role.class));
 		
 		role.setDescription("Testing");
 		us.saveUser(user, null);
@@ -950,10 +949,10 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
 		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
 		assertTrue(cp.isManyToMany());
-		assertEquals(false, auditLogService.isMonitored(User.class));
+		assertEquals(false, auditLogService.isAudited(User.class));
 		
-		auditLogService.startMonitoring(User.class);
-		assertEquals(true, auditLogService.isMonitored(User.class));
+		auditLogService.startAuditing(User.class);
+		assertEquals(true, auditLogService.isAudited(User.class));
 		
 		user.removeRole(role);
 		us.saveUser(user, null);
@@ -982,10 +981,10 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(0, getAllLogs(role.getUuid(), Role.class, null).size());
 		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
 		assertTrue(cp.isManyToMany());
-		assertEquals(false, auditLogService.isMonitored(User.class));
+		assertEquals(false, auditLogService.isAudited(User.class));
 		
-		auditLogService.startMonitoring(User.class);
-		assertEquals(true, auditLogService.isMonitored(User.class));
+		auditLogService.startAuditing(User.class);
+		assertEquals(true, auditLogService.isAudited(User.class));
 		
 		user.setUsername("New");
 		user.removeRole(role);
@@ -1013,13 +1012,13 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
 		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
 		assertTrue(cp.isManyToMany());
-		assertEquals(false, auditLogService.isMonitored(User.class));
-		assertEquals(false, auditLogService.isMonitored(Role.class));
+		assertEquals(false, auditLogService.isAudited(User.class));
+		assertEquals(false, auditLogService.isAudited(Role.class));
 		
-		auditLogService.startMonitoring(User.class);
-		auditLogService.startMonitoring(Role.class);
-		assertEquals(true, auditLogService.isMonitored(User.class));
-		assertEquals(true, auditLogService.isMonitored(Role.class));
+		auditLogService.startAuditing(User.class);
+		auditLogService.startAuditing(Role.class);
+		assertEquals(true, auditLogService.isAudited(User.class));
+		assertEquals(true, auditLogService.isAudited(Role.class));
 		
 		Role role = new Role("new role", "new desc");
 		user.addRole(role);
@@ -1050,10 +1049,10 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
 		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
 		assertTrue(cp.isManyToMany());
-		assertEquals(false, auditLogService.isMonitored(User.class));
+		assertEquals(false, auditLogService.isAudited(User.class));
 		
-		auditLogService.startMonitoring(User.class);
-		assertEquals(true, auditLogService.isMonitored(User.class));
+		auditLogService.startAuditing(User.class);
+		assertEquals(true, auditLogService.isAudited(User.class));
 		
 		user.addRole(role);
 		us.saveUser(user, null);
@@ -1079,13 +1078,13 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
 		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
 		assertTrue(cp.isManyToMany());
-		assertEquals(false, auditLogService.isMonitored(User.class));
-		assertEquals(false, auditLogService.isMonitored(Role.class));
+		assertEquals(false, auditLogService.isAudited(User.class));
+		assertEquals(false, auditLogService.isAudited(Role.class));
 		
-		auditLogService.startMonitoring(User.class);
-		auditLogService.startMonitoring(Role.class);
-		assertEquals(true, auditLogService.isMonitored(User.class));
-		assertEquals(true, auditLogService.isMonitored(Role.class));
+		auditLogService.startAuditing(User.class);
+		auditLogService.startAuditing(Role.class);
+		assertEquals(true, auditLogService.isAudited(User.class));
+		assertEquals(true, auditLogService.isAudited(Role.class));
 		
 		user.setUsername("New");
 		Role role = new Role("new role", "new desc");
@@ -1118,10 +1117,10 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
 		CollectionPersister cp = AuditLogUtil.getCollectionPersister("roles", User.class, null);
 		assertTrue(cp.isManyToMany());
-		assertEquals(false, auditLogService.isMonitored(User.class));
+		assertEquals(false, auditLogService.isAudited(User.class));
 		
-		auditLogService.startMonitoring(User.class);
-		assertEquals(true, auditLogService.isMonitored(User.class));
+		auditLogService.startAuditing(User.class);
+		assertEquals(true, auditLogService.isAudited(User.class));
 		
 		user.setUsername("New");
 		user.addRole(role);
@@ -1152,10 +1151,10 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(0, existingUpdateLogs.size());
 		assertEquals(2, location.getTags().size());
 		
-		auditLogService.startMonitoring(Location.class);
-		auditLogService.startMonitoring(LocationTag.class);
-		assertTrue(auditLogService.isMonitored(Location.class));
-		assertTrue(auditLogService.isMonitored(LocationTag.class));
+		auditLogService.startAuditing(Location.class);
+		auditLogService.startAuditing(LocationTag.class);
+		assertTrue(auditLogService.isAudited(Location.class));
+		assertTrue(auditLogService.isAudited(LocationTag.class));
 		Iterator<LocationTag> i = location.getTags().iterator();
 		LocationTag tagToRemove = i.next();
 		String tagUuid = tagToRemove.getUuid();
@@ -1199,10 +1198,10 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		Set<LocationTag> previousTags = location.getTags();
 		assertEquals(2, previousTags.size());
 		
-		auditLogService.startMonitoring(Location.class);
-		auditLogService.startMonitoring(LocationTag.class);
-		assertTrue(auditLogService.isMonitored(Location.class));
-		assertTrue(auditLogService.isMonitored(LocationTag.class));
+		auditLogService.startAuditing(Location.class);
+		auditLogService.startAuditing(LocationTag.class);
+		assertTrue(auditLogService.isAudited(Location.class));
+		assertTrue(auditLogService.isAudited(LocationTag.class));
 		LocationTag tagToAdd = ls.getLocationTag(2);
 		assertFalse(location.getTags().contains(tagToAdd));
 		String tagUuid = tagToAdd.getUuid();
@@ -1248,10 +1247,10 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		Set<LocationTag> previousTags = location.getTags();
 		assertEquals(2, previousTags.size());
 		
-		auditLogService.startMonitoring(Location.class);
-		auditLogService.startMonitoring(LocationTag.class);
-		assertTrue(auditLogService.isMonitored(Location.class));
-		assertTrue(auditLogService.isMonitored(LocationTag.class));
+		auditLogService.startAuditing(Location.class);
+		auditLogService.startAuditing(LocationTag.class);
+		assertTrue(auditLogService.isAudited(Location.class));
+		assertTrue(auditLogService.isAudited(LocationTag.class));
 		Iterator<LocationTag> i = location.getTags().iterator();
 		LocationTag tagToRemove = i.next();
 		String tagToRemoveUuid = tagToRemove.getUuid();
@@ -1302,9 +1301,9 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		int originalCount = patient.getNames().size();
 		assertTrue(originalCount > 1);
 		
-		auditLogService.startMonitoring(Patient.class);
-		auditLogService.startMonitoring(PersonName.class);
-		assertTrue(auditLogService.isMonitored(PersonName.class));
+		auditLogService.startAuditing(Patient.class);
+		auditLogService.startAuditing(PersonName.class);
+		assertTrue(auditLogService.isAudited(PersonName.class));
 		PersonName nameToRemove = null;
 		for (PersonName name : patient.getNames()) {
 			if (!name.isPreferred()) {
@@ -1351,10 +1350,10 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		Set<LocationTag> previousTags = location.getTags();
 		assertEquals(2, previousTags.size());
 		
-		auditLogService.startMonitoring(Location.class);
-		auditLogService.startMonitoring(LocationTag.class);
-		assertTrue(auditLogService.isMonitored(Location.class));
-		assertTrue(auditLogService.isMonitored(LocationTag.class));
+		auditLogService.startAuditing(Location.class);
+		auditLogService.startAuditing(LocationTag.class);
+		assertTrue(auditLogService.isAudited(Location.class));
+		assertTrue(auditLogService.isAudited(LocationTag.class));
 		location.getTags().clear();
 		Context.evictFromSession(location);
 		ls.saveLocation(location);
@@ -1395,10 +1394,10 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		Set<LocationTag> previousTags = location.getTags();
 		assertEquals(2, previousTags.size());
 		
-		auditLogService.startMonitoring(Location.class);
-		auditLogService.startMonitoring(LocationTag.class);
-		assertTrue(auditLogService.isMonitored(Location.class));
-		assertTrue(auditLogService.isMonitored(LocationTag.class));
+		auditLogService.startAuditing(Location.class);
+		auditLogService.startAuditing(LocationTag.class);
+		assertTrue(auditLogService.isAudited(Location.class));
+		assertTrue(auditLogService.isAudited(LocationTag.class));
 		location.setTags(new HashSet<LocationTag>());
 		Context.evictFromSession(location);
 		ls.saveLocation(location);
@@ -1439,10 +1438,10 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		Set<LocationTag> previousTags = location.getTags();
 		assertEquals(2, previousTags.size());
 		
-		auditLogService.startMonitoring(Location.class);
-		auditLogService.startMonitoring(LocationTag.class);
-		assertTrue(auditLogService.isMonitored(Location.class));
-		assertTrue(auditLogService.isMonitored(LocationTag.class));
+		auditLogService.startAuditing(Location.class);
+		auditLogService.startAuditing(LocationTag.class);
+		assertTrue(auditLogService.isAudited(Location.class));
+		assertTrue(auditLogService.isAudited(LocationTag.class));
 		location.setTags(null);
 		Context.evictFromSession(location);
 		ls.saveLocation(location);

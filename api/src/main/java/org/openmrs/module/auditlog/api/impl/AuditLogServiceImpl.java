@@ -26,7 +26,7 @@ import org.openmrs.api.context.Context;
 import org.openmrs.api.impl.BaseOpenmrsService;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
-import org.openmrs.module.auditlog.MonitoringStrategy;
+import org.openmrs.module.auditlog.AuditingStrategy;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
@@ -53,12 +53,12 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	}
 	
 	/**
-	 * @see AuditLogService#isMonitored(Class)
+	 * @see AuditLogService#isAudited(Class)
 	 * @param clazz
 	 */
 	@Transactional(readOnly = true)
-	public boolean isMonitored(Class<? extends OpenmrsObject> clazz) {
-		return dao.isMonitored(clazz);
+	public boolean isAudited(Class<? extends OpenmrsObject> clazz) {
+		return dao.isAudited(clazz);
 	}
 	
 	/**
@@ -114,66 +114,66 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#startMonitoring(java.lang.Class)
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#startAuditing(java.lang.Class)
 	 */
 	@Override
-	public void startMonitoring(Class<? extends OpenmrsObject> clazz) {
+	public void startAuditing(Class<? extends OpenmrsObject> clazz) {
 		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
 		classes.add(clazz);
-		startMonitoring(classes);
+		startAuditing(classes);
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#startMonitoring(java.util.Set)
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#startAuditing(java.util.Set)
 	 */
 	@Override
-	public void startMonitoring(Set<Class<? extends OpenmrsObject>> clazzes) {
-		dao.startMonitoring(clazzes);
+	public void startAuditing(Set<Class<? extends OpenmrsObject>> clazzes) {
+		dao.startAuditing(clazzes);
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#stopMonitoring(java.lang.Class)
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#stopAuditing(java.lang.Class)
 	 */
 	@Override
-	public void stopMonitoring(Class<? extends OpenmrsObject> clazz) {
+	public void stopAuditing(Class<? extends OpenmrsObject> clazz) {
 		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
 		classes.add(clazz);
-		stopMonitoring(classes);
+		stopAuditing(classes);
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#stopMonitoring(java.util.Set)
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#stopAuditing(java.util.Set)
 	 */
 	@Override
-	public void stopMonitoring(Set<Class<? extends OpenmrsObject>> clazzes) {
-		dao.stopMonitoring(clazzes);
+	public void stopAuditing(Set<Class<? extends OpenmrsObject>> clazzes) {
+		dao.stopAuditing(clazzes);
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#getMonitoringStrategy()
-	 */
-	@Override
-	@Transactional(readOnly = true)
-	public MonitoringStrategy getMonitoringStrategy() {
-		return dao.getMonitoringStrategy();
-	}
-	
-	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#getMonitoredClasses()
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#getAuditingStrategy()
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public Set<Class<? extends OpenmrsObject>> getMonitoredClasses() {
-		return dao.getMonitoredClasses();
+	public AuditingStrategy getAuditingStrategy() {
+		return dao.getAuditingStrategy();
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#getUnMonitoredClasses()
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#getAuditedClasses()
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public Set<Class<? extends OpenmrsObject>> getUnMonitoredClasses() {
-		return dao.getUnMonitoredClasses();
+	public Set<Class<? extends OpenmrsObject>> getAuditedClasses() {
+		return dao.getAuditedClasses();
+	}
+	
+	/**
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#getUnAuditedClasses()
+	 */
+	@Override
+	@Transactional(readOnly = true)
+	public Set<Class<? extends OpenmrsObject>> getUnAuditedClasses() {
+		return dao.getUnAuditedClasses();
 	}
 	
 	/**

@@ -20,7 +20,7 @@ import java.util.Set;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
-import org.openmrs.module.auditlog.MonitoringStrategy;
+import org.openmrs.module.auditlog.AuditingStrategy;
 import org.openmrs.module.auditlog.api.AuditLogService;
 
 /**
@@ -29,18 +29,18 @@ import org.openmrs.module.auditlog.api.AuditLogService;
 public interface AuditLogDAO {
 	
 	/**
-	 * @see AuditLogService#isMonitored(Class)
+	 * @see AuditLogService#isAudited(Class)
 	 */
-	public boolean isMonitored(Class<?> clazz);
+	public boolean isAudited(Class<?> clazz);
 	
 	/**
-	 * Checks if the specified type is implicitly monitor
+	 * Checks if the specified type is implicitly audit
 	 * 
-	 * @should return true if a class is implicitly monitored
-	 * @should return false if a class is not implicitly monitored
-	 * @should return false if a class is also marked as monitored
+	 * @should return true if a class is implicitly audited
+	 * @should return false if a class is not implicitly audited
+	 * @should return false if a class is also marked as audited
 	 */
-	public boolean isImplicitlyMonitored(Class<?> clazz);
+	public boolean isImplicitlyAudited(Class<?> clazz);
 	
 	/**
 	 * Fetches the audit log entries matching the specified arguments
@@ -89,29 +89,29 @@ public interface AuditLogDAO {
 	public <T> T getObjectByUuid(Class<T> clazz, String uuid);
 	
 	/**
-	 * @see AuditLogService#startMonitoring(java.util.Set)
+	 * @see AuditLogService#startAuditing(java.util.Set)
 	 */
-	public void startMonitoring(Set<Class<? extends OpenmrsObject>> clazzes);
+	public void startAuditing(Set<Class<? extends OpenmrsObject>> clazzes);
 	
 	/**
-	 * @see AuditLogService#stopMonitoring(java.util.Set)
+	 * @see AuditLogService#stopAuditing(java.util.Set)
 	 */
-	public void stopMonitoring(Set<Class<? extends OpenmrsObject>> clazzes);
+	public void stopAuditing(Set<Class<? extends OpenmrsObject>> clazzes);
 	
 	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#getMonitoringStrategy()
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#getAuditingStrategy()
 	 */
-	public MonitoringStrategy getMonitoringStrategy();
+	public AuditingStrategy getAuditingStrategy();
 	
 	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#getMonitoredClasses()
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#getAuditedClasses()
 	 */
-	public Set<Class<? extends OpenmrsObject>> getMonitoredClasses();
+	public Set<Class<? extends OpenmrsObject>> getAuditedClasses();
 	
 	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#getUnMonitoredClasses()
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#getUnAuditedClasses()
 	 */
-	public Set<Class<? extends OpenmrsObject>> getUnMonitoredClasses();
+	public Set<Class<? extends OpenmrsObject>> getUnAuditedClasses();
 	
 	/**
 	 * Gets a set of concrete subclasses for the specified class recursively, note that interfaces
@@ -125,23 +125,23 @@ public interface AuditLogDAO {
 	public Set<Class<? extends OpenmrsObject>> getPersistentConcreteSubclasses(Class<? extends OpenmrsObject> clazz);
 	
 	/**
-	 * Finds all the types for associations to monitor in as recursive way i.e if a Persistent type
-	 * is found, then we also find its collection element types and types for fields mapped as one
-	 * to one, note that this only includes sub types of {@link OpenmrsObject}
+	 * Finds all the types for associations to audit in as recursive way i.e if a Persistent type is
+	 * found, then we also find its collection element types and types for fields mapped as one to
+	 * one, note that this only includes sub types of {@link OpenmrsObject}
 	 * 
 	 * @param clazz the Class to match against
 	 * @return a set of found class names
 	 */
-	public Set<Class<? extends OpenmrsObject>> getAssociationTypesToMonitor(Class<? extends OpenmrsObject> clazz);
+	public Set<Class<? extends OpenmrsObject>> getAssociationTypesToAudit(Class<? extends OpenmrsObject> clazz);
 	
 	/**
-	 * Gets implicitly monitored classes, this are generated as a result of their owning entity
-	 * types being marked as monitored if they are not explicitly marked as monitored themselves,
-	 * i.e if Concept is marked as monitored, then ConceptName, ConceptDesctiption, ConceptMapping
-	 * etc implicitly get marked as monitored
+	 * Gets implicitly audited classes, this are generated as a result of their owning entity types
+	 * being marked as audited if they are not explicitly marked as audited themselves, i.e if
+	 * Concept is marked as audited, then ConceptName, ConceptDescription, ConceptMapping etc
+	 * implicitly get marked as audited
 	 * 
-	 * @return a set of implicitly monitored classes
-	 * @should return a set of implicitly monitored classes
+	 * @return a set of implicitly audited classes
+	 * @should return a set of implicitly audited classes
 	 */
-	public Set<Class<? extends OpenmrsObject>> getImplicitlyMonitoredClasses();
+	public Set<Class<? extends OpenmrsObject>> getImplicitlyAuditedClasses();
 }

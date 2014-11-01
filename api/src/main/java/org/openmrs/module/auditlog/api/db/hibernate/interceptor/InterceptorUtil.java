@@ -61,13 +61,13 @@ final class InterceptorUtil {
 	}
 	
 	/**
-	 * Checks if a class is marked as monitored or is explicitly monitored
+	 * Checks if a class is marked as audited or is explicitly audited
 	 * 
 	 * @param clazz the clazz to check
-	 * @return true if is monitored or implicitly monitored otherwise false
+	 * @return true if is audited or implicitly audited otherwise false
 	 */
-	static boolean isMonitored(Class<?> clazz) {
-		return getAuditLogDao().isMonitored(clazz) || getAuditLogDao().isImplicitlyMonitored(clazz);
+	static boolean isAudited(Class<?> clazz) {
+		return getAuditLogDao().isAudited(clazz) || getAuditLogDao().isImplicitlyAudited(clazz);
 	}
 	
 	/**

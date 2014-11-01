@@ -47,24 +47,24 @@ public abstract class BaseBehaviorTest extends BaseModuleContextSensitiveTest {
 		executeDataSet(MODULE_TEST_DATA);
 		auditLogService = Context.getService(AuditLogService.class);
 		AdministrationService as = Context.getAdministrationService();
-		if (MonitoringStrategy.NONE_EXCEPT != auditLogService.getMonitoringStrategy()) {
-			GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
-			gp.setPropertyValue(MonitoringStrategy.NONE_EXCEPT.name());
+		if (AuditingStrategy.NONE_EXCEPT != auditLogService.getAuditingStrategy()) {
+			GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITING_STRATEGY);
+			gp.setPropertyValue(AuditingStrategy.NONE_EXCEPT.name());
 			as.saveGlobalProperty(gp);
 		}
 		
-		final String monitoredGpValue = "org.openmrs.Concept,org.openmrs.EncounterType,org.openmrs.PatientIdentifierType";
-		GlobalProperty monitoredGP = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORED_CLASSES);
-		if (!monitoredGP.getPropertyValue().equals(monitoredGpValue)) {
-			monitoredGP.setPropertyValue(monitoredGpValue);
-			as.saveGlobalProperty(monitoredGP);
+		final String auditedGpValue = "org.openmrs.Concept,org.openmrs.EncounterType,org.openmrs.PatientIdentifierType";
+		GlobalProperty auditedGP = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITED_CLASSES);
+		if (!auditedGP.getPropertyValue().equals(auditedGpValue)) {
+			auditedGP.setPropertyValue(auditedGpValue);
+			as.saveGlobalProperty(auditedGP);
 		}
 		
-		final String unMonitoredGpValue = "org.openmrs.EncounterType";
-		GlobalProperty unMonitoredGP = as.getGlobalPropertyObject(AuditLogConstants.GP_UN_MONITORED_CLASSES);
-		if (!unMonitoredGP.getPropertyValue().equals(unMonitoredGpValue)) {
-			unMonitoredGP.setPropertyValue(unMonitoredGpValue);
-			as.saveGlobalProperty(unMonitoredGP);
+		final String unAuditedGpValue = "org.openmrs.EncounterType";
+		GlobalProperty unAuditedGP = as.getGlobalPropertyObject(AuditLogConstants.GP_UN_AUDITED_CLASSES);
+		if (!unAuditedGP.getPropertyValue().equals(unAuditedGpValue)) {
+			unAuditedGP.setPropertyValue(unAuditedGpValue);
+			as.saveGlobalProperty(unAuditedGP);
 		}
 		
 		conceptService = Context.getConceptService();
@@ -72,7 +72,7 @@ public abstract class BaseBehaviorTest extends BaseModuleContextSensitiveTest {
 		
 		//No log entries should be existing
 		Assert.assertTrue(getAllLogs().isEmpty());
-		Assert.assertEquals(MonitoringStrategy.NONE_EXCEPT, auditLogService.getMonitoringStrategy());
+		Assert.assertEquals(AuditingStrategy.NONE_EXCEPT, auditLogService.getAuditingStrategy());
 	}
 	
 	/**

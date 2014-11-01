@@ -45,28 +45,28 @@
 	
 	<!-- Global properties -->
 	<globalProperty>
-		<property>${project.parent.artifactId}.monitoredClasses</property>
+		<property>${project.parent.artifactId}.auditedClasses</property>
 		<defaultValue></defaultValue>
 		<description>
 			Specifies the class names of objects for which to maintain an audit log, this property is only used when the
-			monitoring strategy is set to NONE_EXCEPT
+			auditing strategy is set to NONE_EXCEPT
 		</description>
 	</globalProperty>
 	
 	<globalProperty>
-		<property>${project.parent.artifactId}.unMonitoredClasses</property>
+		<property>${project.parent.artifactId}.unAuditedClasses</property>
 		<defaultValue></defaultValue>
 		<description>
 			Specifies the class names of objects for which not to maintain an audit log, this property is only used when the
-			monitoring strategy is set to ALL_EXCEPT
+			auditing strategy is set to ALL_EXCEPT
 		</description>
 	</globalProperty>
 	
 	<globalProperty>
-		<property>${project.parent.artifactId}.monitoringStrategy</property>
+		<property>${project.parent.artifactId}.auditingStrategy</property>
 		<defaultValue>NONE</defaultValue>
 		<description>
-			Specifies the monitoring strategy to be used by the audit log module, allowed values are: 
+			Specifies the auditing strategy to be used by the audit log module, allowed values are:
 			ALL, ALL_EXCEPT, NONE, NONE_EXCEPT
 		</description>
 	</globalProperty>

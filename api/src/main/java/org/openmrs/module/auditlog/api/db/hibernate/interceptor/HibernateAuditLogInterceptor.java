@@ -57,7 +57,7 @@ import org.springframework.orm.hibernate3.SessionFactoryUtils;
 
 /**
  * A hibernate {@link org.hibernate.Interceptor} implementation, intercepts any database inserts,
- * updates and deletes and creates audit log entries for Monitored Objects, it logs changes for a
+ * updates and deletes and creates audit log entries for Audited Objects, it logs changes for a
  * single session meaning that if User A and B concurrently make changes to the same object, there
  * will be 2 log entries in the DB, one for each user's session. Any changes/inserts/deletes made to
  * the DB that are not made through the application won't be detected by the module.
@@ -125,7 +125,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	 */
 	@Override
 	public boolean onSave(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
-		if (InterceptorUtil.isMonitored(entity.getClass())) {
+		if (InterceptorUtil.isAudited(entity.getClass())) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			if (log.isDebugEnabled()) {
 				log.debug("Creating log entry for created object with uuid:" + openmrsObject.getUuid() + " of type:"
@@ -146,7 +146,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	public boolean onFlushDirty(Object entity, Serializable id, Object[] currentState, Object[] previousState,
 	                            String[] propertyNames, Type[] types) {
 		
-		if (propertyNames != null && InterceptorUtil.isMonitored(entity.getClass())) {
+		if (propertyNames != null && InterceptorUtil.isAudited(entity.getClass())) {
 			if (previousState == null) {
 				//This is a detached object, load the previous state in a separate session
 				Session tmpSession = null;
@@ -228,7 +228,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	 */
 	@Override
 	public void onDelete(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
-		if (InterceptorUtil.isMonitored(entity.getClass())) {
+		if (InterceptorUtil.isAudited(entity.getClass())) {
 			OpenmrsObject openmrsObject = (OpenmrsObject) entity;
 			if (log.isDebugEnabled()) {
 				log.debug("Creating log entry for deleted object with uuid:" + openmrsObject.getUuid() + " of type:"
@@ -252,7 +252,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	public void onCollectionUpdate(Object collection, Serializable key) throws CallbackException {
 		if (collection != null) {
 			PersistentCollection persistentColl = ((PersistentCollection) collection);
-			if (InterceptorUtil.isMonitored(persistentColl.getOwner().getClass())) {
+			if (InterceptorUtil.isAudited(persistentColl.getOwner().getClass())) {
 				OpenmrsObject owningObject = (OpenmrsObject) persistentColl.getOwner();
 				Map previousStoredSnapshotMap = (Map) persistentColl.getStoredSnapshot();
 				Object previousCollOrMap;
@@ -272,7 +272,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 		//We need to get all collection elements and link their childlogs to the parent's
 		if (collection != null) {
 			PersistentCollection persistentColl = (PersistentCollection) collection;
-			if (InterceptorUtil.isMonitored(persistentColl.getOwner().getClass())) {
+			if (InterceptorUtil.isAudited(persistentColl.getOwner().getClass())) {
 				OpenmrsObject owningObject = (OpenmrsObject) persistentColl.getOwner();
 				String role = persistentColl.getRole();
 				String propertyName = role.substring(role.lastIndexOf('.') + 1);
@@ -334,7 +334,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	@Override
 	public int[] findDirty(Object entity, Serializable id, Object[] currentState, Object[] previousState,
 	                       String[] propertyNames, Type[] types) {
-		if (InterceptorUtil.isMonitored(entity.getClass())) {
+		if (InterceptorUtil.isAudited(entity.getClass())) {
 			if (entityCollectionsMap.get().peek().get(entity) == null) {
 				//This is the first time we are trying to find collection elements for this object
 				if (log.isDebugEnabled()) {
@@ -411,7 +411,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 									updates.get().peek().add(owner);
 								}
 								
-								if (InterceptorUtil.isMonitored(obj.getClass())) {
+								if (InterceptorUtil.isAudited(obj.getClass())) {
 									if (ownerUuidChildLogsMap.get().peek().get(owner.getUuid()) == null) {
 										ownerUuidChildLogsMap.get().peek().put(owner.getUuid(), new ArrayList<AuditLog>());
 									}
@@ -442,7 +442,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 						//that don't have all-delete-orphan cascade
 						boolean isDelete = OpenmrsUtil.collectionContains(deletes.get().peek(), removed);
 						if (isDelete) {
-							if (InterceptorUtil.isMonitored(removed.getClass())) {
+							if (InterceptorUtil.isAudited(removed.getClass())) {
 								if (ownerUuidChildLogsMap.get().peek().get(removedItemsOwner.getUuid()) == null)
 									ownerUuidChildLogsMap.get().peek()
 									        .put(removedItemsOwner.getUuid(), new ArrayList<AuditLog>());

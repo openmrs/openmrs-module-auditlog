@@ -31,7 +31,7 @@ public class AuditLogDetails {
 	//of the toString method of the object, otherwise the id of the audited openmrs object
 	private String displayString;
 	
-	//specifies if the original monitored object still exists otherwise it was may deleted later
+	//specifies if the original audited object still exists otherwise it was may deleted later
 	private boolean objectExists = false;
 	
 	//The uuid of the updated/deleted/created object

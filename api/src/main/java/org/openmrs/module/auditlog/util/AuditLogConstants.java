@@ -37,14 +37,14 @@ public final class AuditLogConstants {
 	
 	public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 	
-	//Specifies the monitoring strategy in use
-	public static final String GP_MONITORING_STRATEGY = MODULE_ID + ".monitoringStrategy";
+	//Specifies the auditing strategy in use
+	public static final String GP_AUDITING_STRATEGY = MODULE_ID + ".auditingStrategy";
 	
-	//Classes names for the objects to monitor when the Monitoring strategy is set to NONE_EXCEPT
-	public static final String GP_MONITORED_CLASSES = MODULE_ID + ".monitoredClasses";
+	//Classes names for the objects to audit when the Auditing strategy is set to NONE_EXCEPT
+	public static final String GP_AUDITED_CLASSES = MODULE_ID + ".auditedClasses";
 	
-	//Classes names for the objects not to monitor when the Monitoring strategy is set to ALL_EXCEPT
-	public static final String GP_UN_MONITORED_CLASSES = MODULE_ID + ".unMonitoredClasses";
+	//Classes names for the objects not to audit when the Auditing strategy is set to ALL_EXCEPT
+	public static final String GP_UN_AUDITED_CLASSES = MODULE_ID + ".unAuditedClasses";
 	
 	/* MODULE PRIVILEGES */
 	public static final String PRIV_GET_AUDITLOGS = "Get Audit Logs";

@@ -232,8 +232,8 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldNotCreateAuditLogsForUnMonitoredObjects() {
-		assertFalse(auditLogService.isMonitored(Location.class));
+	public void shouldNotCreateAuditLogsForUnAuditedObjects() {
+		assertFalse(auditLogService.isAudited(Location.class));
 		Location location = new Location();
 		location.setName("najja");
 		location.setAddress1("test address");
@@ -289,11 +289,11 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldMonitorAnyOpenmrsObjectWhenStrategyIsSetToAll() throws Exception {
-		assertFalse(auditLogService.isMonitored(Location.class));
+	public void shouldAuditAnyOpenmrsObjectWhenStrategyIsSetToAll() throws Exception {
+		assertFalse(auditLogService.isAudited(Location.class));
 		AdministrationService as = Context.getAdministrationService();
-		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
-		gp.setPropertyValue(MonitoringStrategy.ALL.name());
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITING_STRATEGY);
+		gp.setPropertyValue(AuditingStrategy.ALL.name());
 		as.saveGlobalProperty(gp);
 		Location location = new Location();
 		location.setName("new location");
@@ -303,11 +303,11 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldNotMonitorAnyObjectWhenStrategyIsSetToNone() throws Exception {
-		assertTrue(auditLogService.isMonitored(EncounterType.class));
+	public void shouldNotAuditAnyObjectWhenStrategyIsSetToNone() throws Exception {
+		assertTrue(auditLogService.isAudited(EncounterType.class));
 		AdministrationService as = Context.getAdministrationService();
-		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
-		gp.setPropertyValue(MonitoringStrategy.NONE.name());
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITING_STRATEGY);
+		gp.setPropertyValue(AuditingStrategy.NONE.name());
 		as.saveGlobalProperty(gp);
 		EncounterType encounterType = encounterService.getEncounterType(6);
 		encounterService.purgeEncounterType(encounterType);
@@ -319,10 +319,10 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	public void shouldNotCreateLogWhenStrategyIsSetToAllExceptAndObjectTypeIsListedAsExcluded() throws Exception {
 		AdministrationService as = Context.getAdministrationService();
 		//sanity check
-		GlobalProperty monitoredGP = as.getGlobalPropertyObject(AuditLogConstants.GP_UN_MONITORED_CLASSES);
-		assertTrue(monitoredGP.getPropertyValue().indexOf(EncounterType.class.getName()) > -1);
-		GlobalProperty strategyGP = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
-		strategyGP.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
+		GlobalProperty auditedGP = as.getGlobalPropertyObject(AuditLogConstants.GP_UN_AUDITED_CLASSES);
+		assertTrue(auditedGP.getPropertyValue().indexOf(EncounterType.class.getName()) > -1);
+		GlobalProperty strategyGP = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITING_STRATEGY);
+		strategyGP.setPropertyValue(AuditingStrategy.ALL_EXCEPT.name());
 		as.saveGlobalProperty(strategyGP);
 		
 		EncounterType encounterType = encounterService.getEncounterType(6);
@@ -335,10 +335,10 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	public void shouldCreateLogWhenStrategyIsSetToAllExceptAndObjectTypeIsNotListedAsIncluded() throws Exception {
 		AdministrationService as = Context.getAdministrationService();
 		//sanity check
-		GlobalProperty monitoredGP = as.getGlobalPropertyObject(AuditLogConstants.GP_UN_MONITORED_CLASSES);
-		assertTrue(monitoredGP.getPropertyValue().indexOf(EncounterType.class.getName()) > -1);
-		GlobalProperty strategyGP = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORING_STRATEGY);
-		strategyGP.setPropertyValue(MonitoringStrategy.ALL_EXCEPT.name());
+		GlobalProperty auditedGP = as.getGlobalPropertyObject(AuditLogConstants.GP_UN_AUDITED_CLASSES);
+		assertTrue(auditedGP.getPropertyValue().indexOf(EncounterType.class.getName()) > -1);
+		GlobalProperty strategyGP = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITING_STRATEGY);
+		strategyGP.setPropertyValue(AuditingStrategy.ALL_EXCEPT.name());
 		as.saveGlobalProperty(strategyGP);
 		
 		Location location = new Location();
@@ -348,44 +348,42 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	}
 	
 	@Test
-	public void shouldUpdateTheMonitoredClassCacheWhenTheMonitoredClassGlobalPropertyIsUpdatedWithAnAddition()
-	    throws Exception {
-		assertFalse(auditLogService.isMonitored(Order.class));
-		assertFalse(auditLogService.isMonitored(DrugOrder.class));
+	public void shouldUpdateTheAuditedClassCacheWhenTheAuditedClassGlobalPropertyIsUpdatedWithAnAddition() throws Exception {
+		assertFalse(auditLogService.isAudited(Order.class));
+		assertFalse(auditLogService.isAudited(DrugOrder.class));
 		AdministrationService as = Context.getAdministrationService();
-		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORED_CLASSES);
-		Set<Class<? extends OpenmrsObject>> monitoredClasses = new HashSet<Class<? extends OpenmrsObject>>();
-		monitoredClasses.addAll(auditLogService.getMonitoredClasses());
-		monitoredClasses.add(Order.class);
-		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), SEPARATOR));
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITED_CLASSES);
+		Set<Class<? extends OpenmrsObject>> auditedClasses = new HashSet<Class<? extends OpenmrsObject>>();
+		auditedClasses.addAll(auditLogService.getAuditedClasses());
+		auditedClasses.add(Order.class);
+		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(auditedClasses), SEPARATOR));
 		as.saveGlobalProperty(gp);
-		assertTrue(auditLogService.isMonitored(Order.class));
-		assertTrue(auditLogService.isMonitored(DrugOrder.class));
+		assertTrue(auditLogService.isAudited(Order.class));
+		assertTrue(auditLogService.isAudited(DrugOrder.class));
 	}
 	
 	@Test
-	public void shouldUpdateTheMonitoredClassCacheWhenTheMonitoredClassGlobalPropertyIsUpdatedWithARemoval()
-	    throws Exception {
-		assertTrue(auditLogService.isMonitored(Concept.class));
-		assertTrue(auditLogService.isMonitored(ConceptNumeric.class));
-		assertTrue(auditLogService.isMonitored(ConceptComplex.class));
+	public void shouldUpdateTheAuditedClassCacheWhenTheAuditedClassGlobalPropertyIsUpdatedWithARemoval() throws Exception {
+		assertTrue(auditLogService.isAudited(Concept.class));
+		assertTrue(auditLogService.isAudited(ConceptNumeric.class));
+		assertTrue(auditLogService.isAudited(ConceptComplex.class));
 		AdministrationService as = Context.getAdministrationService();
-		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_MONITORED_CLASSES);
-		Set<Class<? extends OpenmrsObject>> monitoredClasses = new HashSet<Class<? extends OpenmrsObject>>();
-		monitoredClasses.addAll(auditLogService.getMonitoredClasses());
-		monitoredClasses.remove(Concept.class);
-		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(monitoredClasses), SEPARATOR));
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITED_CLASSES);
+		Set<Class<? extends OpenmrsObject>> auditedClasses = new HashSet<Class<? extends OpenmrsObject>>();
+		auditedClasses.addAll(auditLogService.getAuditedClasses());
+		auditedClasses.remove(Concept.class);
+		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(auditedClasses), SEPARATOR));
 		as.saveGlobalProperty(gp);
-		assertFalse(auditLogService.isMonitored(Concept.class));
-		assertTrue(auditLogService.isMonitored(ConceptNumeric.class));
-		assertTrue(auditLogService.isMonitored(ConceptComplex.class));
+		assertFalse(auditLogService.isAudited(Concept.class));
+		assertTrue(auditLogService.isAudited(ConceptNumeric.class));
+		assertTrue(auditLogService.isAudited(ConceptComplex.class));
 	}
 	
 	@Test
 	@NotTransactional
 	public void shouldNotCreateAnAuditLogWhenTheTransactionIsRolledBack() throws Exception {
-		auditLogService.startMonitoring(ConceptClass.class);
-		assertTrue(auditLogService.isMonitored(ConceptClass.class));
+		auditLogService.startAuditing(ConceptClass.class);
+		assertTrue(auditLogService.isAudited(ConceptClass.class));
 		ConceptService cs = Context.getConceptService();
 		
 		int initialLogCount = getAllLogs().size();
@@ -408,9 +406,9 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldCreateLogsForActionsSavedInNestedTransactions() throws Exception {
-		auditLogService.startMonitoring(Location.class);
+		auditLogService.startAuditing(Location.class);
 		try {
-			assertEquals(true, auditLogService.isMonitored(Location.class));
+			assertEquals(true, auditLogService.isAudited(Location.class));
 			final String newLocationName = "Some strange new name";
 			Location location = Context.getLocationService().getLocation(1);
 			//sanity checks
@@ -435,17 +433,17 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 			assertEquals(UPDATED, encounterTypeLogs.get(0).getAction());
 		}
 		finally {
-			auditLogService.stopMonitoring(Location.class);
+			auditLogService.stopAuditing(Location.class);
 		}
-		assertEquals(false, auditLogService.isMonitored(Location.class));
+		assertEquals(false, auditLogService.isAudited(Location.class));
 	}
 	
 	@Test
 	@NotTransactional
 	public void shouldNotCreateLogsForActionsSavedInInnerTransactionIfRollback() throws Exception {
-		auditLogService.startMonitoring(Location.class);
-		assertEquals(true, auditLogService.isMonitored(Location.class));
-		assertEquals(true, auditLogService.isMonitored(EncounterType.class));
+		auditLogService.startAuditing(Location.class);
+		assertEquals(true, auditLogService.isAudited(Location.class));
+		assertEquals(true, auditLogService.isAudited(EncounterType.class));
 		final String newLocationName = "Some strange new name";
 		Location location = Context.getLocationService().getLocation(1);
 		//sanity checks
@@ -474,9 +472,9 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldNotCreateLogsForActionsSavedInOuterTransactionIfRollback() throws Exception {
-		auditLogService.startMonitoring(Location.class);
-		assertTrue(auditLogService.isMonitored(Location.class));
-		assertTrue(auditLogService.isMonitored(EncounterType.class));
+		auditLogService.startAuditing(Location.class);
+		assertTrue(auditLogService.isAudited(Location.class));
+		assertTrue(auditLogService.isAudited(EncounterType.class));
 		final String newLocationName = "Some strange new name";
 		Location location = Context.getLocationService().getLocation(1);
 		//sanity checks
@@ -506,9 +504,9 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldNotCreateLogsForActionsSavedInBothTransactionsIfBothRollbacked() throws Exception {
-		auditLogService.startMonitoring(Location.class);
-		assertTrue(auditLogService.isMonitored(Location.class));
-		assertTrue(auditLogService.isMonitored(EncounterType.class));
+		auditLogService.startAuditing(Location.class);
+		assertTrue(auditLogService.isAudited(Location.class));
+		assertTrue(auditLogService.isAudited(EncounterType.class));
 		final String newLocationName = "Some strange new name";
 		Location location = Context.getLocationService().getLocation(1);
 		//sanity checks
@@ -537,7 +535,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldNotCreateLogIfADetachedObjectIsSavedWithNoChanges() throws Exception {
-		assertTrue(auditLogService.isMonitored(EncounterType.class));
+		assertTrue(auditLogService.isAudited(EncounterType.class));
 		EncounterService ls = Context.getEncounterService();
 		EncounterType type = ls.getEncounterType(1);
 		//sanity checks
@@ -553,7 +551,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldCreateLogIfADetachedObjectIsSavedWithChanges() throws Exception {
-		assertTrue(auditLogService.isMonitored(EncounterType.class));
+		assertTrue(auditLogService.isAudited(EncounterType.class));
 		EncounterService ls = Context.getEncounterService();
 		EncounterType type = ls.getEncounterType(1);
 		//sanity checks

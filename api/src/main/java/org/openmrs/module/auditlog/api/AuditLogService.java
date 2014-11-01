@@ -24,7 +24,7 @@ import org.openmrs.annotation.Authorized;
 import org.openmrs.api.OpenmrsService;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
-import org.openmrs.module.auditlog.MonitoringStrategy;
+import org.openmrs.module.auditlog.AuditingStrategy;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 
 /**
@@ -33,15 +33,15 @@ import org.openmrs.module.auditlog.util.AuditLogConstants;
 public interface AuditLogService extends OpenmrsService {
 	
 	/**
-	 * Checks if the specified type is monitored
+	 * Checks if the specified type is audited
 	 * 
 	 * @param clazz the class to check
-	 * @return true if the object is a monitored one otherwise false
-	 * @should true if the class is monitored
-	 * @should false if the class is not monitored
+	 * @return true if the object is an audited one otherwise false
+	 * @should true if the class is audited
+	 * @should false if the class is not audited
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public boolean isMonitored(Class<? extends OpenmrsObject> clazz);
+	public boolean isAudited(Class<? extends OpenmrsObject> clazz);
 	
 	/**
 	 * Fetches the audit log entries matching the specified arguments
@@ -95,82 +95,82 @@ public interface AuditLogService extends OpenmrsService {
 	public <T> T getObjectByUuid(Class<T> clazz, String uuid);
 	
 	/**
-	 * Convenience method that marks a given object type as monitored
+	 * Convenience method that marks a given object type as audited
 	 * 
-	 * @param clazz the type to start monitoring
+	 * @param clazz the type to start auditing
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public void startMonitoring(Class<? extends OpenmrsObject> clazz);
+	public void startAuditing(Class<? extends OpenmrsObject> clazz);
 	
 	/**
-	 * Marks the specified classes as monitored by adding their class names to the
-	 * {@link GlobalProperty} {@link AuditLogConstants#GP_MONITORED_CLASSES}
+	 * Marks the specified classes as audited by adding their class names to the
+	 * {@link GlobalProperty} {@link AuditLogConstants#GP_AUDITED_CLASSES}
 	 * 
-	 * @param clazzes the classes to monitor
-	 * @should update the monitored class names global property if the strategy is none_except
+	 * @param clazzes the classes to audit
+	 * @should update the audited class names global property if the strategy is none_except
 	 * @should not update any global property if the strategy is all
 	 * @should not update any global property if the strategy is none
-	 * @should update the un monitored class names global property if the strategy is all_except
-	 * @should mark a class and its known subclasses as monitored
-	 * @should mark a class and its known subclasses as monitored for all_except strategy
-	 * @should also mark association types as monitored
-	 * @should not mark association types for many to many collections as monitored
+	 * @should update the un audited class names global property if the strategy is all_except
+	 * @should mark a class and its known subclasses as audited
+	 * @should mark a class and its known subclasses as audited for all_except strategy
+	 * @should also mark association types as audited
+	 * @should not mark association types for many to many collections as audited
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public void startMonitoring(Set<Class<? extends OpenmrsObject>> clazzes);
+	public void startAuditing(Set<Class<? extends OpenmrsObject>> clazzes);
 	
 	/**
-	 * Convenience method that marks a given object type as un monitored
+	 * Convenience method that marks a given object type as un audited
 	 * 
-	 * @param clazz the type to stop monitoring
+	 * @param clazz the type to stop auditing
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public void stopMonitoring(Class<? extends OpenmrsObject> clazz);
+	public void stopAuditing(Class<? extends OpenmrsObject> clazz);
 	
 	/**
-	 * Marks the specified classes as not monitored by removing their class names from the
-	 * {@link GlobalProperty} {@link AuditLogConstants#GP_MONITORED_CLASSES}
+	 * Marks the specified classes as not audited by removing their class names from the
+	 * {@link GlobalProperty} {@link AuditLogConstants#GP_AUDITED_CLASSES}
 	 * 
-	 * @param clazzes the class to stop monitoring
-	 * @should update the monitored class names global property if the strategy is none_except
+	 * @param clazzes the class to stop auditing
+	 * @should update the audited class names global property if the strategy is none_except
 	 * @should not update any global property if the strategy is all
 	 * @should not update any global property if the strategy is none
-	 * @should update the un monitored class names global property if the strategy is all_except
-	 * @should mark a class and its known subclasses as un monitored
-	 * @should mark a class and its known subclasses as un monitored for all_except strategy
-	 * @should remove association types from monitored classes
+	 * @should update the un audited class names global property if the strategy is all_except
+	 * @should mark a class and its known subclasses as un audited
+	 * @should mark a class and its known subclasses as un audited for all_except strategy
+	 * @should remove association types from audited classes
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public void stopMonitoring(Set<Class<? extends OpenmrsObject>> clazzes);
+	public void stopAuditing(Set<Class<? extends OpenmrsObject>> clazzes);
 	
 	/**
-	 * Gets the {@link MonitoringStrategy} which is the value of the
-	 * {@link AuditLogConstants#GP_MONITORING_STRATEGY} global property
+	 * Gets the {@link org.openmrs.module.auditlog.AuditingStrategy} which is the value of the
+	 * {@link AuditLogConstants#GP_AUDITING_STRATEGY} global property
 	 * 
-	 * @return the monitoringStrategy
+	 * @return the auditingStrategy
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public MonitoringStrategy getMonitoringStrategy();
+	public AuditingStrategy getAuditingStrategy();
 	
 	/**
-	 * Convenience method that returns a set of monitored classes as specified by the
-	 * {@link GlobalProperty} {@link AuditLogConstants#GP_MONITORED_CLASSES}
+	 * Convenience method that returns a set of audited classes as specified by the
+	 * {@link GlobalProperty} {@link AuditLogConstants#GP_AUDITED_CLASSES}
 	 * 
-	 * @return a set of monitored classes
-	 * @should return a set of monitored classes
+	 * @return a set of audited classes
+	 * @should return a set of audited classes
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public Set<Class<? extends OpenmrsObject>> getMonitoredClasses();
+	public Set<Class<? extends OpenmrsObject>> getAuditedClasses();
 	
 	/**
-	 * Convenience method that returns a set of un monitored classes as specified by the
-	 * {@link GlobalProperty} {@link AuditLogConstants#GP_UN_MONITORED_CLASSES}
+	 * Convenience method that returns a set of un audited classes as specified by the
+	 * {@link GlobalProperty} {@link AuditLogConstants#GP_UN_AUDITED_CLASSES}
 	 * 
-	 * @return a set of monitored classes
-	 * @should return a set of un monitored classes
+	 * @return a set of audited classes
+	 * @should return a set of un audited classes
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public Set<Class<? extends OpenmrsObject>> getUnMonitoredClasses();
+	public Set<Class<? extends OpenmrsObject>> getUnAuditedClasses();
 	
 	/**
 	 * Gets all audit logs for the object that matches the specified uuid and class that match the
