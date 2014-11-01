@@ -262,7 +262,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					previousCollOrMap = previousStoredSnapshotMap;
 				}
 				
-				handledUpdatedCollection(collection, previousCollOrMap, owningObject, persistentColl.getRole());
+				handleUpdatedCollection(collection, previousCollOrMap, owningObject, persistentColl.getRole());
 			}
 		}
 	}
@@ -274,16 +274,32 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			PersistentCollection persistentColl = (PersistentCollection) collection;
 			if (InterceptorUtil.isMonitored(persistentColl.getOwner().getClass())) {
 				OpenmrsObject owningObject = (OpenmrsObject) persistentColl.getOwner();
+				String role = persistentColl.getRole();
+				String propertyName = role.substring(role.lastIndexOf('.') + 1);
+				ClassMetadata cmd = InterceptorUtil.getClassMetadata(owningObject.getClass());
+				Object currentCollection = cmd.getPropertyValue(owningObject, propertyName, EntityMode.POJO);
+				
+				//Hibernate calls onCollectionRemove whenever the underlying collection is replaced with a
+				//new instance i.e one calls the collection's setter and passes in a new instance even if the
+				//new collection contains some elements, we want to treat this as regular collection update,
+				//Except if onCollectionRemove is called because the owner got purged from the DB.
+				//I believe hibernate calls onDelete for the owner before onCollectionRemove for all its
+				//collections so we can guarantee that the owner is already in the 'deletes' thread local
+				boolean isOwnerDeleted = OpenmrsUtil.collectionContains(deletes.get().peek(), owningObject);
 				if (Collection.class.isAssignableFrom(collection.getClass())) {
 					Collection coll = (Collection) collection;
 					if (!coll.isEmpty()) {
 						Class<?> elementClass = coll.iterator().next().getClass();
 						if (OpenmrsObject.class.isAssignableFrom(elementClass)) {
-							String role = persistentColl.getRole();
-							String propertyName = role.substring(role.lastIndexOf('.') + 1);
-							ClassMetadata cmd = InterceptorUtil.getClassMetadata(owningObject.getClass());
-							Object currentCollection = cmd.getPropertyValue(owningObject, propertyName, EntityMode.POJO);
-							if (currentCollection == null) {
+							if (isOwnerDeleted) {
+								if (entityRemovedChildrenMap.get().peek().get(owningObject) == null) {
+									entityRemovedChildrenMap.get().peek().put(owningObject, new HashSet<OpenmrsObject>());
+								}
+								for (Object removedItem : coll) {
+									OpenmrsObject removed = (OpenmrsObject) removedItem;
+									entityRemovedChildrenMap.get().peek().get(owningObject).add(removed);
+								}
+							} else if (!isOwnerDeleted && currentCollection == null) {
 								Class<?> propertyClass = cmd.getPropertyType(propertyName).getReturnedClass();
 								if (Set.class.isAssignableFrom(propertyClass)) {
 									currentCollection = Collections.EMPTY_SET;
@@ -291,29 +307,18 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 									currentCollection = Collections.EMPTY_LIST;
 								}
 							}
-							
-							//Hibernate calls onCollectionRemove whenever the underlying collection is replaced with a
-							//new instance i.e one calls the collection's setter and passes in a new instance even if the
-							//new collection contains some elements, we want to treat this as regular collection update,
-							//Except if onCollectionRemove is called because the owner got purged from the DB.
-							//I believe hibernate calls onDelete for the owner before onCollectionRemove for all its
-							//collections so we can guarantee that the owner is already in the 'deletes' thread local
-							boolean isOwnerDeleted = OpenmrsUtil.collectionContains(deletes.get().peek(), owningObject);
-							if (!isOwnerDeleted) {
-								handledUpdatedCollection(currentCollection, collection, owningObject, role);
-								return;
-							}
-							if (entityRemovedChildrenMap.get().peek().get(owningObject) == null) {
-								entityRemovedChildrenMap.get().peek().put(owningObject, new HashSet<OpenmrsObject>());
-							}
-							for (Object removedItem : coll) {
-								OpenmrsObject removed = (OpenmrsObject) removedItem;
-								entityRemovedChildrenMap.get().peek().get(owningObject).add(removed);
-							}
 						}
 					}
+				} else if (Map.class.isAssignableFrom(collection.getClass())) {
+					if (!isOwnerDeleted && currentCollection == null) {
+						currentCollection = Collections.EMPTY_MAP;
+					}
 				} else {
-					//TODO: Handle other persistent collections like bags
+					//TODO: Handle other persistent collections types e.g bags
+				}
+				
+				if (!isOwnerDeleted) {
+					handleUpdatedCollection(currentCollection, collection, owningObject, role);
 				}
 			}
 		}
@@ -450,6 +455,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 						}
 					}
 				}
+				
 				List<AuditLog> logs = new ArrayList<AuditLog>();
 				for (OpenmrsObject insert : inserts.get().peek()) {
 					logs.add(createAuditLogIfNecessary(insert, Action.CREATED));
@@ -532,7 +538,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			} else {
 				//TODO if one edits and deletes an object in the same API call, the property
 				//value that gets serialized is the new one but actually was never saved
-				//Should we store the value in teh DB or the in teh current session?
+				//Should we store the value in the DB or the one in the current session?
 				auditLog.setSerializedData(InterceptorUtil.serializePersistentObject(object));
 			}
 		}
@@ -599,8 +605,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 		}
 	}
 	
-	private void handledUpdatedCollection(Object currentCollOrMap, Object previousCollOrMap, OpenmrsObject owningObject,
-	                                      String role) {
+	private void handleUpdatedCollection(Object currentCollOrMap, Object previousCollOrMap, OpenmrsObject owningObject,
+	                                     String role) {
 		
 		String ownerUuid = owningObject.getUuid();
 		String propertyName = role.substring(role.lastIndexOf('.') + 1);

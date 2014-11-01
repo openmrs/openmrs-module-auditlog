@@ -727,6 +727,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		final String newPropValue2 = "2";
 		user.setUserProperty(newPropKey1, newPropValue1);
 		user.setUserProperty(newPropKey2, newPropValue2);
+		//Should work even for detached owners
+		Context.evictFromSession(user);
 		us.saveUser(user, null);
 		List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, null);
 		assertEquals(1, logs.size());
@@ -752,6 +754,61 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		auditLogService.startMonitoring(User.class);
 		assertEquals(true, auditLogService.isMonitored(User.class));
 		user.getUserProperties().clear();//since it is 1, just clear
+		us.saveUser(user, null);
+		List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, null);
+		assertEquals(1, logs.size());
+		AuditLog al = logs.get(0);
+		assertEquals(previousUserProperties, AuditLogUtil.getPreviousValueOfUpdatedItem("userProperties", al));
+		assertNull(AuditLogUtil.getNewValueOfUpdatedItem("userProperties", al));
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldCreateAnAuditLogForTheParentWhenAMapPropertyIsReplacedWithANewInstance() throws Exception {
+		executeDataSet("org/openmrs/api/include/UserServiceTest.xml");
+		UserService us = Context.getUserService();
+		User user = us.getUser(505);
+		assertEquals(1, user.getUserProperties().size());
+		Map<String, String> originalProperties = user.getUserProperties();
+		Map.Entry<String, String> entry = originalProperties.entrySet().iterator().next();
+		String previousUserProperties = "{\"" + entry.getKey() + "\"" + MAP_KEY_VALUE_SEPARATOR + "\"" + entry.getValue()
+		        + "\"}";
+		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
+		auditLogService.startMonitoring(User.class);
+		assertEquals(true, auditLogService.isMonitored(User.class));
+		Map<String, String> newProperties = new HashMap<String, String>();
+		final String newKey = "this is new";
+		final String newValue = "this is the value";
+		newProperties.put(newKey, newValue);
+		user.setUserProperties(newProperties);
+		//Should work even for detached owners
+		Context.evictFromSession(user);
+		us.saveUser(user, null);
+		List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, null);
+		assertEquals(1, logs.size());
+		AuditLog al = logs.get(0);
+		assertEquals(previousUserProperties, AuditLogUtil.getPreviousValueOfUpdatedItem("userProperties", al));
+		assertEquals("{\"" + newKey + "\":\"" + newValue + "\"}",
+		    AuditLogUtil.getNewValueOfUpdatedItem("userProperties", al));
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldCreateAnAuditLogForTheParentWhenAMapPropertyIsReplacedWithANullValue() throws Exception {
+		executeDataSet("org/openmrs/api/include/UserServiceTest.xml");
+		UserService us = Context.getUserService();
+		User user = us.getUser(505);
+		assertEquals(1, user.getUserProperties().size());
+		Map<String, String> originalProperties = user.getUserProperties();
+		Map.Entry<String, String> entry = originalProperties.entrySet().iterator().next();
+		String previousUserProperties = "{\"" + entry.getKey() + "\"" + MAP_KEY_VALUE_SEPARATOR + "\"" + entry.getValue()
+		        + "\"}";
+		assertEquals(0, getAllLogs(user.getUuid(), User.class, null).size());
+		auditLogService.startMonitoring(User.class);
+		assertEquals(true, auditLogService.isMonitored(User.class));
+		user.setUserProperties(null);
+		//Should work even for detached owners
+		Context.evictFromSession(user);
 		us.saveUser(user, null);
 		List<AuditLog> logs = getAllLogs(user.getUuid(), User.class, null);
 		assertEquals(1, logs.size());
