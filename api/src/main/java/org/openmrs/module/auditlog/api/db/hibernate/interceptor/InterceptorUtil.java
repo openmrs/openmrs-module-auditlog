@@ -218,4 +218,8 @@ final class InterceptorUtil {
 	static SessionFactory getSessionFactory() {
 		return Context.getRegisteredComponents(SessionFactory.class).get(0);
 	}
+	
+	static boolean storeLastStateOfDeletedItems() {
+		return auditLogDao.storeLastStateOfDeletedItems();
+	}
 }

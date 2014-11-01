@@ -95,6 +95,27 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(1, logs.size());
 		AuditLog al = logs.get(0);
 		assertEquals(DELETED, al.getAction());
+		assertNull(al.getSerializedData());
+	}
+	
+	@Test
+	@NotTransactional
+	public void shouldStoreTheLastStateOfAsDeletedObjectIfTheFeatureIsEnabled() throws Exception {
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_STORE_LAST_STATE_OF_DELETED_ITEMS);
+		if (gp == null) {
+			gp = new GlobalProperty(AuditLogConstants.GP_STORE_LAST_STATE_OF_DELETED_ITEMS, "true");
+		} else {
+			gp.setPropertyValue("true");
+		}
+		as.saveGlobalProperty(gp);
+		EncounterType encounterType = encounterService.getEncounterType(6);
+		encounterService.purgeEncounterType(encounterType);
+		List<AuditLog> logs = getAllLogs(encounterType.getUuid(), EncounterType.class, null);
+		//Should have created a log entry for deleted Encounter type
+		assertEquals(1, logs.size());
+		AuditLog al = logs.get(0);
+		assertEquals(DELETED, al.getAction());
 		assertEquals("{\"encounterTypeId\":6," + "\"retireReason\":\"for testing\","
 		        + "\"retiredBy\":\"uuid:1010d442-e134-11de-babe-001e378eb67e\","
 		        + "\"description\":\"Visit to the laboratory\"," + "\"name\":\"Laboratory\"," + "\"retired\":\"true\","

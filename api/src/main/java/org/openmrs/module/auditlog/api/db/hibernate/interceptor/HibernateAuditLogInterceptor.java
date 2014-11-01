@@ -535,7 +535,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				if (propertyValuesMap != null) {
 					auditLog.setSerializedData(InterceptorUtil.serializeToJson(propertyValuesMap));
 				}
-			} else {
+			} else if (InterceptorUtil.storeLastStateOfDeletedItems()) {
 				//TODO if one edits and deletes an object in the same API call, the property
 				//value that gets serialized is the new one but actually was never saved
 				//Should we store the value in the DB or the one in the current session?

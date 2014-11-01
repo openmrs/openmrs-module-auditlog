@@ -59,6 +59,8 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	
 	private static Set<Class<? extends OpenmrsObject>> implicitlyAuditedTypeCache;
 	
+	private static Boolean storeLastStateOfDeleteItemsCache;
+	
 	private SessionFactory sessionFactory;
 	
 	/**
@@ -399,11 +401,26 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	}
 	
 	/**
+	 * @see org.openmrs.module.auditlog.api.db.AuditLogDAO#storeLastStateOfDeletedItems()
+	 * @return
+	 */
+	public boolean storeLastStateOfDeletedItems() {
+		if (storeLastStateOfDeleteItemsCache == null) {
+			String gpValue = Context.getAdministrationService().getGlobalProperty(
+			    AuditLogConstants.GP_STORE_LAST_STATE_OF_DELETED_ITEMS);
+			storeLastStateOfDeleteItemsCache = Boolean.valueOf(gpValue);
+		}
+		return storeLastStateOfDeleteItemsCache;
+	}
+	
+	/**
 	 * @see org.openmrs.api.GlobalPropertyListener#globalPropertyChanged(org.openmrs.GlobalProperty)
 	 */
 	@Override
 	public void globalPropertyChanged(GlobalProperty gp) {
-		if (AuditLogConstants.GP_AUDITED_CLASSES.equals(gp.getProperty())) {
+		if (AuditLogConstants.GP_STORE_LAST_STATE_OF_DELETED_ITEMS.equals(gp.getProperty())) {
+			storeLastStateOfDeleteItemsCache = null;
+		} else if (AuditLogConstants.GP_AUDITED_CLASSES.equals(gp.getProperty())) {
 			auditedTypeCache = null;
 		} else if (AuditLogConstants.GP_UN_AUDITED_CLASSES.equals(gp.getProperty())) {
 			unAuditedTypeCache = null;
@@ -421,7 +438,9 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 */
 	@Override
 	public void globalPropertyDeleted(String gpName) {
-		if (AuditLogConstants.GP_AUDITED_CLASSES.equals(gpName)) {
+		if (AuditLogConstants.GP_STORE_LAST_STATE_OF_DELETED_ITEMS.equals(gpName)) {
+			storeLastStateOfDeleteItemsCache = null;
+		} else if (AuditLogConstants.GP_AUDITED_CLASSES.equals(gpName)) {
 			auditedTypeCache = null;
 		} else if (AuditLogConstants.GP_UN_AUDITED_CLASSES.equals(gpName)) {
 			unAuditedTypeCache = null;
@@ -439,7 +458,8 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	@Override
 	public boolean supportsPropertyName(String gpName) {
 		return AuditLogConstants.GP_AUDITING_STRATEGY.equals(gpName) || AuditLogConstants.GP_AUDITED_CLASSES.equals(gpName)
-		        || AuditLogConstants.GP_UN_AUDITED_CLASSES.equals(gpName);
+		        || AuditLogConstants.GP_UN_AUDITED_CLASSES.equals(gpName)
+		        || AuditLogConstants.GP_STORE_LAST_STATE_OF_DELETED_ITEMS.equals(gpName);
 	}
 	
 	/**

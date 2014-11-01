@@ -144,4 +144,12 @@ public interface AuditLogDAO {
 	 * @should return a set of implicitly audited classes
 	 */
 	public Set<Class<? extends OpenmrsObject>> getImplicitlyAuditedClasses();
+	
+	/**
+	 * Returns true or false depending on the value of the
+	 * AuditLogConstants#GP_STORE_LAST_STATE_OF_DELETED_ITEMS global property
+	 * 
+	 * @return true is allowed otherwise false
+	 */
+	public boolean storeLastStateOfDeletedItems();
 }
