@@ -70,6 +70,14 @@
 			ALL, ALL_EXCEPT, NONE, NONE_EXCEPT
 		</description>
 	</globalProperty>
+
+    <globalProperty>
+        <property>${project.parent.artifactId}.storeLastStateOfDeletedItems</property>
+        <defaultValue>false</defaultValue>
+        <description>
+            Specifies whether the last states of deleted items should be stored
+        </description>
+    </globalProperty>
 	
 	<!-- Maps hibernate file's, if present -->
 	<mappingFiles>
