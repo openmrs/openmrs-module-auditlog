@@ -59,7 +59,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	
 	private static Set<Class<? extends OpenmrsObject>> implicitlyAuditedTypeCache;
 	
-	private static Boolean storeLastStateOfDeleteItemsCache;
+	private static Boolean storeLastStateOfDeletedItemsCache;
 	
 	private SessionFactory sessionFactory;
 	
@@ -405,12 +405,12 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 * @return
 	 */
 	public boolean storeLastStateOfDeletedItems() {
-		if (storeLastStateOfDeleteItemsCache == null) {
+		if (storeLastStateOfDeletedItemsCache == null) {
 			String gpValue = Context.getAdministrationService().getGlobalProperty(
 			    AuditLogConstants.GP_STORE_LAST_STATE_OF_DELETED_ITEMS);
-			storeLastStateOfDeleteItemsCache = Boolean.valueOf(gpValue);
+			storeLastStateOfDeletedItemsCache = Boolean.valueOf(gpValue);
 		}
-		return storeLastStateOfDeleteItemsCache;
+		return storeLastStateOfDeletedItemsCache;
 	}
 	
 	/**
@@ -419,7 +419,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	@Override
 	public void globalPropertyChanged(GlobalProperty gp) {
 		if (AuditLogConstants.GP_STORE_LAST_STATE_OF_DELETED_ITEMS.equals(gp.getProperty())) {
-			storeLastStateOfDeleteItemsCache = null;
+			storeLastStateOfDeletedItemsCache = null;
 		} else if (AuditLogConstants.GP_AUDITED_CLASSES.equals(gp.getProperty())) {
 			auditedTypeCache = null;
 		} else if (AuditLogConstants.GP_UN_AUDITED_CLASSES.equals(gp.getProperty())) {
@@ -439,7 +439,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	@Override
 	public void globalPropertyDeleted(String gpName) {
 		if (AuditLogConstants.GP_STORE_LAST_STATE_OF_DELETED_ITEMS.equals(gpName)) {
-			storeLastStateOfDeleteItemsCache = null;
+			storeLastStateOfDeletedItemsCache = null;
 		} else if (AuditLogConstants.GP_AUDITED_CLASSES.equals(gpName)) {
 			auditedTypeCache = null;
 		} else if (AuditLogConstants.GP_UN_AUDITED_CLASSES.equals(gpName)) {
