@@ -44,7 +44,6 @@ import org.junit.Test;
 import org.openmrs.Cohort;
 import org.openmrs.Concept;
 import org.openmrs.ConceptDescription;
-import org.openmrs.GlobalProperty;
 import org.openmrs.Location;
 import org.openmrs.LocationTag;
 import org.openmrs.OpenmrsObject;
@@ -59,7 +58,6 @@ import org.openmrs.PersonName;
 import org.openmrs.Relationship;
 import org.openmrs.Role;
 import org.openmrs.User;
-import org.openmrs.api.AdministrationService;
 import org.openmrs.api.CohortService;
 import org.openmrs.api.LocationService;
 import org.openmrs.api.OrderService;
@@ -383,10 +381,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldCreateLogForUnAuditedTypeIfTheOwningTypeIsAuditedAndStrategyIsAllExcept() throws Exception {
-		AdministrationService as = Context.getAdministrationService();
-		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITING_STRATEGY);
-		gp.setPropertyValue(AuditingStrategy.ALL_EXCEPT.name());
-		as.saveGlobalProperty(gp);
+		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, null);
 		assertEquals(AuditingStrategy.ALL_EXCEPT, auditLogService.getAuditingStrategy());
 		assertEquals(true, auditLogService.isAudited(Person.class));
 		assertEquals(true, auditLogService.isAudited(PersonAddress.class));

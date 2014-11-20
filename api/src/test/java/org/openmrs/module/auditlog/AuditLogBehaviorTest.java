@@ -43,13 +43,11 @@ import org.openmrs.ConceptName;
 import org.openmrs.ConceptNumeric;
 import org.openmrs.DrugOrder;
 import org.openmrs.EncounterType;
-import org.openmrs.GlobalProperty;
 import org.openmrs.Location;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.Order;
 import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.APIException;
-import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.PatientService;
@@ -101,14 +99,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldStoreTheLastStateOfAsDeletedObjectIfTheFeatureIsEnabled() throws Exception {
-		AdministrationService as = Context.getAdministrationService();
-		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_STORE_LAST_STATE_OF_DELETED_ITEMS);
-		if (gp == null) {
-			gp = new GlobalProperty(AuditLogConstants.GP_STORE_LAST_STATE_OF_DELETED_ITEMS, "true");
-		} else {
-			gp.setPropertyValue("true");
-		}
-		as.saveGlobalProperty(gp);
+		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_STORE_LAST_STATE_OF_DELETED_ITEMS, "true");
 		EncounterType encounterType = encounterService.getEncounterType(6);
 		encounterService.purgeEncounterType(encounterType);
 		List<AuditLog> logs = getAllLogs(encounterType.getUuid(), EncounterType.class, null);
@@ -312,10 +303,8 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@NotTransactional
 	public void shouldAuditAnyOpenmrsObjectWhenStrategyIsSetToAll() throws Exception {
 		assertFalse(auditLogService.isAudited(Location.class));
-		AdministrationService as = Context.getAdministrationService();
-		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITING_STRATEGY);
-		gp.setPropertyValue(AuditingStrategy.ALL.name());
-		as.saveGlobalProperty(gp);
+		setAuditConfiguration(AuditingStrategy.ALL, null);
+		assertTrue(auditLogService.isAudited(Location.class));
 		Location location = new Location();
 		location.setName("new location");
 		Context.getLocationService().saveLocation(location);
@@ -326,10 +315,8 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@NotTransactional
 	public void shouldNotAuditAnyObjectWhenStrategyIsSetToNone() throws Exception {
 		assertTrue(auditLogService.isAudited(EncounterType.class));
-		AdministrationService as = Context.getAdministrationService();
-		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITING_STRATEGY);
-		gp.setPropertyValue(AuditingStrategy.NONE.name());
-		as.saveGlobalProperty(gp);
+		setAuditConfiguration(AuditingStrategy.NONE, null);
+		assertFalse(auditLogService.isAudited(EncounterType.class));
 		EncounterType encounterType = encounterService.getEncounterType(6);
 		encounterService.purgeEncounterType(encounterType);
 		assertEquals(0, getAllLogs().size());
@@ -350,15 +337,8 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldCreateLogWhenStrategyIsSetToAllExceptAndObjectTypeIsNotListedAsIncluded() throws Exception {
-		AdministrationService as = Context.getAdministrationService();
-		//sanity check
-		GlobalProperty auditedGP = as.getGlobalPropertyObject(AuditLogConstants.GP_EXCEPTIONS);
-		assertTrue(auditedGP.getPropertyValue().indexOf(EncounterType.class.getName()) > -1);
-		GlobalProperty strategyGP = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITING_STRATEGY);
-		strategyGP.setPropertyValue(AuditingStrategy.ALL_EXCEPT.name());
-		as.saveGlobalProperty(strategyGP);
-		
+	public void shouldCreateLogWhenStrategyIsSetToAllExceptAndObjectTypeIsNotListedAsAnException() throws Exception {
+		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, EncounterType.class.getName());
 		Location location = new Location();
 		location.setName("new location");
 		Context.getLocationService().saveLocation(location);
@@ -369,13 +349,11 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	public void shouldUpdateTheAuditedClassCacheWhenTheAuditedClassGlobalPropertyIsUpdatedWithAnAddition() throws Exception {
 		assertFalse(auditLogService.isAudited(Order.class));
 		assertFalse(auditLogService.isAudited(DrugOrder.class));
-		AdministrationService as = Context.getAdministrationService();
-		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_EXCEPTIONS);
 		Set<Class<? extends OpenmrsObject>> auditedClasses = new HashSet<Class<? extends OpenmrsObject>>();
 		auditedClasses.addAll(auditLogService.getExceptions());
 		auditedClasses.add(Order.class);
-		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(auditedClasses), SEPARATOR));
-		as.saveGlobalProperty(gp);
+		String exceptions = StringUtils.join(AuditLogUtil.getAsListOfClassnames(auditedClasses), SEPARATOR);
+		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_EXCEPTIONS, exceptions);
 		assertTrue(auditLogService.isAudited(Order.class));
 		assertTrue(auditLogService.isAudited(DrugOrder.class));
 	}
@@ -385,13 +363,11 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		assertTrue(auditLogService.isAudited(Concept.class));
 		assertTrue(auditLogService.isAudited(ConceptNumeric.class));
 		assertTrue(auditLogService.isAudited(ConceptComplex.class));
-		AdministrationService as = Context.getAdministrationService();
-		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_EXCEPTIONS);
 		Set<Class<? extends OpenmrsObject>> auditedClasses = new HashSet<Class<? extends OpenmrsObject>>();
 		auditedClasses.addAll(auditLogService.getExceptions());
 		auditedClasses.remove(Concept.class);
-		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(auditedClasses), SEPARATOR));
-		as.saveGlobalProperty(gp);
+		String exceptions = StringUtils.join(AuditLogUtil.getAsListOfClassnames(auditedClasses), SEPARATOR);
+		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_EXCEPTIONS, exceptions);
 		assertFalse(auditLogService.isAudited(Concept.class));
 		assertTrue(auditLogService.isAudited(ConceptNumeric.class));
 		assertTrue(auditLogService.isAudited(ConceptComplex.class));

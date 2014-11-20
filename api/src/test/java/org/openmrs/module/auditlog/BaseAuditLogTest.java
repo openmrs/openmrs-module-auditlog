@@ -47,8 +47,7 @@ public abstract class BaseAuditLogTest extends BaseModuleContextSensitiveTest {
 		auditLogService = Context.getService(AuditLogService.class);
 		executeDataSet(MODULE_TEST_DATA);
 		String exceptionsGpValue = "org.openmrs.Concept,org.openmrs.EncounterType,org.openmrs.PatientIdentifierType";
-		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_AUDITING_STRATEGY, AuditingStrategy.NONE_EXCEPT.name());
-		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_EXCEPTIONS, exceptionsGpValue);
+		setAuditConfiguration(AuditingStrategy.NONE_EXCEPT, exceptionsGpValue);
 		
 		assertEquals(AuditingStrategy.NONE_EXCEPT, auditLogService.getAuditingStrategy());
 		Set<Class<? extends OpenmrsObject>> exceptions = auditLogService.getExceptions();
