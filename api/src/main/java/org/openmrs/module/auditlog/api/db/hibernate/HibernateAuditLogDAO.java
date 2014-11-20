@@ -51,11 +51,9 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	
 	protected final Log log = LogFactory.getLog(getClass());
 	
-	private static Set<Class<? extends OpenmrsObject>> auditedTypeCache;
+	private static Set<Class<? extends OpenmrsObject>> exceptionsTypeCache;
 	
 	private static AuditingStrategy auditingStrategyCache;
-	
-	private static Set<Class<? extends OpenmrsObject>> unAuditedTypeCache;
 	
 	private static Set<Class<? extends OpenmrsObject>> implicitlyAuditedTypeCache;
 	
@@ -78,7 +76,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		//We need to stop hibernate auto flushing which might happen as we fetch
 		//the GP values, Otherwise if a flush happens, then the interceptor
 		//logic will be called again which will result in an infinite loop/stack overflow
-		if (auditedTypeCache == null || auditingStrategyCache == null) {
+		if (exceptionsTypeCache == null || auditingStrategyCache == null) {
 			FlushMode originalFlushMode = sessionFactory.getCurrentSession().getFlushMode();
 			sessionFactory.getCurrentSession().setFlushMode(FlushMode.MANUAL);
 			try {
@@ -91,6 +89,37 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		}
 		
 		return isAuditedInternal(clazz);
+	}
+	
+	/**
+	 * @see org.openmrs.module.auditlog.api.db.AuditLogDAO#getExceptions()
+	 * @return
+	 */
+	public Set<Class<? extends OpenmrsObject>> getExceptions() {
+		if (exceptionsTypeCache == null) {
+			exceptionsTypeCache = new HashSet<Class<? extends OpenmrsObject>>();
+			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(AuditLogConstants.GP_EXCEPTIONS);
+			if (gp != null && StringUtils.isNotBlank(gp.getPropertyValue())) {
+				String[] classnameArray = StringUtils.split(gp.getPropertyValue(), ",");
+				for (String classname : classnameArray) {
+					classname = classname.trim();
+					try {
+						Class<? extends OpenmrsObject> auditedClass = (Class<? extends OpenmrsObject>) Context
+						        .loadClass(classname);
+						exceptionsTypeCache.add(auditedClass);
+						Set<Class<? extends OpenmrsObject>> subclasses = getPersistentConcreteSubclasses(auditedClass);
+						for (Class<? extends OpenmrsObject> subclass : subclasses) {
+							exceptionsTypeCache.add(subclass);
+						}
+					}
+					catch (ClassNotFoundException e) {
+						log.error("Failed to load class:" + classname);
+					}
+				}
+			}
+		}
+		
+		return exceptionsTypeCache;
 	}
 	
 	/**
@@ -109,10 +138,10 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		}
 		
 		if (getAuditingStrategy() == AuditingStrategy.NONE_EXCEPT) {
-			return getAuditedClasses().contains(clazz);
+			return getExceptions().contains(clazz);
 		}
-		//Strategy is ALL_EXCEPT
-		return !getUnAuditedClasses().contains(clazz);
+		//Strategy is ALL_EXCEPT or NONE_EXCEPT
+		return !getExceptions().contains(clazz);
 	}
 	
 	/**
@@ -261,89 +290,16 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	@Override
 	public AuditingStrategy getAuditingStrategy() {
 		if (auditingStrategyCache == null) {
-			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
-			    AuditLogConstants.GP_AUDITING_STRATEGY);
-			if (gp != null) {
-				if (StringUtils.isNotBlank(gp.getPropertyValue())) {
-					auditingStrategyCache = AuditingStrategy.valueOf(gp.getPropertyValue().trim());
-				}
+			String gpValue = Context.getAdministrationService().getGlobalProperty(AuditLogConstants.GP_AUDITING_STRATEGY);
+			if (StringUtils.isBlank(gpValue)) {
+				//Defaults to none, we can't cache this so sorry but we will have to hit the DB
+				//for the GP value until it gets set so that we only cache a set value
+				return AuditingStrategy.NONE;
 			}
+			auditingStrategyCache = AuditingStrategy.valueOf(gpValue.trim());
 		}
 		
-		//default
-		if (auditingStrategyCache == null) {
-			auditingStrategyCache = AuditingStrategy.NONE;
-		}
 		return auditingStrategyCache;
-	}
-	
-	/**
-	 * @see org.openmrs.module.auditlog.api.db.AuditLogDAO#getAuditedClasses()
-	 */
-	@Override
-	public Set<Class<? extends OpenmrsObject>> getAuditedClasses() {
-		if (auditedTypeCache == null) {
-			auditedTypeCache = new HashSet<Class<? extends OpenmrsObject>>();
-			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
-			    AuditLogConstants.GP_AUDITED_CLASSES);
-			if (gp != null && StringUtils.isNotBlank(gp.getPropertyValue())) {
-				String[] classnameArray = StringUtils.split(gp.getPropertyValue(), ",");
-				for (String classname : classnameArray) {
-					classname = classname.trim();
-					try {
-						Class<? extends OpenmrsObject> auditedClass = (Class<? extends OpenmrsObject>) Context
-						        .loadClass(classname);
-						auditedTypeCache.add(auditedClass);
-						Set<Class<? extends OpenmrsObject>> subclasses = getPersistentConcreteSubclasses(auditedClass);
-						for (Class<? extends OpenmrsObject> subclass : subclasses) {
-							auditedTypeCache.add(subclass);
-						}
-					}
-					catch (ClassNotFoundException e) {
-						log.error("Failed to load class:" + classname);
-					}
-				}
-			}
-			
-			//in case implicit classes cache was already created, update it
-			if (implicitlyAuditedTypeCache != null) {
-				implicitlyAuditedTypeCache.removeAll(auditedTypeCache);
-			}
-		}
-		
-		return auditedTypeCache;
-	}
-	
-	/**
-	 * @see org.openmrs.module.auditlog.api.db.AuditLogDAO#getUnAuditedClasses()
-	 */
-	@Override
-	public Set<Class<? extends OpenmrsObject>> getUnAuditedClasses() {
-		if (unAuditedTypeCache == null) {
-			unAuditedTypeCache = new HashSet<Class<? extends OpenmrsObject>>();
-			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(
-			    AuditLogConstants.GP_UN_AUDITED_CLASSES);
-			if (gp != null && StringUtils.isNotBlank(gp.getPropertyValue())) {
-				String[] classnameArray = StringUtils.split(gp.getPropertyValue(), ",");
-				for (String classname : classnameArray) {
-					classname = classname.trim();
-					try {
-						Class<? extends OpenmrsObject> unAuditedClass = (Class<? extends OpenmrsObject>) Context
-						        .loadClass(classname);
-						unAuditedTypeCache.add(unAuditedClass);
-						Set<Class<? extends OpenmrsObject>> subclasses = getPersistentConcreteSubclasses(unAuditedClass);
-						for (Class<? extends OpenmrsObject> subclass : subclasses) {
-							unAuditedTypeCache.add(subclass);
-						}
-					}
-					catch (ClassNotFoundException e) {
-						log.error("Failed to load class:" + classname);
-					}
-				}
-			}
-		}
-		
-		return unAuditedTypeCache;
 	}
 	
 	/**
@@ -351,9 +307,12 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 */
 	@Override
 	public void startAuditing(Set<Class<? extends OpenmrsObject>> clazzes) {
-		if (getAuditingStrategy() == AuditingStrategy.NONE_EXCEPT || getAuditingStrategy() == AuditingStrategy.ALL_EXCEPT) {
-			updateGlobalProperty(clazzes, true);
+		if (getAuditingStrategy() == AuditingStrategy.NONE || getAuditingStrategy() == AuditingStrategy.ALL) {
+			throw new APIException("Can't call AuditLogService.startAuditing when the Audit strategy is set to "
+			        + AuditingStrategy.NONE + " or " + AuditingStrategy.ALL);
 		}
+		
+		updateGlobalProperty(clazzes, true);
 	}
 	
 	/**
@@ -361,9 +320,12 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 */
 	@Override
 	public void stopAuditing(Set<Class<? extends OpenmrsObject>> clazzes) {
-		if (getAuditingStrategy() == AuditingStrategy.NONE_EXCEPT || getAuditingStrategy() == AuditingStrategy.ALL_EXCEPT) {
-			updateGlobalProperty(clazzes, false);
+		if (getAuditingStrategy() == AuditingStrategy.NONE || getAuditingStrategy() == AuditingStrategy.ALL) {
+			throw new APIException("Can't call AuditLogService.stopAuditing when the Audit strategy is set to "
+			        + AuditingStrategy.NONE + " or " + AuditingStrategy.ALL);
 		}
+		
+		updateGlobalProperty(clazzes, false);
 	}
 	
 	/**
@@ -375,14 +337,10 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		if (implicitlyAuditedTypeCache == null) {
 			implicitlyAuditedTypeCache = new HashSet<Class<? extends OpenmrsObject>>();
 			if (getAuditingStrategy() == AuditingStrategy.NONE_EXCEPT) {
-				for (Class<? extends OpenmrsObject> auditedClass : getAuditedClasses()) {
+				for (Class<? extends OpenmrsObject> auditedClass : getExceptions()) {
 					addAssociationTypes(auditedClass);
-					Set<Class<? extends OpenmrsObject>> subclasses = getPersistentConcreteSubclasses(auditedClass);
-					for (Class<? extends OpenmrsObject> subclass : subclasses) {
-						addAssociationTypes(subclass);
-					}
 				}
-			} else if (getAuditingStrategy() == AuditingStrategy.ALL_EXCEPT && getUnAuditedClasses().size() > 0) {
+			} else if (getAuditingStrategy() == AuditingStrategy.ALL_EXCEPT && getExceptions().size() > 0) {
 				//generate implicitly audited classes so we can track them. The reason behind 
 				//this is: Say Concept is marked as audited and strategy is set to All Except
 				//and say ConceptName is for some reason marked as un audited we should still audit
@@ -390,7 +348,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 				Collection<ClassMetadata> allClassMetadata = sessionFactory.getAllClassMetadata().values();
 				for (ClassMetadata classMetadata : allClassMetadata) {
 					Class<?> mappedClass = classMetadata.getMappedClass(EntityMode.POJO);
-					if (OpenmrsObject.class.isAssignableFrom(mappedClass)) {
+					if (OpenmrsObject.class.isAssignableFrom(mappedClass) && !getExceptions().contains(mappedClass)) {
 						addAssociationTypes((Class<? extends OpenmrsObject>) mappedClass);
 					}
 				}
@@ -420,17 +378,14 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	public void globalPropertyChanged(GlobalProperty gp) {
 		if (AuditLogConstants.GP_STORE_LAST_STATE_OF_DELETED_ITEMS.equals(gp.getProperty())) {
 			storeLastStateOfDeletedItemsCache = null;
-		} else if (AuditLogConstants.GP_AUDITED_CLASSES.equals(gp.getProperty())) {
-			auditedTypeCache = null;
-		} else if (AuditLogConstants.GP_UN_AUDITED_CLASSES.equals(gp.getProperty())) {
-			unAuditedTypeCache = null;
 		} else {
-			//we need to invalidate all caches when the strategy is changed
 			auditingStrategyCache = null;
-			auditedTypeCache = null;
-			unAuditedTypeCache = null;
+			implicitlyAuditedTypeCache = null;
+			exceptionsTypeCache = null;
+			if (AuditLogConstants.GP_AUDITING_STRATEGY.equals(gp.getProperty())) {
+				AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_EXCEPTIONS, "");
+			}
 		}
-		implicitlyAuditedTypeCache = null;
 	}
 	
 	/**
@@ -440,16 +395,14 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	public void globalPropertyDeleted(String gpName) {
 		if (AuditLogConstants.GP_STORE_LAST_STATE_OF_DELETED_ITEMS.equals(gpName)) {
 			storeLastStateOfDeletedItemsCache = null;
-		} else if (AuditLogConstants.GP_AUDITED_CLASSES.equals(gpName)) {
-			auditedTypeCache = null;
-		} else if (AuditLogConstants.GP_UN_AUDITED_CLASSES.equals(gpName)) {
-			unAuditedTypeCache = null;
 		} else {
 			auditingStrategyCache = null;
-			auditedTypeCache = null;
-			unAuditedTypeCache = null;
+			implicitlyAuditedTypeCache = null;
+			exceptionsTypeCache = null;
+			if (AuditLogConstants.GP_AUDITING_STRATEGY.equals(gpName)) {
+				AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_EXCEPTIONS, "");
+			}
 		}
-		implicitlyAuditedTypeCache = null;
 	}
 	
 	/**
@@ -457,8 +410,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 */
 	@Override
 	public boolean supportsPropertyName(String gpName) {
-		return AuditLogConstants.GP_AUDITING_STRATEGY.equals(gpName) || AuditLogConstants.GP_AUDITED_CLASSES.equals(gpName)
-		        || AuditLogConstants.GP_UN_AUDITED_CLASSES.equals(gpName)
+		return AuditLogConstants.GP_AUDITING_STRATEGY.equals(gpName) || AuditLogConstants.GP_EXCEPTIONS.equals(gpName)
 		        || AuditLogConstants.GP_STORE_LAST_STATE_OF_DELETED_ITEMS.equals(gpName);
 	}
 	
@@ -494,6 +446,12 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 					if (type.isCollectionType()) {
 						assocType = collType.getElementType((SessionFactoryImplementor) sessionFactory).getReturnedClass();
 					}
+					
+					//Ignore non persistent types
+					if (sessionFactory.getClassMetadata(assocType) == null) {
+						continue;
+					}
+					
 					if (!foundAssocTypes.contains(assocType)) {
 						//Don't implicitly audit types for many to many collections items
 						if (!type.isCollectionType() || (type.isCollectionType() && !isManyToManyColl)) {
@@ -509,8 +467,8 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	}
 	
 	/**
-	 * Update the value of the {@link GlobalProperty} {@link AuditLogConstants#GP_AUDITED_CLASSES}
-	 * in the database
+	 * Update the value of the {@link GlobalProperty} {@link AuditLogConstants#GP_EXCEPTIONS} in the
+	 * database
 	 * 
 	 * @param clazzes the classes to add or remove
 	 * @param startAuditing specifies if the the classes are getting added to removed
@@ -518,45 +476,40 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	private void updateGlobalProperty(Set<Class<? extends OpenmrsObject>> clazzes, boolean startAuditing) {
 		boolean isNoneExceptStrategy = getAuditingStrategy() == AuditingStrategy.NONE_EXCEPT;
 		AdministrationService as = Context.getAdministrationService();
-		String gpName = isNoneExceptStrategy ? AuditLogConstants.GP_AUDITED_CLASSES
-		        : AuditLogConstants.GP_UN_AUDITED_CLASSES;
-		GlobalProperty gp = as.getGlobalPropertyObject(gpName);
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_EXCEPTIONS);
 		if (gp == null) {
-			String description = (isNoneExceptStrategy) ? "Specifies the class names of objects for which to maintain an audit log, this property is only used when the auditing strategy is set to NONE_EXCEPT"
-			        : "Specifies the class names of objects for which not to maintain an audit log, this property is only used when the	auditing strategy is set to ALL_EXCEPT";
-			gp = new GlobalProperty(gpName, null, description);
+			String description = "Specifies the class names of objects to audit or not depending on the auditing strategy";
+			gp = new GlobalProperty(AuditLogConstants.GP_EXCEPTIONS, null, description);
 		}
 		
 		if (isNoneExceptStrategy) {
 			for (Class<? extends OpenmrsObject> clazz : clazzes) {
 				if (startAuditing) {
-					getAuditedClasses().add(clazz);
+					getExceptions().add(clazz);
 				} else {
-					getAuditedClasses().remove(clazz);
+					getExceptions().remove(clazz);
 					//remove subclasses too
 					Set<Class<? extends OpenmrsObject>> subclasses = getPersistentConcreteSubclasses(clazz);
 					for (Class<? extends OpenmrsObject> subclass : subclasses) {
-						getAuditedClasses().remove(subclass);
+						getExceptions().remove(subclass);
 					}
 				}
 			}
-			
-			gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(getAuditedClasses()), ","));
 		} else {
 			for (Class<? extends OpenmrsObject> clazz : clazzes) {
 				if (startAuditing) {
-					getUnAuditedClasses().remove(clazz);
+					getExceptions().remove(clazz);
 					Set<Class<? extends OpenmrsObject>> subclasses = getPersistentConcreteSubclasses(clazz);
 					for (Class<? extends OpenmrsObject> subclass : subclasses) {
-						getUnAuditedClasses().remove(subclass);
+						getExceptions().remove(subclass);
 					}
 				} else {
-					getUnAuditedClasses().add(clazz);
+					getExceptions().add(clazz);
 				}
 			}
-			
-			gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(getUnAuditedClasses()), ","));
 		}
+		
+		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(getExceptions()), ","));
 		
 		try {
 			as.saveGlobalProperty(gp);
@@ -564,11 +517,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		catch (Exception e) {
 			//The cache needs to be rebuilt since we already updated the 
 			//cached above but the GP value didn't get updated in the DB
-			if (isNoneExceptStrategy) {
-				auditedTypeCache = null;
-			} else {
-				unAuditedTypeCache = null;
-			}
+			exceptionsTypeCache = null;
 			implicitlyAuditedTypeCache = null;
 			
 			throw new APIException("Failed to " + ((startAuditing) ? "start" : "stop") + " auditing " + clazzes, e);
@@ -620,8 +569,11 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	private void addAssociationTypes(Class<? extends OpenmrsObject> clazz) {
 		for (Class<? extends OpenmrsObject> assocType : getAssociationTypesToAudit(clazz)) {
 			//If this type is not explicitly marked as audited
-			if (!getAuditedClasses().contains(assocType)) {
-				getImplicitlyAuditedClasses().add(assocType);
+			if (!isAudited(assocType)) {
+				if (implicitlyAuditedTypeCache == null) {
+					implicitlyAuditedTypeCache = new HashSet<Class<? extends OpenmrsObject>>();
+				}
+				implicitlyAuditedTypeCache.add(assocType);
 			}
 		}
 	}

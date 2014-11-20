@@ -338,13 +338,10 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldNotCreateLogWhenStrategyIsSetToAllExceptAndObjectTypeIsListedAsExcluded() throws Exception {
-		AdministrationService as = Context.getAdministrationService();
-		//sanity check
-		GlobalProperty auditedGP = as.getGlobalPropertyObject(AuditLogConstants.GP_UN_AUDITED_CLASSES);
-		assertTrue(auditedGP.getPropertyValue().indexOf(EncounterType.class.getName()) > -1);
-		GlobalProperty strategyGP = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITING_STRATEGY);
-		strategyGP.setPropertyValue(AuditingStrategy.ALL_EXCEPT.name());
-		as.saveGlobalProperty(strategyGP);
+		Class<? extends OpenmrsObject> type = EncounterType.class;
+		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, type.getName());
+		assertFalse(auditLogService.isAudited(type));
+		assertTrue(auditLogService.getExceptions().contains(type));
 		
 		EncounterType encounterType = encounterService.getEncounterType(6);
 		encounterService.purgeEncounterType(encounterType);
@@ -356,7 +353,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	public void shouldCreateLogWhenStrategyIsSetToAllExceptAndObjectTypeIsNotListedAsIncluded() throws Exception {
 		AdministrationService as = Context.getAdministrationService();
 		//sanity check
-		GlobalProperty auditedGP = as.getGlobalPropertyObject(AuditLogConstants.GP_UN_AUDITED_CLASSES);
+		GlobalProperty auditedGP = as.getGlobalPropertyObject(AuditLogConstants.GP_EXCEPTIONS);
 		assertTrue(auditedGP.getPropertyValue().indexOf(EncounterType.class.getName()) > -1);
 		GlobalProperty strategyGP = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITING_STRATEGY);
 		strategyGP.setPropertyValue(AuditingStrategy.ALL_EXCEPT.name());
@@ -373,9 +370,9 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		assertFalse(auditLogService.isAudited(Order.class));
 		assertFalse(auditLogService.isAudited(DrugOrder.class));
 		AdministrationService as = Context.getAdministrationService();
-		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITED_CLASSES);
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_EXCEPTIONS);
 		Set<Class<? extends OpenmrsObject>> auditedClasses = new HashSet<Class<? extends OpenmrsObject>>();
-		auditedClasses.addAll(auditLogService.getAuditedClasses());
+		auditedClasses.addAll(auditLogService.getExceptions());
 		auditedClasses.add(Order.class);
 		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(auditedClasses), SEPARATOR));
 		as.saveGlobalProperty(gp);
@@ -389,9 +386,9 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		assertTrue(auditLogService.isAudited(ConceptNumeric.class));
 		assertTrue(auditLogService.isAudited(ConceptComplex.class));
 		AdministrationService as = Context.getAdministrationService();
-		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITED_CLASSES);
+		GlobalProperty gp = as.getGlobalPropertyObject(AuditLogConstants.GP_EXCEPTIONS);
 		Set<Class<? extends OpenmrsObject>> auditedClasses = new HashSet<Class<? extends OpenmrsObject>>();
-		auditedClasses.addAll(auditLogService.getAuditedClasses());
+		auditedClasses.addAll(auditLogService.getExceptions());
 		auditedClasses.remove(Concept.class);
 		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(auditedClasses), SEPARATOR));
 		as.saveGlobalProperty(gp);

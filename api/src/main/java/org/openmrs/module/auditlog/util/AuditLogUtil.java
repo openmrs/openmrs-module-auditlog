@@ -35,8 +35,10 @@ import org.hibernate.MappingException;
 import org.hibernate.SessionFactory;
 import org.hibernate.engine.SessionFactoryImplementor;
 import org.hibernate.persister.collection.CollectionPersister;
+import org.openmrs.GlobalProperty;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.api.APIException;
+import org.openmrs.api.AdministrationService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 
@@ -215,6 +217,17 @@ public class AuditLogUtil {
 		}
 		
 		return cp;
+	}
+	
+	public static void setGlobalProperty(String property, String propertyValue) {
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(property);
+		if (gp == null) {
+			gp = new GlobalProperty(property, propertyValue);
+		} else {
+			gp.setPropertyValue(propertyValue);
+		}
+		as.saveGlobalProperty(gp);
 	}
 	
 }

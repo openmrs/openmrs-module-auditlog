@@ -159,21 +159,12 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#getAuditedClasses()
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#getExceptions()
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public Set<Class<? extends OpenmrsObject>> getAuditedClasses() {
-		return dao.getAuditedClasses();
-	}
-	
-	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#getUnAuditedClasses()
-	 */
-	@Override
-	@Transactional(readOnly = true)
-	public Set<Class<? extends OpenmrsObject>> getUnAuditedClasses() {
-		return dao.getUnAuditedClasses();
+	public Set<Class<? extends OpenmrsObject>> getExceptions() {
+		return dao.getExceptions();
 	}
 	
 	/**

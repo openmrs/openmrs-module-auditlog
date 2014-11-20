@@ -40,11 +40,8 @@ public final class AuditLogConstants {
 	//Specifies the auditing strategy in use
 	public static final String GP_AUDITING_STRATEGY = MODULE_ID + ".auditingStrategy";
 	
-	//Classes names for the objects to audit when the Auditing strategy is set to NONE_EXCEPT
-	public static final String GP_AUDITED_CLASSES = MODULE_ID + ".auditedClasses";
-	
-	//Classes names for the objects not to audit when the Auditing strategy is set to ALL_EXCEPT
-	public static final String GP_UN_AUDITED_CLASSES = MODULE_ID + ".unAuditedClasses";
+	//Classes names for the objects to audit or not depending on the Auditing strategy
+	public static final String GP_EXCEPTIONS = MODULE_ID + ".exceptions";
 	
 	//Specifies whether the last states of deleted items should be stored on the auditlog
 	public static final String GP_STORE_LAST_STATE_OF_DELETED_ITEMS = MODULE_ID + ".storeLastStateOfDeletedItems";

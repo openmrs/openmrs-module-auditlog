@@ -37,8 +37,10 @@ public interface AuditLogDAO {
 	 * Checks if the specified type is implicitly audit
 	 * 
 	 * @should return true if a class is implicitly audited
-	 * @should return false if a class is not implicitly audited
-	 * @should return false if a class is also marked as audited
+	 * @should return false if a class is not implicitly audited for none except strategy
+	 * @should return false if a class is also marked as audited for none except strategy
+	 * @should return false if a class is not implicitly audited for all except strategy
+	 * @should return false if a class is also marked as audited for all except strategy
 	 */
 	public boolean isImplicitlyAudited(Class<?> clazz);
 	
@@ -104,14 +106,9 @@ public interface AuditLogDAO {
 	public AuditingStrategy getAuditingStrategy();
 	
 	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#getAuditedClasses()
+	 * @see org.openmrs.module.auditlog.api.AuditLogService#getExceptions()
 	 */
-	public Set<Class<? extends OpenmrsObject>> getAuditedClasses();
-	
-	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#getUnAuditedClasses()
-	 */
-	public Set<Class<? extends OpenmrsObject>> getUnAuditedClasses();
+	public Set<Class<? extends OpenmrsObject>> getExceptions();
 	
 	/**
 	 * Gets a set of concrete subclasses for the specified class recursively, note that interfaces
@@ -141,7 +138,10 @@ public interface AuditLogDAO {
 	 * implicitly get marked as audited
 	 * 
 	 * @return a set of implicitly audited classes
-	 * @should return a set of implicitly audited classes
+	 * @should return a set of implicitly audited classes for none except strategy
+	 * @should return a set of implicitly audited classes for all except strategy
+	 * @should return an empty set for none strategy
+	 * @should return an empty set for all strategy
 	 */
 	public Set<Class<? extends OpenmrsObject>> getImplicitlyAuditedClasses();
 	

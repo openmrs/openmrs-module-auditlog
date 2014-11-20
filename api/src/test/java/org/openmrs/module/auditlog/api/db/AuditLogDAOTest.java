@@ -18,7 +18,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.Modifier;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.Test;
@@ -31,22 +30,19 @@ import org.openmrs.ConceptName;
 import org.openmrs.ConceptNameTag;
 import org.openmrs.ConceptNumeric;
 import org.openmrs.ConceptSet;
-import org.openmrs.GlobalProperty;
 import org.openmrs.Location;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.PersonName;
-import org.openmrs.api.AdministrationService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditingStrategy;
+import org.openmrs.module.auditlog.BaseAuditLogTest;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
-import org.openmrs.test.BaseModuleContextSensitiveTest;
+import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.test.Verifies;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class AuditLogDAOTest extends BaseModuleContextSensitiveTest {
-	
-	private static final String MODULE_TEST_DATA = "moduleTestData.xml";
+public class AuditLogDAOTest extends BaseAuditLogTest {
 	
 	@Autowired
 	private AuditLogDAO dao;
@@ -82,14 +78,12 @@ public class AuditLogDAOTest extends BaseModuleContextSensitiveTest {
 	 * @see {@link AuditLogDAO#getImplicitlyAuditedClasses()}
 	 */
 	@Test
-	@Verifies(value = "should return a set of implicitly audited classes", method = "getImplicitlyAuditedClasses()")
-	public void getImplicitlyAuditedClasses_shouldReturnASetOfImplicitlyAuditedClasses() throws Exception {
-		AdministrationService as = Context.getAdministrationService();
-		as.saveGlobalProperty(new GlobalProperty(AuditLogConstants.GP_AUDITING_STRATEGY, AuditingStrategy.NONE_EXCEPT.name()));
-		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
-		classes.add(Concept.class);
-		dao.startAuditing(classes);
+	@Verifies(value = "should return a set of implicitly audited classes for none except strategy", method = "getImplicitlyAuditedClasses()")
+	public void getImplicitlyAuditedClasses_shouldReturnASetOfImplicitlyAuditedClassesForNoneExceptStrategy()
+	    throws Exception {
 		Set<Class<? extends OpenmrsObject>> implicitlyAuditedClasses = dao.getImplicitlyAuditedClasses();
+		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_EXCEPTIONS, ConceptName.class.getName() + ","
+		        + ConceptDescription.class.getName());
 		assertEquals(5, implicitlyAuditedClasses.size());
 		assertTrue(implicitlyAuditedClasses.contains(ConceptName.class));
 		assertTrue(implicitlyAuditedClasses.contains(ConceptDescription.class));
@@ -98,6 +92,49 @@ public class AuditLogDAOTest extends BaseModuleContextSensitiveTest {
 		assertTrue(implicitlyAuditedClasses.contains(ConceptAnswer.class));
 		//ConceptName.tags is mapped as many-to-many
 		assertFalse(implicitlyAuditedClasses.contains(ConceptNameTag.class));
+	}
+	
+	/**
+	 * @see {@link AuditLogDAO#getImplicitlyAuditedClasses()}
+	 */
+	@Test
+	@Verifies(value = "should return a set of implicitly audited classes for all except strategy", method = "getImplicitlyAuditedClasses()")
+	public void getImplicitlyAuditedClasses_shouldReturnASetOfImplicitlyAuditedClassesForAllExceptStrategy()
+	    throws Exception {
+		AuditingStrategy newStrategy = AuditingStrategy.ALL_EXCEPT;
+		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_AUDITING_STRATEGY, newStrategy.name());
+		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_EXCEPTIONS, ConceptName.class.getName() + ","
+		        + ConceptDescription.class.getName() + "," + ConceptAnswer.class.getName());
+		Set<Class<? extends OpenmrsObject>> implicitlyAuditedClasses = dao.getImplicitlyAuditedClasses();
+		assertEquals(3, implicitlyAuditedClasses.size());
+		//ConceptName and Description should still be audited implicitly
+		assertTrue(implicitlyAuditedClasses.contains(ConceptName.class));
+		assertTrue(implicitlyAuditedClasses.contains(ConceptDescription.class));
+		assertTrue(implicitlyAuditedClasses.contains(ConceptAnswer.class));
+		assertFalse(implicitlyAuditedClasses.contains(ConceptMap.class));
+		assertFalse(implicitlyAuditedClasses.contains(ConceptSet.class));
+		//ConceptName.tags is mapped as many-to-many
+		assertFalse(implicitlyAuditedClasses.contains(ConceptNameTag.class));
+	}
+	
+	/**
+	 * @verifies return an empty set for all strategy
+	 * @see AuditLogDAO#getImplicitlyAuditedClasses()
+	 */
+	@Test
+	public void getImplicitlyAuditedClasses_shouldReturnAnEmptySetForAllStrategy() throws Exception {
+		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_AUDITING_STRATEGY, AuditingStrategy.ALL.name());
+		assertEquals(0, dao.getImplicitlyAuditedClasses().size());
+	}
+	
+	/**
+	 * @verifies return an empty set for none strategy
+	 * @see AuditLogDAO#getImplicitlyAuditedClasses()
+	 */
+	@Test
+	public void getImplicitlyAuditedClasses_shouldReturnAnEmptySetForNoneStrategy() throws Exception {
+		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_AUDITING_STRATEGY, AuditingStrategy.NONE.name());
+		assertEquals(0, dao.getImplicitlyAuditedClasses().size());
 	}
 	
 	/**
@@ -116,12 +153,6 @@ public class AuditLogDAOTest extends BaseModuleContextSensitiveTest {
 	@Test
 	@Verifies(value = "should return false if a class is also marked as audited", method = "isImplicitlyAudited(Class<*>)")
 	public void isImplicitlyAudited_shouldReturnFalseIfAClassIsAlsoMarkedAsAudited() throws Exception {
-		executeDataSet(MODULE_TEST_DATA);
-		AdministrationService as = Context.getAdministrationService();
-		GlobalProperty strategyGP = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITING_STRATEGY);
-		strategyGP.setPropertyValue(AuditingStrategy.NONE_EXCEPT.name());
-		as.saveGlobalProperty(strategyGP);
-		
 		Context.getService(AuditLogService.class).startAuditing(Location.class);
 		assertTrue(dao.isAudited(Location.class));//sanity check
 		assertFalse(dao.isImplicitlyAudited(Location.class));
@@ -136,5 +167,4 @@ public class AuditLogDAOTest extends BaseModuleContextSensitiveTest {
 		assertFalse(dao.isAudited(PersonName.class));//sanity check
 		assertFalse(dao.isImplicitlyAudited(PersonName.class));
 	}
-	
 }

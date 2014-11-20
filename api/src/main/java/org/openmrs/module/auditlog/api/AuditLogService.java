@@ -37,8 +37,10 @@ public interface AuditLogService extends OpenmrsService {
 	 * 
 	 * @param clazz the class to check
 	 * @return true if the object is an audited one otherwise false
-	 * @should true if the class is audited
-	 * @should false if the class is not audited
+	 * @should return true if the class is audited for none except strategy
+	 * @should return false if the class is not audited for none except strategy
+	 * @should return true if the class is audited for all except strategy
+	 * @should return false if the class is not audited for all except strategy
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
 	public boolean isAudited(Class<? extends OpenmrsObject> clazz);
@@ -104,13 +106,13 @@ public interface AuditLogService extends OpenmrsService {
 	
 	/**
 	 * Marks the specified classes as audited by adding their class names to the
-	 * {@link GlobalProperty} {@link AuditLogConstants#GP_AUDITED_CLASSES}
+	 * {@link GlobalProperty} {@link AuditLogConstants#GP_EXCEPTIONS}
 	 * 
 	 * @param clazzes the classes to audit
-	 * @should update the audited class names global property if the strategy is none_except
-	 * @should not update any global property if the strategy is all
-	 * @should not update any global property if the strategy is none
-	 * @should update the un audited class names global property if the strategy is all_except
+	 * @should update the exception class names global property if the strategy is none_except
+	 * @should fail if the strategy is set to all
+	 * @should fail if the strategy is set to none
+	 * @should update the exception class names global property if the strategy is all_except
 	 * @should mark a class and its known subclasses as audited
 	 * @should mark a class and its known subclasses as audited for all_except strategy
 	 * @should also mark association types as audited
@@ -129,13 +131,13 @@ public interface AuditLogService extends OpenmrsService {
 	
 	/**
 	 * Marks the specified classes as not audited by removing their class names from the
-	 * {@link GlobalProperty} {@link AuditLogConstants#GP_AUDITED_CLASSES}
+	 * {@link GlobalProperty} {@link AuditLogConstants#GP_EXCEPTIONS}
 	 * 
 	 * @param clazzes the class to stop auditing
-	 * @should update the audited class names global property if the strategy is none_except
-	 * @should not update any global property if the strategy is all
-	 * @should not update any global property if the strategy is none
-	 * @should update the un audited class names global property if the strategy is all_except
+	 * @should update the exception class names global property if the strategy is none_except
+	 * @should fail if the strategy is set to all
+	 * @should fail if the strategy is set to none
+	 * @should update the exception class names global property if the strategy is all_except
 	 * @should mark a class and its known subclasses as un audited
 	 * @should mark a class and its known subclasses as un audited for all_except strategy
 	 * @should remove association types from audited classes
@@ -153,24 +155,14 @@ public interface AuditLogService extends OpenmrsService {
 	public AuditingStrategy getAuditingStrategy();
 	
 	/**
-	 * Convenience method that returns a set of audited classes as specified by the
-	 * {@link GlobalProperty} {@link AuditLogConstants#GP_AUDITED_CLASSES}
+	 * Convenience method that returns a set of exception classes as specified by the
+	 * {@link GlobalProperty} {@link AuditLogConstants#GP_EXCEPTIONS}
 	 * 
 	 * @return a set of audited classes
-	 * @should return a set of audited classes
+	 * @should return a set of exception classes
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public Set<Class<? extends OpenmrsObject>> getAuditedClasses();
-	
-	/**
-	 * Convenience method that returns a set of un audited classes as specified by the
-	 * {@link GlobalProperty} {@link AuditLogConstants#GP_UN_AUDITED_CLASSES}
-	 * 
-	 * @return a set of audited classes
-	 * @should return a set of un audited classes
-	 */
-	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public Set<Class<? extends OpenmrsObject>> getUnAuditedClasses();
+	public Set<Class<? extends OpenmrsObject>> getExceptions();
 	
 	/**
 	 * Gets all audit logs for the object that matches the specified uuid and class that match the
