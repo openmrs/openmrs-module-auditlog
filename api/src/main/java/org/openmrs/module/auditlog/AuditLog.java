@@ -20,7 +20,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
-import org.openmrs.OpenmrsObject;
 import org.openmrs.User;
 
 /**
@@ -35,7 +34,7 @@ public class AuditLog implements Serializable {
 	private Integer auditLogId;
 	
 	//the fully qualified java class name of the create/updated/deleted object
-	private Class<? extends OpenmrsObject> type;
+	private Class<?> type;
 	
 	//the uuid of the created/updated/deleted object
 	private String objectUuid;
@@ -80,7 +79,7 @@ public class AuditLog implements Serializable {
 	 * @param user the user that triggered the operation
 	 * @param dateCreated the date when the operation was done
 	 */
-	public AuditLog(Class<? extends OpenmrsObject> type, String objectUuid, Action action, User user, Date dateCreated) {
+	public AuditLog(Class<?> type, String objectUuid, Action action, User user, Date dateCreated) {
 		this();
 		this.type = type;
 		this.objectUuid = objectUuid;
@@ -106,14 +105,14 @@ public class AuditLog implements Serializable {
 	/**
 	 * @return the type
 	 */
-	public Class<? extends OpenmrsObject> getType() {
+	public Class<?> getType() {
 		return type;
 	}
 	
 	/**
 	 * @param type the type to set
 	 */
-	public void setType(Class<? extends OpenmrsObject> type) {
+	public void setType(Class<?> type) {
 		this.type = type;
 	}
 	

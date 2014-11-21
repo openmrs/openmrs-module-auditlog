@@ -46,7 +46,6 @@ import org.openmrs.Concept;
 import org.openmrs.ConceptDescription;
 import org.openmrs.Location;
 import org.openmrs.LocationTag;
-import org.openmrs.OpenmrsObject;
 import org.openmrs.Order;
 import org.openmrs.Patient;
 import org.openmrs.PatientIdentifier;
@@ -405,7 +404,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	public void shouldLinkTheLogsOfCollectionItemsToThatOfTheUpdatedParent() throws Exception {
 		PatientService ps = Context.getPatientService();
 		Patient patient = ps.getPatient(2);
-		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
+		Set<Class<?>> classes = new HashSet<Class<?>>();
 		classes.add(PersonName.class);
 		classes.add(Patient.class);
 		
@@ -574,7 +573,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	public void shouldLinkTheLogsOfCollectionItemsToThatOfTheDeletedParent() throws Exception {
 		PatientService ps = Context.getPatientService();
 		Patient patient = ps.getPatient(2);
-		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
+		Set<Class<?>> classes = new HashSet<Class<?>>();
 		classes.add(PersonName.class);
 		classes.add(PersonAttribute.class);
 		classes.add(PersonAddress.class);
@@ -1362,7 +1361,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 			assertEquals(-1, AuditLogUtil.getNewValueOfUpdatedItem("tags", al).indexOf(tag.getUuid()));
 			assertTrue(AuditLogUtil.getPreviousValueOfUpdatedItem("tags", al).indexOf(tag.getUuid()) > -1);
 		}
-		List<Class<? extends OpenmrsObject>> classes = new ArrayList<Class<? extends OpenmrsObject>>();
+		List<Class<?>> classes = new ArrayList<Class<?>>();
 		classes.add(LocationTag.class);
 		List<AuditLog.Action> actions = new ArrayList<AuditLog.Action>();
 		actions.add(DELETED);
@@ -1406,7 +1405,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		for (LocationTag tag : previousTags) {
 			assertTrue(AuditLogUtil.getPreviousValueOfUpdatedItem("tags", al).indexOf(tag.getUuid()) > -1);
 		}
-		List<Class<? extends OpenmrsObject>> classes = new ArrayList<Class<? extends OpenmrsObject>>();
+		List<Class<?>> classes = new ArrayList<Class<?>>();
 		classes.add(LocationTag.class);
 		List<AuditLog.Action> actions = new ArrayList<AuditLog.Action>();
 		actions.add(DELETED);
@@ -1450,7 +1449,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		for (LocationTag tag : previousTags) {
 			assertTrue(AuditLogUtil.getPreviousValueOfUpdatedItem("tags", al).indexOf(tag.getUuid()) > -1);
 		}
-		List<Class<? extends OpenmrsObject>> classes = new ArrayList<Class<? extends OpenmrsObject>>();
+		List<Class<?>> classes = new ArrayList<Class<?>>();
 		classes.add(LocationTag.class);
 		List<AuditLog.Action> actions = new ArrayList<AuditLog.Action>();
 		actions.add(DELETED);

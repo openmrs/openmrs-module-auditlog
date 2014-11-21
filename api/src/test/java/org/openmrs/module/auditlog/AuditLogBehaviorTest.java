@@ -44,7 +44,6 @@ import org.openmrs.ConceptNumeric;
 import org.openmrs.DrugOrder;
 import org.openmrs.EncounterType;
 import org.openmrs.Location;
-import org.openmrs.OpenmrsObject;
 import org.openmrs.Order;
 import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.APIException;
@@ -325,7 +324,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldNotCreateLogWhenStrategyIsSetToAllExceptAndObjectTypeIsListedAsExcluded() throws Exception {
-		Class<? extends OpenmrsObject> type = EncounterType.class;
+		Class<?> type = EncounterType.class;
 		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, type.getName(), false);
 		assertFalse(auditLogService.isAudited(type));
 		assertTrue(auditLogService.getExceptions().contains(type));
@@ -349,7 +348,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	public void shouldUpdateTheAuditedClassCacheWhenTheAuditedClassGlobalPropertyIsUpdatedWithAnAddition() throws Exception {
 		assertFalse(auditLogService.isAudited(Order.class));
 		assertFalse(auditLogService.isAudited(DrugOrder.class));
-		Set<Class<? extends OpenmrsObject>> auditedClasses = new HashSet<Class<? extends OpenmrsObject>>();
+		Set<Class<?>> auditedClasses = new HashSet<Class<?>>();
 		auditedClasses.addAll(auditLogService.getExceptions());
 		auditedClasses.add(Order.class);
 		String exceptions = StringUtils.join(AuditLogUtil.getAsListOfClassnames(auditedClasses), SEPARATOR);
@@ -363,7 +362,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		assertTrue(auditLogService.isAudited(Concept.class));
 		assertTrue(auditLogService.isAudited(ConceptNumeric.class));
 		assertTrue(auditLogService.isAudited(ConceptComplex.class));
-		Set<Class<? extends OpenmrsObject>> auditedClasses = new HashSet<Class<? extends OpenmrsObject>>();
+		Set<Class<?>> auditedClasses = new HashSet<Class<?>>();
 		auditedClasses.addAll(auditLogService.getExceptions());
 		auditedClasses.remove(Concept.class);
 		String exceptions = StringUtils.join(AuditLogUtil.getAsListOfClassnames(auditedClasses), SEPARATOR);

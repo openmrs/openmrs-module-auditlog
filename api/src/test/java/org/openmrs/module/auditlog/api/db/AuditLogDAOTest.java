@@ -53,7 +53,7 @@ public class AuditLogDAOTest extends BaseAuditLogTest {
 	@Test
 	@Verifies(value = "should return a list of subclasses for the specified type", method = "getPersistentConcreteSubclasses(Class<*>)")
 	public void getPersistentConcreteSubclasses_shouldReturnAListOfSubclassesForTheSpecifiedType() throws Exception {
-		Set<Class<? extends OpenmrsObject>> subclasses = dao.getPersistentConcreteSubclasses(Concept.class);
+		Set<Class<?>> subclasses = dao.getPersistentConcreteSubclasses(Concept.class);
 		assertEquals(2, subclasses.size());
 		assertTrue(subclasses.contains(ConceptNumeric.class));
 		assertTrue(subclasses.contains(ConceptComplex.class));
@@ -65,7 +65,7 @@ public class AuditLogDAOTest extends BaseAuditLogTest {
 	@Test
 	@Verifies(value = "should exclude interfaces and abstract classes", method = "getPersistentConcreteSubclasses(Class<*>)")
 	public void getPersistentConcreteSubclasses_shouldExcludeInterfacesAndAbstractClasses() throws Exception {
-		Set<Class<? extends OpenmrsObject>> subclasses = dao.getPersistentConcreteSubclasses(OpenmrsObject.class);
+		Set<Class<?>> subclasses = dao.getPersistentConcreteSubclasses(OpenmrsObject.class);
 		for (Class<?> clazz : subclasses) {
 			assertFalse("Found interface:" + clazz.getName() + ", interfaces should be excluded",
 			    Modifier.isInterface(clazz.getModifiers()));
@@ -81,7 +81,7 @@ public class AuditLogDAOTest extends BaseAuditLogTest {
 	@Verifies(value = "should return a set of implicitly audited classes for none except strategy", method = "getImplicitlyAuditedClasses()")
 	public void getImplicitlyAuditedClasses_shouldReturnASetOfImplicitlyAuditedClassesForNoneExceptStrategy()
 	    throws Exception {
-		Set<Class<? extends OpenmrsObject>> implicitlyAuditedClasses = dao.getImplicitlyAuditedClasses();
+		Set<Class<?>> implicitlyAuditedClasses = dao.getImplicitlyAuditedClasses();
 		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_EXCEPTIONS, ConceptName.class.getName() + ","
 		        + ConceptDescription.class.getName());
 		assertEquals(5, implicitlyAuditedClasses.size());
@@ -105,7 +105,7 @@ public class AuditLogDAOTest extends BaseAuditLogTest {
 		String exceptions = ConceptName.class.getName() + "," + ConceptDescription.class.getName() + ","
 		        + ConceptAnswer.class.getName();
 		setAuditConfiguration(newStrategy, exceptions, false);
-		Set<Class<? extends OpenmrsObject>> implicitlyAuditedClasses = dao.getImplicitlyAuditedClasses();
+		Set<Class<?>> implicitlyAuditedClasses = dao.getImplicitlyAuditedClasses();
 		assertEquals(3, implicitlyAuditedClasses.size());
 		//ConceptName and Description should still be audited implicitly
 		assertTrue(implicitlyAuditedClasses.contains(ConceptName.class));

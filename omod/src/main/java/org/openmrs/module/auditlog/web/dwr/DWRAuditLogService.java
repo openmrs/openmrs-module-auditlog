@@ -73,10 +73,10 @@ public class DWRAuditLogService {
 				boolean objectExists = false;
 				String objectId = null;
 				Map<String, Object> otherData = new HashMap<String, Object>();
-				Class<? extends OpenmrsObject> clazz = auditLog.getType();
+				Class<?> clazz = auditLog.getType();
 				if (!auditLog.getAction().equals(Action.DELETED)) {
 					
-					OpenmrsObject obj = getService().getObjectByUuid(clazz, auditLog.getObjectUuid());
+					OpenmrsObject obj = (OpenmrsObject) getService().getObjectByUuid(clazz, auditLog.getObjectUuid());
 					if (obj != null) {
 						objectExists = true;
 						//some objects don't support this method e.g GlobalProperties

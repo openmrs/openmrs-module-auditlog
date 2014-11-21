@@ -43,7 +43,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should return false if the class is not audited for all except strategy
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public boolean isAudited(Class<? extends OpenmrsObject> clazz);
+	public boolean isAudited(Class<?> clazz);
 	
 	/**
 	 * Fetches the audit log entries matching the specified arguments
@@ -73,7 +73,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should exclude child logs if excludeChildAuditLogsis set to true
 	 */
 	@Authorized(AuditLogConstants.PRIV_GET_AUDITLOGS)
-	public List<AuditLog> getAuditLogs(List<Class<? extends OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
+	public List<AuditLog> getAuditLogs(List<Class<?>> clazzes, List<Action> actions, Date startDate,
 	                                   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length);
 	
 	/**
@@ -102,7 +102,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @param clazz the type to start auditing
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public void startAuditing(Class<? extends OpenmrsObject> clazz);
+	public void startAuditing(Class<?> clazz);
 	
 	/**
 	 * Marks the specified classes as audited by adding their class names to the
@@ -119,7 +119,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should not mark association types for many to many collections as audited
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public void startAuditing(Set<Class<? extends OpenmrsObject>> clazzes);
+	public void startAuditing(Set<Class<?>> clazzes);
 	
 	/**
 	 * Convenience method that marks a given object type as un audited
@@ -127,7 +127,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @param clazz the type to stop auditing
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public void stopAuditing(Class<? extends OpenmrsObject> clazz);
+	public void stopAuditing(Class<?> clazz);
 	
 	/**
 	 * Marks the specified classes as not audited by removing their class names from the
@@ -143,7 +143,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should remove association types from audited classes
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public void stopAuditing(Set<Class<? extends OpenmrsObject>> clazzes);
+	public void stopAuditing(Set<Class<?>> clazzes);
 	
 	/**
 	 * Gets the {@link org.openmrs.module.auditlog.AuditingStrategy} which is the value of the
@@ -162,7 +162,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should return a set of exception classes
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public Set<Class<? extends OpenmrsObject>> getExceptions();
+	public Set<Class<?>> getExceptions();
 	
 	/**
 	 * Gets all audit logs for the object that matches the specified uuid and class that match the
@@ -181,7 +181,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should exclude child logs for object if excludeChildAuditLogs is set to true
 	 */
 	@Authorized(AuditLogConstants.PRIV_GET_AUDITLOGS)
-	public List<AuditLog> getAuditLogs(String uuid, Class<? extends OpenmrsObject> clazz, List<Action> actions,
+	public List<AuditLog> getAuditLogs(String uuid, Class<?> clazz, List<Action> actions,
 	                                   Date startDate, Date endDate, boolean excludeChildAuditLogs);
 	
 	/**

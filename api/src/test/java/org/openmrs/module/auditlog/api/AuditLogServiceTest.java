@@ -144,10 +144,10 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
-	@Verifies(value = "should match on the specified classes", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
+	@Verifies(value = "should match on the specified classes", method = "getAuditLogs(List<Class<?>>,List<Action>,Date,Date,Integer,Integer)")
 	public void getAuditLogs_shouldMatchOnTheSpecifiedClasses() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
-		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
+		List<Class<?>> clazzes = new ArrayList<Class<?>>();
 		clazzes.add(Concept.class);
 		assertEquals(3, auditLogService.getAuditLogs(clazzes, null, null, null, false, null, null).size());
 		clazzes.add(ConceptName.class);
@@ -158,7 +158,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
-	@Verifies(value = "should return logs created on or after the specified startDate", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
+	@Verifies(value = "should return logs created on or after the specified startDate", method = "getAuditLogs(List<Class<?>>,List<Action>,Date,Date,Integer,Integer)")
 	public void getAuditLogs_shouldReturnLogsCreatedOnOrAfterTheSpecifiedStartDate() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		Calendar cal = Calendar.getInstance();
@@ -172,7 +172,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
-	@Verifies(value = "should return logs created on or before the specified endDate", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
+	@Verifies(value = "should return logs created on or before the specified endDate", method = "getAuditLogs(List<Class<?>>,List<Action>,Date,Date,Integer,Integer)")
 	public void getAuditLogs_shouldReturnLogsCreatedOnOrBeforeTheSpecifiedEndDate() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		Calendar cal = Calendar.getInstance();
@@ -186,7 +186,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
-	@Verifies(value = "should return logs created within the specified start and end dates", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
+	@Verifies(value = "should return logs created within the specified start and end dates", method = "getAuditLogs(List<Class<?>>,List<Action>,Date,Date,Integer,Integer)")
 	public void getAuditLogs_shouldReturnLogsCreatedWithinTheSpecifiedStartAndEndDates() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		Calendar cal = Calendar.getInstance();
@@ -202,7 +202,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test(expected = APIException.class)
-	@Verifies(value = "should reject a start date that is in the future", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
+	@Verifies(value = "should reject a start date that is in the future", method = "getAuditLogs(List<Class<?>>,List<Action>,Date,Date,Integer,Integer)")
 	public void getAuditLogs_shouldRejectAStartDateThatIsInTheFuture() throws Exception {
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.MINUTE, 1);
@@ -214,7 +214,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
-	@Verifies(value = "should ignore end date it it is in the future", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
+	@Verifies(value = "should ignore end date it it is in the future", method = "getAuditLogs(List<Class<?>>,List<Action>,Date,Date,Integer,Integer)")
 	public void getAuditLogs_shouldIgnoreEndDateItItIsInTheFuture() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		Calendar cal = Calendar.getInstance();
@@ -227,7 +227,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
-	@Verifies(value = "should sort the logs by date of creation starting with the latest", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
+	@Verifies(value = "should sort the logs by date of creation starting with the latest", method = "getAuditLogs(List<Class<?>>,List<Action>,Date,Date,Integer,Integer)")
 	public void getAuditLogs_shouldSortTheLogsByDateOfCreationStartingWithTheLatest() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		List<AuditLog> auditLogs = getAllAuditLogs();
@@ -255,10 +255,10 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
-	@Verifies(value = "should include logs for subclasses when getting logs by type", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,Integer,Integer)")
+	@Verifies(value = "should include logs for subclasses when getting logs by type", method = "getAuditLogs(List<Class<?>>,List<Action>,Date,Date,Integer,Integer)")
 	public void getAuditLogs_shouldIncludeLogsForSubclassesWhenGettingLogsByType() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
-		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
+		List<Class<?>> clazzes = new ArrayList<Class<?>>();
 		clazzes.add(OpenmrsObject.class);
 		assertEquals(6, auditLogService.getAuditLogs(clazzes, null, null, null, false, null, null).size());
 		clazzes.clear();
@@ -272,7 +272,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	@Test
 	@Verifies(value = "should return a set of exception classes", method = "getAuditedClasses()")
 	public void getExceptions_shouldReturnASetOfExceptionClasses() throws Exception {
-		Set<Class<? extends OpenmrsObject>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = auditLogService.getExceptions();
 		assertEquals(5, exceptions.size());
 		assertTrue(OpenmrsUtil.collectionContains(exceptions, Concept.class));
 		assertTrue(OpenmrsUtil.collectionContains(exceptions, ConceptNumeric.class));
@@ -285,9 +285,9 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#startAuditing(java.util.Set)}
 	 */
 	@Test
-	@Verifies(value = "should update the exception class names global property if the strategy is none_except", method = "startAuditing(Set<Class<OpenmrsObject>>)")
+	@Verifies(value = "should update the exception class names global property if the strategy is none_except", method = "startAuditing(Set<Class<?>>)")
 	public void startAuditing_shouldUpdateTheExceptionClassNamesGlobalPropertyIfTheStrategyIsNone_except() throws Exception {
-		Set<Class<? extends OpenmrsObject>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = auditLogService.getExceptions();
 		int originalCount = exceptions.size();
 		assertFalse(auditLogService.isAudited(ConceptDescription.class));
 		assertTrue(auditLogService.isAudited(Concept.class));
@@ -313,7 +313,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#startAuditing(java.util.Set)}
 	 */
 	@Test
-	@Verifies(value = "should fail if the strategy is set to all", method = "startAuditing(Set<Class<OpenmrsObject>>)")
+	@Verifies(value = "should fail if the strategy is set to all", method = "startAuditing(Set<Class<?>>)")
 	public void startAuditing_shouldFailIfTheStrategyIsSetToAll() throws Exception {
 		setAuditConfiguration(AuditingStrategy.ALL);
 		expectedException.expect(APIException.class);
@@ -326,7 +326,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#startAuditing(java.util.Set)}
 	 */
 	@Test
-	@Verifies(value = "should fail if the strategy is set to none", method = "startAuditing(Set<Class<OpenmrsObject>>)")
+	@Verifies(value = "should fail if the strategy is set to none", method = "startAuditing(Set<Class<?>>)")
 	public void startAuditing_shouldFailIfTheStrategyIsSetToNone() throws Exception {
 		setAuditConfiguration(AuditingStrategy.NONE);
 		expectedException.expect(APIException.class);
@@ -339,10 +339,10 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#startAuditing(java.util.Set)}
 	 */
 	@Test
-	@Verifies(value = "should update the exception class names global property if the strategy is all_except", method = "startAuditing(Set<Class<OpenmrsObject>>)")
+	@Verifies(value = "should update the exception class names global property if the strategy is all_except", method = "startAuditing(Set<Class<?>>)")
 	public void startAuditing_shouldUpdateTheExceptionClassNamesGlobalPropertyIfTheStrategyIsAll_except() throws Exception {
 		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, EXCEPTIONS_FOR_ALL_EXCEPT, false);
-		Set<Class<? extends OpenmrsObject>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = auditLogService.getExceptions();
 		int originalCount = exceptions.size();
 		assertTrue(OpenmrsUtil.collectionContains(exceptions, EncounterType.class));
 		assertTrue(OpenmrsUtil.collectionContains(exceptions, Concept.class));
@@ -370,11 +370,11 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#startAuditing(java.util.Set)}
 	 */
 	@Test
-	@Verifies(value = "should mark a class and its known subclasses as audited", method = "startAuditing(Set<Class<OpenmrsObject>>)")
+	@Verifies(value = "should mark a class and its known subclasses as audited", method = "startAuditing(Set<Class<?>>)")
 	public void startAuditing_shouldMarkAClassAndItsKnownSubclassesAsAudited() throws Exception {
 		AdministrationService as = Context.getAdministrationService();
 		as.purgeGlobalProperty(as.getGlobalPropertyObject(AuditLogConstants.GP_EXCEPTIONS));
-		Set<Class<? extends OpenmrsObject>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = auditLogService.getExceptions();
 		assertFalse(exceptions.contains(Order.class));
 		assertFalse(exceptions.contains(DrugOrder.class));
 		assertEquals(false, auditLogService.isAudited(Order.class));
@@ -392,10 +392,10 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#startAuditing(java.util.Set)}
 	 */
 	@Test
-	@Verifies(value = "should mark a class and its known subclasses as audited for all_except strategy", method = "startAuditing(Set<Class<OpenmrsObject>>)")
+	@Verifies(value = "should mark a class and its known subclasses as audited for all_except strategy", method = "startAuditing(Set<Class<?>>)")
 	public void startAuditing_shouldMarkAClassAndItsKnownSubclassesAsAuditedForAll_exceptStrategy() throws Exception {
 		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, EXCEPTIONS_FOR_ALL_EXCEPT, false);
-		Set<Class<? extends OpenmrsObject>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = auditLogService.getExceptions();
 		assertTrue(exceptions.contains(Concept.class));
 		assertTrue(exceptions.contains(ConceptNumeric.class));
 		assertTrue(exceptions.contains(ConceptComplex.class));
@@ -403,7 +403,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 		assertEquals(false, auditLogService.isAudited(ConceptNumeric.class));
 		assertEquals(false, auditLogService.isAudited(ConceptComplex.class));
 		
-		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
+		Set<Class<?>> classes = new HashSet<Class<?>>();
 		classes.add(Concept.class);
 		auditLogService.startAuditing(classes);
 		exceptions = auditLogService.getExceptions();
@@ -455,9 +455,9 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#stopAuditing(java.util.Set)}
 	 */
 	@Test
-	@Verifies(value = "should update the exception class names global property if the strategy is none_except", method = "stopAuditing(Set<Class<OpenmrsObject>>)")
+	@Verifies(value = "should update the exception class names global property if the strategy is none_except", method = "stopAuditing(Set<Class<?>>)")
 	public void stopAuditing_shouldUpdateTheExceptionClassNamesGlobalPropertyIfTheStrategyIsNone_except() throws Exception {
-		Set<Class<? extends OpenmrsObject>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = auditLogService.getExceptions();
 		int originalCount = exceptions.size();
 		assertTrue(OpenmrsUtil.collectionContains(exceptions, Concept.class));
 		assertTrue(auditLogService.isAudited(Concept.class));
@@ -482,7 +482,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#stopAuditing(java.util.Set)}
 	 */
 	@Test
-	@Verifies(value = "should fail if the strategy is set to all", method = "stopAuditing(Set<Class<OpenmrsObject>>)")
+	@Verifies(value = "should fail if the strategy is set to all", method = "stopAuditing(Set<Class<?>>)")
 	public void stopAuditing_shouldFailIfTheStrategyIsSetToAll() throws Exception {
 		setAuditConfiguration(AuditingStrategy.ALL);
 		expectedException.expect(APIException.class);
@@ -495,7 +495,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#stopAuditing(java.util.Set)}
 	 */
 	@Test
-	@Verifies(value = "should fail if the strategy is set to none", method = "stopAuditing(Set<Class<OpenmrsObject>>)")
+	@Verifies(value = "should fail if the strategy is set to none", method = "stopAuditing(Set<Class<?>>)")
 	public void stopAuditing_shouldFailIfTheStrategyIsSetToNone() throws Exception {
 		setAuditConfiguration(AuditingStrategy.NONE);
 		expectedException.expect(APIException.class);
@@ -508,10 +508,10 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#stopAuditing(java.util.Set)}
 	 */
 	@Test
-	@Verifies(value = "should update the exception class names global property if the strategy is all_except", method = "stopAuditing(Set<Class<OpenmrsObject>>)")
+	@Verifies(value = "should update the exception class names global property if the strategy is all_except", method = "stopAuditing(Set<Class<?>>)")
 	public void stopAuditing_shouldUpdateTheExceptionClassNamesGlobalPropertyIfTheStrategyIsAll_except() throws Exception {
 		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, EXCEPTIONS_FOR_ALL_EXCEPT, false);
-		Set<Class<? extends OpenmrsObject>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = auditLogService.getExceptions();
 		int originalCount = exceptions.size();
 		assertFalse(OpenmrsUtil.collectionContains(exceptions, Location.class));
 		assertEquals(true, auditLogService.isAudited(Location.class));
@@ -527,9 +527,9 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#stopAuditing(java.util.Set)}
 	 */
 	@Test
-	@Verifies(value = "should mark a class and its known subclasses as un audited", method = "stopAuditing(Set<Class<OpenmrsObject>>)")
+	@Verifies(value = "should mark a class and its known subclasses as un audited", method = "stopAuditing(Set<Class<?>>)")
 	public void stopAuditing_shouldMarkAClassAndItsKnownSubclassesAsUnAudited() throws Exception {
-		Set<Class<? extends OpenmrsObject>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = auditLogService.getExceptions();
 		assertTrue(exceptions.contains(Concept.class));
 		assertTrue(exceptions.contains(ConceptNumeric.class));
 		assertTrue(exceptions.contains(ConceptComplex.class));
@@ -537,7 +537,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 		assertEquals(true, auditLogService.isAudited(ConceptNumeric.class));
 		assertEquals(true, auditLogService.isAudited(ConceptComplex.class));
 		
-		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
+		Set<Class<?>> classes = new HashSet<Class<?>>();
 		classes.add(Concept.class);
 		
 		auditLogService.stopAuditing(classes);
@@ -553,16 +553,16 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#stopAuditing(Class)}
 	 */
 	@Test
-	@Verifies(value = "should mark a class and its known subclasses as un audited for all_except strategy", method = "stopAuditing(Set<Class<OpenmrsObject>>)")
+	@Verifies(value = "should mark a class and its known subclasses as un audited for all_except strategy", method = "stopAuditing(Set<Class<?>>)")
 	public void stopAuditing_shouldMarkAClassAndItsKnownSubclassesAsUnAuditedForAll_exceptStrategy() throws Exception {
 		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, EXCEPTIONS_FOR_ALL_EXCEPT, false);
-		Set<Class<? extends OpenmrsObject>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = auditLogService.getExceptions();
 		assertFalse(exceptions.contains(Order.class));
 		assertFalse(exceptions.contains(DrugOrder.class));
 		assertEquals(true, auditLogService.isAudited(Order.class));
 		assertEquals(true, auditLogService.isAudited(DrugOrder.class));
 		
-		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
+		Set<Class<?>> classes = new HashSet<Class<?>>();
 		classes.add(Order.class);
 		auditLogService.stopAuditing(classes);
 		exceptions = auditLogService.getExceptions();
@@ -593,7 +593,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
-	@Verifies(value = "should get all logs for the object matching the specified uuid", method = "getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date)")
+	@Verifies(value = "should get all logs for the object matching the specified uuid", method = "getAuditLogs(String,Class<?>,List<Action>,Date,Date)")
 	public void getAuditLogs_shouldGetAllLogsForTheObjectMatchingTheSpecifiedUuid() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		assertEquals(
@@ -662,7 +662,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#getAuditLogs(String, Class, java.util.List, java.util.Date, java.util.Date, boolean)}
 	 */
 	@Test
-	@Verifies(value = "should include logs for subclasses when getting by type", method = "getAuditLogs(String,Class<OpenmrsObject>,List<Action>,Date,Date)")
+	@Verifies(value = "should include logs for subclasses when getting by type", method = "getAuditLogs(String,Class<?>,List<Action>,Date,Date)")
 	public void getAuditLogs_shouldIncludeLogsForSubclassesWhenGettingByType() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		assertEquals(2,
@@ -674,7 +674,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	 * @see {@link AuditLogService#getAuditLogs(java.util.List, java.util.List, java.util.Date, java.util.Date, boolean, Integer, Integer)}
 	 */
 	@Test
-	@Verifies(value = "should exclude child logs if excludeChildAuditLogsis set to true", method = "getAuditLogs(List<Class<OpenmrsObject>>,List<Action>,Date,Date,null,Integer,Integer)")
+	@Verifies(value = "should exclude child logs if excludeChildAuditLogsis set to true", method = "getAuditLogs(List<Class<?>>,List<Action>,Date,Date,null,Integer,Integer)")
 	public void getAuditLogs_shouldExcludeChildLogsIfExcludeChildAuditLogsisSetToTrue() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
 		assertEquals(4, auditLogService.getAuditLogs(null, null, null, null, true, null, null).size());

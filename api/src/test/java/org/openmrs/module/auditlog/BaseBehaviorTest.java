@@ -18,7 +18,6 @@ import java.util.List;
 import junit.framework.Assert;
 
 import org.junit.Before;
-import org.openmrs.OpenmrsObject;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.context.Context;
@@ -55,7 +54,7 @@ public abstract class BaseBehaviorTest extends BaseAuditLogTest {
 	 * 
 	 * @return a list of {@link AuditLog}s
 	 */
-	protected List<AuditLog> getAllLogs(String uuid, Class<? extends OpenmrsObject> clazz, List<Action> actions) {
+	protected List<AuditLog> getAllLogs(String uuid, Class<?> clazz, List<Action> actions) {
 		return auditLogService.getAuditLogs(uuid, clazz, actions, null, null, false);
 	}
 }

@@ -57,7 +57,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 * @param clazz
 	 */
 	@Transactional(readOnly = true)
-	public boolean isAudited(Class<? extends OpenmrsObject> clazz) {
+	public boolean isAudited(Class<?> clazz) {
 		return dao.isAudited(clazz);
 	}
 	
@@ -69,16 +69,16 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	@SuppressWarnings({ "rawtypes" })
 	@Override
 	@Transactional(readOnly = true)
-	public List<AuditLog> getAuditLogs(List<Class<? extends OpenmrsObject>> clazzes, List<Action> actions, Date startDate,
+	public List<AuditLog> getAuditLogs(List<Class<?>> clazzes, List<Action> actions, Date startDate,
 	                                   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length) {
 		if (OpenmrsUtil.compareWithNullAsEarliest(startDate, new Date()) > 0) {
 			throw new APIException(Context.getMessageSourceService().getMessage(
 			    AuditLogConstants.MODULE_ID + ".exception.startDateInFuture"));
 		}
 		
-		List<Class<? extends OpenmrsObject>> classesToMatch = null;
+		List<Class<?>> classesToMatch = null;
 		if (clazzes != null) {
-			classesToMatch = new ArrayList<Class<? extends OpenmrsObject>>();
+			classesToMatch = new ArrayList<Class<?>>();
 			for (Class clazz : clazzes) {
 				classesToMatch.add(clazz);
 				for (Class subclass : dao.getPersistentConcreteSubclasses(clazz)) {
@@ -117,8 +117,8 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 * @see org.openmrs.module.auditlog.api.AuditLogService#startAuditing(java.lang.Class)
 	 */
 	@Override
-	public void startAuditing(Class<? extends OpenmrsObject> clazz) {
-		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
+	public void startAuditing(Class<?> clazz) {
+		Set<Class<?>> classes = new HashSet<Class<?>>();
 		classes.add(clazz);
 		startAuditing(classes);
 	}
@@ -127,7 +127,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 * @see org.openmrs.module.auditlog.api.AuditLogService#startAuditing(java.util.Set)
 	 */
 	@Override
-	public void startAuditing(Set<Class<? extends OpenmrsObject>> clazzes) {
+	public void startAuditing(Set<Class<?>> clazzes) {
 		dao.startAuditing(clazzes);
 	}
 	
@@ -135,8 +135,8 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 * @see org.openmrs.module.auditlog.api.AuditLogService#stopAuditing(java.lang.Class)
 	 */
 	@Override
-	public void stopAuditing(Class<? extends OpenmrsObject> clazz) {
-		Set<Class<? extends OpenmrsObject>> classes = new HashSet<Class<? extends OpenmrsObject>>();
+	public void stopAuditing(Class<?> clazz) {
+		Set<Class<?>> classes = new HashSet<Class<?>>();
 		classes.add(clazz);
 		stopAuditing(classes);
 	}
@@ -145,7 +145,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 * @see org.openmrs.module.auditlog.api.AuditLogService#stopAuditing(java.util.Set)
 	 */
 	@Override
-	public void stopAuditing(Set<Class<? extends OpenmrsObject>> clazzes) {
+	public void stopAuditing(Set<Class<?>> clazzes) {
 		dao.stopAuditing(clazzes);
 	}
 	
@@ -163,7 +163,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public Set<Class<? extends OpenmrsObject>> getExceptions() {
+	public Set<Class<?>> getExceptions() {
 		return dao.getExceptions();
 	}
 	
@@ -173,14 +173,14 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public List<AuditLog> getAuditLogs(String uuid, Class<? extends OpenmrsObject> clazz, List<Action> actions,
+	public List<AuditLog> getAuditLogs(String uuid, Class<?> clazz, List<Action> actions,
 	                                   Date startDate, Date endDate, boolean excludeChildAuditLogs) {
 		
 		if (StringUtils.isBlank(uuid) || clazz == null) {
 			throw new APIException("class and uuid are required when fetching AuditLogs for an object");
 		}
 		
-		List<Class<? extends OpenmrsObject>> clazzes = new ArrayList<Class<? extends OpenmrsObject>>();
+		List<Class<?>> clazzes = new ArrayList<Class<?>>();
 		clazzes.add(clazz);
 		for (Class subclass : dao.getPersistentConcreteSubclasses(clazz)) {
 			clazzes.add(subclass);

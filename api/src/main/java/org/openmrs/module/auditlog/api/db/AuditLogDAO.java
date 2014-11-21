@@ -63,7 +63,7 @@ public interface AuditLogDAO {
 	 *            <code>null<code>)
 	 * @return list of auditlogs
 	 */
-	public List<AuditLog> getAuditLogs(String uuid, List<Class<? extends OpenmrsObject>> types, List<Action> actions,
+	public List<AuditLog> getAuditLogs(String uuid, List<Class<?>> types, List<Action> actions,
 	                                   Date startDate, Date endDate, boolean excludeChildAuditLogs, Integer start,
 	                                   Integer length);
 	
@@ -93,12 +93,12 @@ public interface AuditLogDAO {
 	/**
 	 * @see AuditLogService#startAuditing(java.util.Set)
 	 */
-	public void startAuditing(Set<Class<? extends OpenmrsObject>> clazzes);
+	public void startAuditing(Set<Class<?>> clazzes);
 	
 	/**
 	 * @see AuditLogService#stopAuditing(java.util.Set)
 	 */
-	public void stopAuditing(Set<Class<? extends OpenmrsObject>> clazzes);
+	public void stopAuditing(Set<Class<?>> clazzes);
 	
 	/**
 	 * @see org.openmrs.module.auditlog.api.AuditLogService#getAuditingStrategy()
@@ -108,7 +108,7 @@ public interface AuditLogDAO {
 	/**
 	 * @see org.openmrs.module.auditlog.api.AuditLogService#getExceptions()
 	 */
-	public Set<Class<? extends OpenmrsObject>> getExceptions();
+	public Set<Class<?>> getExceptions();
 	
 	/**
 	 * Gets a set of concrete subclasses for the specified class recursively, note that interfaces
@@ -119,7 +119,7 @@ public interface AuditLogDAO {
 	 * @should return a list of subclasses for the specified type
 	 * @should exclude interfaces and abstract classes
 	 */
-	public Set<Class<? extends OpenmrsObject>> getPersistentConcreteSubclasses(Class<? extends OpenmrsObject> clazz);
+	public Set<Class<?>> getPersistentConcreteSubclasses(Class<?> clazz);
 	
 	/**
 	 * Finds all the types for associations to audit in as recursive way i.e if a Persistent type is
@@ -129,7 +129,7 @@ public interface AuditLogDAO {
 	 * @param clazz the Class to match against
 	 * @return a set of found class names
 	 */
-	public Set<Class<? extends OpenmrsObject>> getAssociationTypesToAudit(Class<? extends OpenmrsObject> clazz);
+	public Set<Class<?>> getAssociationTypesToAudit(Class<?> clazz);
 	
 	/**
 	 * Gets implicitly audited classes, this are generated as a result of their owning entity types
@@ -143,7 +143,7 @@ public interface AuditLogDAO {
 	 * @should return an empty set for none strategy
 	 * @should return an empty set for all strategy
 	 */
-	public Set<Class<? extends OpenmrsObject>> getImplicitlyAuditedClasses();
+	public Set<Class<?>> getImplicitlyAuditedClasses();
 	
 	/**
 	 * Returns true or false depending on the value of the

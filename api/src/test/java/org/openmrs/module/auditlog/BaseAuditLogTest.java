@@ -23,7 +23,6 @@ import org.openmrs.Concept;
 import org.openmrs.ConceptComplex;
 import org.openmrs.ConceptNumeric;
 import org.openmrs.EncounterType;
-import org.openmrs.OpenmrsObject;
 import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.api.AuditLogService;
@@ -50,7 +49,7 @@ public abstract class BaseAuditLogTest extends BaseModuleContextSensitiveTest {
 		setAuditConfiguration(AuditingStrategy.NONE_EXCEPT, exceptionsGpValue, false);
 		
 		assertEquals(AuditingStrategy.NONE_EXCEPT, auditLogService.getAuditingStrategy());
-		Set<Class<? extends OpenmrsObject>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = auditLogService.getExceptions();
 		assertEquals(5, exceptions.size());
 		assertTrue(OpenmrsUtil.collectionContains(exceptions, Concept.class));
 		assertTrue(OpenmrsUtil.collectionContains(exceptions, ConceptNumeric.class));
