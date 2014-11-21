@@ -303,7 +303,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@NotTransactional
 	public void shouldAuditAnyOpenmrsObjectWhenStrategyIsSetToAll() throws Exception {
 		assertFalse(auditLogService.isAudited(Location.class));
-		setAuditConfiguration(AuditingStrategy.ALL, null);
+		setAuditConfiguration(AuditingStrategy.ALL, null, false);
 		assertTrue(auditLogService.isAudited(Location.class));
 		Location location = new Location();
 		location.setName("new location");
@@ -315,7 +315,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@NotTransactional
 	public void shouldNotAuditAnyObjectWhenStrategyIsSetToNone() throws Exception {
 		assertTrue(auditLogService.isAudited(EncounterType.class));
-		setAuditConfiguration(AuditingStrategy.NONE, null);
+		setAuditConfiguration(AuditingStrategy.NONE, null, false);
 		assertFalse(auditLogService.isAudited(EncounterType.class));
 		EncounterType encounterType = encounterService.getEncounterType(6);
 		encounterService.purgeEncounterType(encounterType);
@@ -326,7 +326,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@NotTransactional
 	public void shouldNotCreateLogWhenStrategyIsSetToAllExceptAndObjectTypeIsListedAsExcluded() throws Exception {
 		Class<? extends OpenmrsObject> type = EncounterType.class;
-		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, type.getName());
+		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, type.getName(), false);
 		assertFalse(auditLogService.isAudited(type));
 		assertTrue(auditLogService.getExceptions().contains(type));
 		
@@ -338,7 +338,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldCreateLogWhenStrategyIsSetToAllExceptAndObjectTypeIsNotListedAsAnException() throws Exception {
-		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, EncounterType.class.getName());
+		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, EncounterType.class.getName(), false);
 		Location location = new Location();
 		location.setName("new location");
 		Context.getLocationService().saveLocation(location);

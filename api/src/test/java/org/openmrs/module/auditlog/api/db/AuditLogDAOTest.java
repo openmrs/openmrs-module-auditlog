@@ -104,7 +104,7 @@ public class AuditLogDAOTest extends BaseAuditLogTest {
 		AuditingStrategy newStrategy = AuditingStrategy.ALL_EXCEPT;
 		String exceptions = ConceptName.class.getName() + "," + ConceptDescription.class.getName() + ","
 		        + ConceptAnswer.class.getName();
-		setAuditConfiguration(newStrategy, exceptions);
+		setAuditConfiguration(newStrategy, exceptions, false);
 		Set<Class<? extends OpenmrsObject>> implicitlyAuditedClasses = dao.getImplicitlyAuditedClasses();
 		assertEquals(3, implicitlyAuditedClasses.size());
 		//ConceptName and Description should still be audited implicitly

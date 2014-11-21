@@ -81,7 +81,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	}
 	
 	private void setAuditConfiguration(AuditingStrategy strategy) throws Exception {
-		setAuditConfiguration(strategy, null);
+		setAuditConfiguration(strategy, null, false);
 	}
 	
 	/**
@@ -341,7 +341,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	@Test
 	@Verifies(value = "should update the exception class names global property if the strategy is all_except", method = "startAuditing(Set<Class<OpenmrsObject>>)")
 	public void startAuditing_shouldUpdateTheExceptionClassNamesGlobalPropertyIfTheStrategyIsAll_except() throws Exception {
-		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, EXCEPTIONS_FOR_ALL_EXCEPT);
+		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, EXCEPTIONS_FOR_ALL_EXCEPT, false);
 		Set<Class<? extends OpenmrsObject>> exceptions = auditLogService.getExceptions();
 		int originalCount = exceptions.size();
 		assertTrue(OpenmrsUtil.collectionContains(exceptions, EncounterType.class));
@@ -394,7 +394,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	@Test
 	@Verifies(value = "should mark a class and its known subclasses as audited for all_except strategy", method = "startAuditing(Set<Class<OpenmrsObject>>)")
 	public void startAuditing_shouldMarkAClassAndItsKnownSubclassesAsAuditedForAll_exceptStrategy() throws Exception {
-		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, EXCEPTIONS_FOR_ALL_EXCEPT);
+		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, EXCEPTIONS_FOR_ALL_EXCEPT, false);
 		Set<Class<? extends OpenmrsObject>> exceptions = auditLogService.getExceptions();
 		assertTrue(exceptions.contains(Concept.class));
 		assertTrue(exceptions.contains(ConceptNumeric.class));
@@ -510,7 +510,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	@Test
 	@Verifies(value = "should update the exception class names global property if the strategy is all_except", method = "stopAuditing(Set<Class<OpenmrsObject>>)")
 	public void stopAuditing_shouldUpdateTheExceptionClassNamesGlobalPropertyIfTheStrategyIsAll_except() throws Exception {
-		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, EXCEPTIONS_FOR_ALL_EXCEPT);
+		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, EXCEPTIONS_FOR_ALL_EXCEPT, false);
 		Set<Class<? extends OpenmrsObject>> exceptions = auditLogService.getExceptions();
 		int originalCount = exceptions.size();
 		assertFalse(OpenmrsUtil.collectionContains(exceptions, Location.class));
@@ -555,7 +555,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	@Test
 	@Verifies(value = "should mark a class and its known subclasses as un audited for all_except strategy", method = "stopAuditing(Set<Class<OpenmrsObject>>)")
 	public void stopAuditing_shouldMarkAClassAndItsKnownSubclassesAsUnAuditedForAll_exceptStrategy() throws Exception {
-		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, EXCEPTIONS_FOR_ALL_EXCEPT);
+		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, EXCEPTIONS_FOR_ALL_EXCEPT, false);
 		Set<Class<? extends OpenmrsObject>> exceptions = auditLogService.getExceptions();
 		assertFalse(exceptions.contains(Order.class));
 		assertFalse(exceptions.contains(DrugOrder.class));

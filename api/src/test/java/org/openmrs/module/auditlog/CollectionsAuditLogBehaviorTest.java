@@ -381,7 +381,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldCreateLogForUnAuditedTypeIfTheOwningTypeIsAuditedAndStrategyIsAllExcept() throws Exception {
-		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, null);
+		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, null, false);
 		assertEquals(AuditingStrategy.ALL_EXCEPT, auditLogService.getAuditingStrategy());
 		assertEquals(true, auditLogService.isAudited(Person.class));
 		assertEquals(true, auditLogService.isAudited(PersonAddress.class));
@@ -836,6 +836,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	@NotTransactional
 	public void shouldSerializeMapEntriesAsSerializedDataForADeletedItem() throws Exception {
 		executeDataSet("org/openmrs/api/include/UserServiceTest.xml");
+		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_STORE_LAST_STATE_OF_DELETED_ITEMS, "true");
 		UserService us = Context.getUserService();
 		User user = us.getUser(505);
 		assertEquals(1, user.getUserProperties().size());

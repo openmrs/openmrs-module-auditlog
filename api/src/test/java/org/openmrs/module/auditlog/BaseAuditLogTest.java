@@ -47,7 +47,7 @@ public abstract class BaseAuditLogTest extends BaseModuleContextSensitiveTest {
 		auditLogService = Context.getService(AuditLogService.class);
 		executeDataSet(MODULE_TEST_DATA);
 		String exceptionsGpValue = "org.openmrs.Concept,org.openmrs.EncounterType,org.openmrs.PatientIdentifierType";
-		setAuditConfiguration(AuditingStrategy.NONE_EXCEPT, exceptionsGpValue);
+		setAuditConfiguration(AuditingStrategy.NONE_EXCEPT, exceptionsGpValue, false);
 		
 		assertEquals(AuditingStrategy.NONE_EXCEPT, auditLogService.getAuditingStrategy());
 		Set<Class<? extends OpenmrsObject>> exceptions = auditLogService.getExceptions();
@@ -59,12 +59,15 @@ public abstract class BaseAuditLogTest extends BaseModuleContextSensitiveTest {
 		assertTrue(OpenmrsUtil.collectionContains(exceptions, PatientIdentifierType.class));
 	}
 	
-	public void setAuditConfiguration(AuditingStrategy strategy, String exceptionsString) throws Exception {
+	public void setAuditConfiguration(AuditingStrategy strategy, String exceptionsString,
+	                                  boolean storeLastStateOfDeletedItems) throws Exception {
 		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_AUDITING_STRATEGY, strategy.name());
 		assertEquals(strategy, auditLogService.getAuditingStrategy());
 		if (exceptionsString != null) {
 			AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_EXCEPTIONS, exceptionsString);
 		}
+		String value = storeLastStateOfDeletedItems ? "true" : "false";
+		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_STORE_LAST_STATE_OF_DELETED_ITEMS, value);
 		if (strategy == AuditingStrategy.ALL || strategy == AuditingStrategy.NONE) {
 			assertEquals(0, auditLogService.getExceptions().size());
 		}
