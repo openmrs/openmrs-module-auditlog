@@ -640,14 +640,14 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				}
 			}
 		} else if (Map.class.isAssignableFrom(currentCollOrMap.getClass())) {
-			previousSerializedItems = InterceptorUtil.serializeMap((Map) previousCollOrMap);
-			newSerializedItems = InterceptorUtil.serializeMap((Map) currentCollOrMap);
 			//For some reason hibernate ends calling onCollectionUpdate even when the map has
 			//no changes. I think it uses object equality for the map entries and assumes the map has
 			//changes. Noticed this happens for user.userProperties and added a unit test to prove it
-			if (previousSerializedItems.equals(newSerializedItems)) {
+			if (previousCollOrMap.equals(currentCollOrMap)) {
 				return;
 			}
+			previousSerializedItems = InterceptorUtil.serializeMap((Map) previousCollOrMap);
+			newSerializedItems = InterceptorUtil.serializeMap((Map) currentCollOrMap);
 		}
 		
 		updates.get().peek().add(owningObject);
