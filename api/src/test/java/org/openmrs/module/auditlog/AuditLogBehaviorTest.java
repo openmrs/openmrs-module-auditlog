@@ -87,7 +87,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	public void shouldCreateAnAuditLogEntryWhenAnObjectIsDeleted() throws Exception {
 		EncounterType encounterType = encounterService.getEncounterType(6);
 		encounterService.purgeEncounterType(encounterType);
-		List<AuditLog> logs = getAllLogs(encounterType.getUuid(), EncounterType.class, null);
+		List<AuditLog> logs = getAllLogs(encounterType.getId(), EncounterType.class, null);
 		//Should have created a log entry for deleted Encounter type
 		assertEquals(1, logs.size());
 		AuditLog al = logs.get(0);
@@ -101,7 +101,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_STORE_LAST_STATE_OF_DELETED_ITEMS, "true");
 		EncounterType encounterType = encounterService.getEncounterType(6);
 		encounterService.purgeEncounterType(encounterType);
-		List<AuditLog> logs = getAllLogs(encounterType.getUuid(), EncounterType.class, null);
+		List<AuditLog> logs = getAllLogs(encounterType.getId(), EncounterType.class, null);
 		//Should have created a log entry for deleted Encounter type
 		assertEquals(1, logs.size());
 		AuditLog al = logs.get(0);
@@ -300,14 +300,14 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	@Test
 	@NotTransactional
-	public void shouldAuditAnyOpenmrsObjectWhenStrategyIsSetToAll() throws Exception {
+	public void shouldAuditAnyObjectWhenStrategyIsSetToAll() throws Exception {
 		assertFalse(auditLogService.isAudited(Location.class));
 		setAuditConfiguration(AuditingStrategy.ALL, null, false);
 		assertTrue(auditLogService.isAudited(Location.class));
 		Location location = new Location();
 		location.setName("new location");
 		Context.getLocationService().saveLocation(location);
-		assertEquals(1, getAllLogs(location.getUuid(), Location.class, Collections.singletonList(CREATED)).size());
+		assertEquals(1, getAllLogs(location.getId(), Location.class, Collections.singletonList(CREATED)).size());
 	}
 	
 	@Test
@@ -331,7 +331,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		
 		EncounterType encounterType = encounterService.getEncounterType(6);
 		encounterService.purgeEncounterType(encounterType);
-		assertEquals(0, getAllLogs(encounterType.getUuid(), EncounterType.class, Collections.singletonList(DELETED)).size());
+		assertEquals(0, getAllLogs(encounterType.getId(), EncounterType.class, Collections.singletonList(DELETED)).size());
 	}
 	
 	@Test
@@ -341,7 +341,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		Location location = new Location();
 		location.setName("new location");
 		Context.getLocationService().saveLocation(location);
-		assertEquals(1, getAllLogs(location.getUuid(), Location.class, Collections.singletonList(CREATED)).size());
+		assertEquals(1, getAllLogs(location.getId(), Location.class, Collections.singletonList(CREATED)).size());
 	}
 	
 	@Test
@@ -405,11 +405,11 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 			final String newLocationName = "Some strange new name";
 			Location location = Context.getLocationService().getLocation(1);
 			//sanity checks
-			List<AuditLog> locationLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+			List<AuditLog> locationLogs = getAllLogs(location.getId(), Location.class, Collections.singletonList(UPDATED));
 			assertEquals(0, locationLogs.size());
 			
 			EncounterType et = Context.getEncounterService().getEncounterType(MockNestedService.ENCOUNTER_TYPE_ID);
-			List<AuditLog> encounterTypeLogs = getAllLogs(et.getUuid(), EncounterType.class,
+			List<AuditLog> encounterTypeLogs = getAllLogs(et.getId(), EncounterType.class,
 			    Collections.singletonList(UPDATED));
 			assertEquals(0, encounterTypeLogs.size());
 			
@@ -417,11 +417,11 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 			location.setName(newLocationName);
 			
 			Context.getService(MockNestedService.class).outerTransaction(location, false, false);
-			locationLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+			locationLogs = getAllLogs(location.getId(), Location.class, Collections.singletonList(UPDATED));
 			assertEquals(1, locationLogs.size());
 			assertEquals(UPDATED, locationLogs.get(0).getAction());
 			
-			encounterTypeLogs = getAllLogs(et.getUuid(), EncounterType.class, Collections.singletonList(UPDATED));
+			encounterTypeLogs = getAllLogs(et.getId(), EncounterType.class, Collections.singletonList(UPDATED));
 			assertEquals(1, encounterTypeLogs.size());
 			assertEquals(UPDATED, encounterTypeLogs.get(0).getAction());
 		}
@@ -440,11 +440,11 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		final String newLocationName = "Some strange new name";
 		Location location = Context.getLocationService().getLocation(1);
 		//sanity checks
-		List<AuditLog> locationLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+		List<AuditLog> locationLogs = getAllLogs(location.getId(), Location.class, Collections.singletonList(UPDATED));
 		assertEquals(0, locationLogs.size());
 		
 		EncounterType et = Context.getEncounterService().getEncounterType(MockNestedService.ENCOUNTER_TYPE_ID);
-		List<AuditLog> encounterTypeLogs = getAllLogs(et.getUuid(), EncounterType.class, Collections.singletonList(UPDATED));
+		List<AuditLog> encounterTypeLogs = getAllLogs(et.getId(), EncounterType.class, Collections.singletonList(UPDATED));
 		assertEquals(0, encounterTypeLogs.size());
 		
 		assertEquals(false, location.getName().equalsIgnoreCase(newLocationName));
@@ -455,9 +455,9 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		}
 		catch (APIException e) {}
 		
-		encounterTypeLogs = getAllLogs(et.getUuid(), EncounterType.class, Collections.singletonList(UPDATED));
+		encounterTypeLogs = getAllLogs(et.getId(), EncounterType.class, Collections.singletonList(UPDATED));
 		assertEquals(0, encounterTypeLogs.size());
-		locationLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+		locationLogs = getAllLogs(location.getId(), Location.class, Collections.singletonList(UPDATED));
 		assertEquals(1, locationLogs.size());
 		assertEquals(UPDATED, locationLogs.get(0).getAction());
 	}
@@ -471,11 +471,11 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		final String newLocationName = "Some strange new name";
 		Location location = Context.getLocationService().getLocation(1);
 		//sanity checks
-		List<AuditLog> locationLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+		List<AuditLog> locationLogs = getAllLogs(location.getId(), Location.class, Collections.singletonList(UPDATED));
 		assertEquals(0, locationLogs.size());
 		
 		EncounterType et = Context.getEncounterService().getEncounterType(MockNestedService.ENCOUNTER_TYPE_ID);
-		List<AuditLog> encounterTypeLogs = getAllLogs(et.getUuid(), EncounterType.class, Collections.singletonList(UPDATED));
+		List<AuditLog> encounterTypeLogs = getAllLogs(et.getId(), EncounterType.class, Collections.singletonList(UPDATED));
 		assertEquals(0, encounterTypeLogs.size());
 		
 		assertEquals(false, location.getName().equalsIgnoreCase(newLocationName));
@@ -486,10 +486,10 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		}
 		catch (APIException e) {}
 		
-		locationLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+		locationLogs = getAllLogs(location.getId(), Location.class, Collections.singletonList(UPDATED));
 		assertEquals(0, locationLogs.size());
 		
-		encounterTypeLogs = getAllLogs(et.getUuid(), EncounterType.class, Collections.singletonList(UPDATED));
+		encounterTypeLogs = getAllLogs(et.getId(), EncounterType.class, Collections.singletonList(UPDATED));
 		assertEquals(1, encounterTypeLogs.size());
 		assertEquals(UPDATED, encounterTypeLogs.get(0).getAction());
 	}
@@ -503,11 +503,11 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		final String newLocationName = "Some strange new name";
 		Location location = Context.getLocationService().getLocation(1);
 		//sanity checks
-		List<AuditLog> locationLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+		List<AuditLog> locationLogs = getAllLogs(location.getId(), Location.class, Collections.singletonList(UPDATED));
 		assertEquals(0, locationLogs.size());
 		
 		EncounterType et = Context.getEncounterService().getEncounterType(MockNestedService.ENCOUNTER_TYPE_ID);
-		List<AuditLog> encounterTypeLogs = getAllLogs(et.getUuid(), EncounterType.class, Collections.singletonList(UPDATED));
+		List<AuditLog> encounterTypeLogs = getAllLogs(et.getId(), EncounterType.class, Collections.singletonList(UPDATED));
 		assertEquals(0, encounterTypeLogs.size());
 		
 		assertEquals(false, location.getName().equalsIgnoreCase(newLocationName));
@@ -518,10 +518,10 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		}
 		catch (APIException e) {}
 		
-		locationLogs = getAllLogs(location.getUuid(), Location.class, Collections.singletonList(UPDATED));
+		locationLogs = getAllLogs(location.getId(), Location.class, Collections.singletonList(UPDATED));
 		assertEquals(0, locationLogs.size());
 		
-		encounterTypeLogs = getAllLogs(et.getUuid(), EncounterType.class, Collections.singletonList(UPDATED));
+		encounterTypeLogs = getAllLogs(et.getId(), EncounterType.class, Collections.singletonList(UPDATED));
 		assertEquals(0, encounterTypeLogs.size());
 	}
 	
@@ -532,12 +532,12 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		EncounterService ls = Context.getEncounterService();
 		EncounterType type = ls.getEncounterType(1);
 		//sanity checks
-		List<AuditLog> logs = getAllLogs(type.getUuid(), EncounterType.class, null);
+		List<AuditLog> logs = getAllLogs(type.getId(), EncounterType.class, null);
 		assertEquals(0, logs.size());
 		Context.evictFromSession(type);
 		
 		ls.saveEncounterType(type);
-		logs = getAllLogs(type.getUuid(), EncounterType.class, null);
+		logs = getAllLogs(type.getId(), EncounterType.class, null);
 		assertEquals(0, logs.size());
 	}
 	
@@ -548,7 +548,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		EncounterService ls = Context.getEncounterService();
 		EncounterType type = ls.getEncounterType(1);
 		//sanity checks
-		List<AuditLog> logs = getAllLogs(type.getUuid(), EncounterType.class, null);
+		List<AuditLog> logs = getAllLogs(type.getId(), EncounterType.class, null);
 		assertEquals(0, logs.size());
 		Context.evictFromSession(type);
 		
@@ -557,9 +557,9 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		final String oldName = type.getName();
 		type.setName(newName);
 		ls.saveEncounterType(type);
-		logs = getAllLogs(type.getUuid(), EncounterType.class, null);
+		logs = getAllLogs(type.getId(), EncounterType.class, null);
 		assertEquals(1, logs.size());
-		logs = getAllLogs(type.getUuid(), EncounterType.class, Collections.singletonList(UPDATED));
+		logs = getAllLogs(type.getId(), EncounterType.class, Collections.singletonList(UPDATED));
 		assertEquals(1, logs.size());
 		AuditLog log = logs.get(0);
 		//Check that there is one property tag entry

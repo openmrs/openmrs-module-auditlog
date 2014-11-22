@@ -13,6 +13,7 @@
  */
 package org.openmrs.module.auditlog;
 
+import java.io.Serializable;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -54,7 +55,7 @@ public abstract class BaseBehaviorTest extends BaseAuditLogTest {
 	 * 
 	 * @return a list of {@link AuditLog}s
 	 */
-	protected List<AuditLog> getAllLogs(String uuid, Class<?> clazz, List<Action> actions) {
-		return auditLogService.getAuditLogs(uuid, clazz, actions, null, null, false);
+	protected List<AuditLog> getAllLogs(Serializable id, Class<?> clazz, List<Action> actions) {
+		return auditLogService.getAuditLogs(id, clazz, actions, null, null, false);
 	}
 }

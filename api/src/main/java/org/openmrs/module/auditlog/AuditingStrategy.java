@@ -13,17 +13,16 @@
  */
 package org.openmrs.module.auditlog;
 
-import org.openmrs.OpenmrsObject;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 
 /**
  * Enumeration of the auditing strategies that can be used to declare which object types to audit
- * and exclude. <b>Note</b> that only {@link OpenmrsObject}s can be audited
+ * and exclude.
  */
 public enum AuditingStrategy {
 	
 	/**
-	 * All {@link OpenmrsObject} objects are audited for this strategy
+	 * All objects are audited for this strategy
 	 */
 	ALL(AuditLogConstants.MODULE_ID + ".all", AuditLogConstants.MODULE_ID + ".description"),
 	

@@ -13,17 +13,16 @@
  */
 package org.openmrs.module.auditlog.web.dwr;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-import org.openmrs.OpenmrsObject;
 import org.openmrs.module.auditlog.AuditLog;
 
 /**
- * An object of this type contains a display String for updated/created/deleted
- * {@link OpenmrsObject} and in case it is an UPDATE, a mapping of edited property names to the new
- * and previous values' array is included, the new property value is at index 0 and the previous
- * value at index 1 in the array
+ * An object of this type contains a display String for updated/created/deleted object and in case
+ * it is an UPDATE, a mapping of edited property names to the new and previous values' array is
+ * included, the new property value is at index 0 and the previous value at index 1 in the array
  */
 public class AuditLogDetails {
 	
@@ -35,7 +34,7 @@ public class AuditLogDetails {
 	private boolean objectExists = false;
 	
 	//The uuid of the updated/deleted/created object
-	private String objectUuid;
+	private Serializable identifier;
 	
 	private String simpleTypeName;
 	
@@ -57,11 +56,11 @@ public class AuditLogDetails {
 	/**
 	 * Convenience constructor that created an {@link AuditLogDetails} from an {@link AuditLog}
 	 */
-	public AuditLogDetails(String displayString, String objectUuid, String simpleTypeName, String action, String objectId,
-	    String uuid, String openmrsVersion, boolean objectExists, Map<String, Object> changes) {
+	public AuditLogDetails(String displayString, Serializable identifier, String simpleTypeName, String action,
+	    String objectId, String uuid, String openmrsVersion, boolean objectExists, Map<String, Object> changes) {
 		this.displayString = displayString;
 		this.objectExists = objectExists;
-		this.objectUuid = objectUuid;
+		this.identifier = identifier;
 		this.simpleTypeName = simpleTypeName;
 		this.action = action;
 		this.objectId = objectId;
@@ -99,17 +98,17 @@ public class AuditLogDetails {
 	}
 	
 	/**
-	 * @return
+	 * @return the identifier
 	 */
-	public String getObjectUuid() {
-		return objectUuid;
+	public Serializable getIdentifier() {
+		return identifier;
 	}
 	
 	/**
-	 * @param objectUuid the objectUuid to set
+	 * @param identifier the action to set
 	 */
-	public void setObjectUuid(String objectUuid) {
-		this.objectUuid = objectUuid;
+	public void setIdentifier(Serializable identifier) {
+		this.identifier = identifier;
 	}
 	
 	/**

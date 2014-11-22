@@ -60,6 +60,7 @@ public abstract class BaseAuditLogTest extends BaseModuleContextSensitiveTest {
 	
 	public void setAuditConfiguration(AuditingStrategy strategy, String exceptionsString,
 	                                  boolean storeLastStateOfDeletedItems) throws Exception {
+		
 		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_AUDITING_STRATEGY, strategy.name());
 		assertEquals(strategy, auditLogService.getAuditingStrategy());
 		if (exceptionsString != null) {

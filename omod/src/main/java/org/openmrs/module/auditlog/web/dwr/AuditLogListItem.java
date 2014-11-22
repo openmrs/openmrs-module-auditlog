@@ -13,6 +13,8 @@
  */
 package org.openmrs.module.auditlog.web.dwr;
 
+import java.io.Serializable;
+
 import org.apache.commons.lang.StringUtils;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
@@ -28,7 +30,7 @@ public class AuditLogListItem {
 	
 	private String simpleClassname;
 	
-	private String objectUuid;
+	private Serializable identifier;
 	
 	private String action;
 	
@@ -47,7 +49,7 @@ public class AuditLogListItem {
 		if (simpleClassname.indexOf("$") > -1) {
 			simpleClassname = simpleClassname.substring(simpleClassname.indexOf("$") + 1);
 		}
-		objectUuid = auditLog.getObjectUuid();
+		identifier = auditLog.getIdentifier();
 		action = auditLog.getAction().toString();
 		if (auditLog.getUser() == null) {
 			if (auditLog.getUser().getUuid().equals(DAEMON_USER_UUID)) {
@@ -108,17 +110,17 @@ public class AuditLogListItem {
 	}
 	
 	/**
-	 * @return the objectUuid
+	 * @return the identifier
 	 */
-	public String getObjectUuid() {
-		return objectUuid;
+	public Serializable getIdentifier() {
+		return identifier;
 	}
 	
 	/**
-	 * @param objectUuid the objectUuid to set
+	 * @param identifier the action to set
 	 */
-	public void setObjectUuid(String objectUuid) {
-		this.objectUuid = objectUuid;
+	public void setIdentifier(Serializable identifier) {
+		this.identifier = identifier;
 	}
 	
 	/**

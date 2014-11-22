@@ -13,11 +13,11 @@
  */
 package org.openmrs.module.auditlog.api.db;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-import org.openmrs.OpenmrsObject;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.AuditingStrategy;
@@ -47,7 +47,7 @@ public interface AuditLogDAO {
 	/**
 	 * Fetches the audit log entries matching the specified arguments
 	 * 
-	 * @param uuid the uuid to match against
+	 * @param id
 	 * @param types the class names to match against e.g for objects of type
 	 *            {@link org.openmrs.Concept}
 	 * @param actions the list of {@link org.openmrs.module.auditlog.AuditLog.Action}s to match
@@ -63,9 +63,8 @@ public interface AuditLogDAO {
 	 *            <code>null<code>)
 	 * @return list of auditlogs
 	 */
-	public List<AuditLog> getAuditLogs(String uuid, List<Class<?>> types, List<Action> actions,
-	                                   Date startDate, Date endDate, boolean excludeChildAuditLogs, Integer start,
-	                                   Integer length);
+	public List<AuditLog> getAuditLogs(Serializable id, List<Class<?>> types, List<Action> actions, Date startDate,
+	                                   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length);
 	
 	/**
 	 * Saves the specified object to the database
@@ -81,9 +80,9 @@ public interface AuditLogDAO {
 	public void delete(Object object);
 	
 	/**
-	 * @see AuditLogService#getObjectById(Class, Integer)
+	 * @see AuditLogService#getObjectById(Class, java.io.Serializable)
 	 */
-	public <T> T getObjectById(Class<T> clazz, Integer id);
+	public <T> T getObjectById(Class<T> clazz, Serializable id);
 	
 	/**
 	 * @see AuditLogService#getObjectByUuid(Class, String)
@@ -124,7 +123,7 @@ public interface AuditLogDAO {
 	/**
 	 * Finds all the types for associations to audit in as recursive way i.e if a Persistent type is
 	 * found, then we also find its collection element types and types for fields mapped as one to
-	 * one, note that this only includes sub types of {@link OpenmrsObject}
+	 * one.
 	 * 
 	 * @param clazz the Class to match against
 	 * @return a set of found class names
@@ -152,4 +151,12 @@ public interface AuditLogDAO {
 	 * @return true is allowed otherwise false
 	 */
 	public boolean storeLastStateOfDeletedItems();
+	
+	/**
+	 * Returns unique database identifier for the specified persistent object
+	 * 
+	 * @return the unique identifier
+	 * @should return the database id of the object
+	 */
+	public Serializable getId(Object object);
 }

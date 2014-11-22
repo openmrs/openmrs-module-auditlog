@@ -13,7 +13,9 @@
  */
 package org.openmrs.module.auditlog.api.db.hibernate;
 
+import java.io.Serializable;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -35,7 +37,6 @@ import org.hibernate.type.CollectionType;
 import org.hibernate.type.OneToOneType;
 import org.hibernate.type.Type;
 import org.openmrs.GlobalProperty;
-import org.openmrs.OpenmrsObject;
 import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.GlobalPropertyListener;
@@ -60,6 +61,12 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	private static Boolean storeLastStateOfDeletedItemsCache;
 	
 	private SessionFactory sessionFactory;
+	
+	private static final List<Class<?>> CORE_EXCEPTIONS;
+	static {
+		CORE_EXCEPTIONS = new ArrayList<Class<?>>();
+		CORE_EXCEPTIONS.add(AuditLog.class);
+	}
 	
 	/**
 	 * @param sessionFactory the sessionFactory to set
@@ -104,7 +111,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 				for (String classname : classnameArray) {
 					classname = classname.trim();
 					try {
-						Class<?> auditedClass = (Class<?>) Context.loadClass(classname);
+						Class<?> auditedClass = Context.loadClass(classname);
 						exceptionsTypeCache.add(auditedClass);
 						Set<Class<?>> subclasses = getPersistentConcreteSubclasses(auditedClass);
 						for (Class<?> subclass : subclasses) {
@@ -122,14 +129,16 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	}
 	
 	/**
-	 * Checks if specified object is among the ones that are audited and is an {@link OpenmrsObject}
+	 * Checks if specified object is among the ones that are audited
 	 * 
 	 * @param clazz the class to check against
 	 * @return true if it is audited otherwise false
 	 */
 	private boolean isAuditedInternal(Class<?> clazz) {
-		if (!OpenmrsObject.class.isAssignableFrom(clazz) || getAuditingStrategy() == null
-		        || getAuditingStrategy() == AuditingStrategy.NONE) {
+		if (CORE_EXCEPTIONS.contains(clazz)) {
+			return false;
+		}
+		if (getAuditingStrategy() == null || getAuditingStrategy() == AuditingStrategy.NONE) {
 			return false;
 		}
 		if (getAuditingStrategy() == AuditingStrategy.ALL) {
@@ -167,15 +176,16 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	}
 	
 	/**
-	 * Checks if specified object is among the ones that are implicitly audited and is an
-	 * {@link OpenmrsObject}
+	 * Checks if specified object is among the ones that are implicitly audited
 	 * 
 	 * @param clazz the class to check against
 	 * @return true if it is implicitly audited otherwise false
 	 */
 	private boolean isImplicitlyAuditedInternal(Class<?> clazz) {
-		if (!OpenmrsObject.class.isAssignableFrom(clazz) || getAuditingStrategy() == null
-		        || getAuditingStrategy() == AuditingStrategy.NONE) {
+		if (CORE_EXCEPTIONS.contains(clazz)) {
+			return false;
+		}
+		if (getAuditingStrategy() == null || getAuditingStrategy() == AuditingStrategy.NONE) {
 			return false;
 		}
 		
@@ -183,15 +193,17 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	}
 	
 	/**
-	 * @see AuditLogDAO#getAuditLogs(String, List, List, Date, Date, boolean, Integer, Integer)
+	 * @see AuditLogDAO#getAuditLogs(java.io.Serializable, java.util.List, java.util.List,
+	 *      java.util.Date, java.util.Date, boolean, Integer, Integer)
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<AuditLog> getAuditLogs(String uuid, List<Class<?>> types, List<Action> actions, Date startDate,
+	public List<AuditLog> getAuditLogs(Serializable id, List<Class<?>> types, List<Action> actions, Date startDate,
 	                                   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length) {
+		
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(AuditLog.class);
-		if (uuid != null) {
-			criteria.add(Restrictions.eq("objectUuid", uuid));
+		if (id != null) {
+			criteria.add(Restrictions.eq("identifier", String.valueOf(id)));
 		}
 		
 		if (types != null) {
@@ -249,11 +261,11 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	}
 	
 	/**
-	 * @see AuditLogDAO#getObjectById(Class, Integer)
+	 * @see AuditLogDAO#getObjectById(Class, java.io.Serializable)
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T getObjectById(Class<T> clazz, Integer id) {
+	public <T> T getObjectById(Class<T> clazz, Serializable id) {
 		return (T) sessionFactory.getCurrentSession().get(clazz, id);
 	}
 	
@@ -336,7 +348,9 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 			implicitlyAuditedTypeCache = new HashSet<Class<?>>();
 			if (getAuditingStrategy() == AuditingStrategy.NONE_EXCEPT) {
 				for (Class<?> auditedClass : getExceptions()) {
-					addAssociationTypes(auditedClass);
+					if (!CORE_EXCEPTIONS.contains(auditedClass)) {
+						addAssociationTypes(auditedClass);
+					}
 				}
 			} else if (getAuditingStrategy() == AuditingStrategy.ALL_EXCEPT && getExceptions().size() > 0) {
 				//generate implicitly audited classes so we can track them. The reason behind 
@@ -346,8 +360,10 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 				Collection<ClassMetadata> allClassMetadata = sessionFactory.getAllClassMetadata().values();
 				for (ClassMetadata classMetadata : allClassMetadata) {
 					Class<?> mappedClass = classMetadata.getMappedClass(EntityMode.POJO);
-					if (OpenmrsObject.class.isAssignableFrom(mappedClass) && !getExceptions().contains(mappedClass)) {
-						addAssociationTypes((Class<?>) mappedClass);
+					if (!getExceptions().contains(mappedClass)) {
+						if (!CORE_EXCEPTIONS.contains(mappedClass)) {
+							addAssociationTypes(mappedClass);
+						}
 					}
 				}
 			}
@@ -367,6 +383,15 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 			storeLastStateOfDeletedItemsCache = Boolean.valueOf(gpValue);
 		}
 		return storeLastStateOfDeletedItemsCache;
+	}
+	
+	/**
+	 * @see org.openmrs.module.auditlog.api.db.AuditLogDAO#getId(Object)
+	 * @return
+	 */
+	@Override
+	public Serializable getId(Object object) {
+		return sessionFactory.getClassMetadata(object.getClass()).getIdentifier(object, EntityMode.POJO).toString();
 	}
 	
 	/**
@@ -415,8 +440,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	/**
 	 * Finds all the types for associations to audit in as recursive way i.e if a Persistent type is
 	 * found, then we also find its collection element types and types for fields mapped as one to
-	 * one, note that this only includes sub types of {@link OpenmrsObject} and that this method is
-	 * recursive
+	 * one.
 	 * 
 	 * @param clazz the Class to match against
 	 * @param foundAssocTypes the found association types

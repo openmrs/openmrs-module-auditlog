@@ -24,7 +24,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.Concept;
-import org.openmrs.GlobalProperty;
 import org.openmrs.Obs;
 import org.openmrs.OpenmrsMetadata;
 import org.openmrs.OpenmrsObject;
@@ -76,21 +75,10 @@ public class DWRAuditLogService {
 				Class<?> clazz = auditLog.getType();
 				if (!auditLog.getAction().equals(Action.DELETED)) {
 					
-					OpenmrsObject obj = (OpenmrsObject) getService().getObjectByUuid(clazz, auditLog.getObjectUuid());
+					Object obj = getService().getObjectById(clazz, auditLog.getIdentifier());
 					if (obj != null) {
 						objectExists = true;
-						//some objects don't support this method e.g GlobalProperties
-						if (!GlobalProperty.class.isAssignableFrom(obj.getClass())) {
-							try {
-								objectId = obj.getId() != null ? obj.getId().toString() : "";
-							}
-							catch (UnsupportedOperationException e) {
-								//ignore
-							}
-							displayString = getDisplayString(obj, false);
-						} else {
-							displayString += ((GlobalProperty) obj).getProperty();
-						}
+						displayString = getDisplayString(obj, false);
 					}
 					
 					if (auditLog.getAction().equals(Action.UPDATED)) {
@@ -123,7 +111,7 @@ public class DWRAuditLogService {
 					}
 				}
 				
-				AuditLogDetails details = new AuditLogDetails(displayString, auditLog.getObjectUuid(),
+				AuditLogDetails details = new AuditLogDetails(displayString, auditLog.getIdentifier(),
 				        auditLog.getSimpleTypeName(), auditLog.getAction().name(), objectId, auditLog.getUuid(),
 				        auditLog.getOpenmrsVersion(), objectExists, otherData);
 				if (auditLog.hasChildLogs()) {

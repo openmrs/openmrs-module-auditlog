@@ -85,7 +85,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#getObjectById(Class, Integer)}
+	 * @see {@link AuditLogService#getObjectById(Class, java.io.Serializable)}
 	 */
 	@Test
 	@Verifies(value = "should get the saved object matching the specified arguments", method = "get(Class<T>,Integer)")
@@ -596,10 +596,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	@Verifies(value = "should get all logs for the object matching the specified uuid", method = "getAuditLogs(String,Class<?>,List<Action>,Date,Date)")
 	public void getAuditLogs_shouldGetAllLogsForTheObjectMatchingTheSpecifiedUuid() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
-		assertEquals(
-		    2,
-		    auditLogService.getAuditLogs("c607c80f-1ea9-4da3-bb88-6276ce8868dd", ConceptNumeric.class, null, null, null,
-		        false).size());
+		assertEquals(2, auditLogService.getAuditLogs(5089, ConceptNumeric.class, null, null, null, false).size());
 	}
 	
 	/**
@@ -659,15 +656,13 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#getAuditLogs(String, Class, java.util.List, java.util.Date, java.util.Date, boolean)}
+	 * @see {@link AuditLogService#getAuditLogs(java.io.Serializable, Class, java.util.List, java.util.Date, java.util.Date, boolean)}
 	 */
 	@Test
 	@Verifies(value = "should include logs for subclasses when getting by type", method = "getAuditLogs(String,Class<?>,List<Action>,Date,Date)")
 	public void getAuditLogs_shouldIncludeLogsForSubclassesWhenGettingByType() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
-		assertEquals(2,
-		    auditLogService.getAuditLogs("c607c80f-1ea9-4da3-bb88-6276ce8868dd", Concept.class, null, null, null, false)
-		            .size());
+		assertEquals(2, auditLogService.getAuditLogs(5089, Concept.class, null, null, null, false).size());
 	}
 	
 	/**
@@ -682,27 +677,25 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	
 	/**
 	 * @verifies exclude child logs for object if excludeChildAuditLogs is set to true
-	 * @see AuditLogService#getAuditLogs(String, Class, java.util.List, java.util.Date,
-	 *      java.util.Date, boolean)
+	 * @see AuditLogService#getAuditLogs(java.io.Serializable, Class, java.util.List,
+	 *      java.util.Date, java.util.Date, boolean)
 	 */
 	@Test
 	public void getAuditLogs_shouldExcludeChildLogsForObjectIfExcludeChildAuditLogsIsSetToTrue() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
-		assertEquals(
-		    0,
-		    auditLogService.getAuditLogs("d607c80f-1ea9-4da3-bb88-6276ce8868de", ConceptDescription.class, null, null, null,
-		        true).size());
+		assertEquals(0, auditLogService.getAuditLogs(3000, ConceptDescription.class, null, null, null, true).size());
 	}
 	
 	/**
 	 * @verifies get all logs for the specified object
-	 * @see AuditLogService#getAuditLogs(org.openmrs.OpenmrsObject, java.util.List, java.util.Date,
-	 *      java.util.Date, boolean)
+	 * @see AuditLogService#getAuditLogs(Object, java.util.List, java.util.Date, java.util.Date,
+	 *      boolean)
 	 */
 	@Test
 	public void getAuditLogs_shouldGetAllLogsForTheSpecifiedObject() throws Exception {
 		executeDataSet(MODULE_TEST_DATA_AUDIT_LOGS);
-		OpenmrsObject obj = auditLogService.getObjectByUuid(ConceptNumeric.class, "c607c80f-1ea9-4da3-bb88-6276ce8868dd");
+		Object obj = auditLogService.getObjectByUuid(ConceptNumeric.class, "c607c80f-1ea9-4da3-bb88-6276ce8868dd");
+		assertNotNull(obj);
 		assertEquals(2, auditLogService.getAuditLogs(obj, null, null, null, false).size());
 	}
 }

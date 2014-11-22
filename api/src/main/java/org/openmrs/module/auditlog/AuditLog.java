@@ -37,7 +37,7 @@ public class AuditLog implements Serializable {
 	private Class<?> type;
 	
 	//the uuid of the created/updated/deleted object
-	private String objectUuid;
+	private Serializable identifier;
 	
 	//the performed operation that which could be a create, update or delete
 	private Action action;
@@ -74,15 +74,15 @@ public class AuditLog implements Serializable {
 	 * Convenience constructor
 	 * 
 	 * @param type the fully qualified classname of the Object type
-	 * @param objectUuid the id of the object
+	 * @param identifier the id of the object
 	 * @param action the operation performed on the object
 	 * @param user the user that triggered the operation
 	 * @param dateCreated the date when the operation was done
 	 */
-	public AuditLog(Class<?> type, String objectUuid, Action action, User user, Date dateCreated) {
+	public AuditLog(Class<?> type, Serializable identifier, Action action, User user, Date dateCreated) {
 		this();
 		this.type = type;
-		this.objectUuid = objectUuid;
+		this.identifier = identifier;
 		this.action = action;
 		this.user = user;
 		this.dateCreated = dateCreated;
@@ -117,17 +117,17 @@ public class AuditLog implements Serializable {
 	}
 	
 	/**
-	 * @return the objectUuid
+	 * @return the identifier
 	 */
-	public String getObjectUuid() {
-		return objectUuid;
+	public Serializable getIdentifier() {
+		return identifier;
 	}
 	
 	/**
-	 * @param objectUuid the objectUuid to set
+	 * @param identifier the identifier to set
 	 */
-	public void setObjectUuid(String objectUuid) {
-		this.objectUuid = objectUuid;
+	public void setIdentifier(Serializable identifier) {
+		this.identifier = identifier;
 	}
 	
 	/**
@@ -309,7 +309,7 @@ public class AuditLog implements Serializable {
 	 */
 	@Override
 	public String toString() {
-		return action + " " + type + " " + objectUuid;
+		return action + " " + type + " " + identifier;
 	}
 	
 	public boolean hasChildLogs() {

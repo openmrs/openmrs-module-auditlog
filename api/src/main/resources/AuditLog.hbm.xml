@@ -17,7 +17,7 @@
 		
 		<property name="type" type="class" length="512" not-null="true" />
 		
-		<property name="objectUuid" type="string" column="object_uuid" length="38" not-null="true" />
+		<property name="identifier" type="string" length="255" not-null="true" />
 		
 		<property name="action" length="50" not-null="true">
 			<type name="org.openmrs.util.HibernateEnumType">

@@ -13,13 +13,13 @@
  */
 package org.openmrs.module.auditlog.api;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
 import org.openmrs.Concept;
 import org.openmrs.GlobalProperty;
-import org.openmrs.OpenmrsObject;
 import org.openmrs.annotation.Authorized;
 import org.openmrs.api.OpenmrsService;
 import org.openmrs.module.auditlog.AuditLog;
@@ -73,18 +73,19 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should exclude child logs if excludeChildAuditLogsis set to true
 	 */
 	@Authorized(AuditLogConstants.PRIV_GET_AUDITLOGS)
-	public List<AuditLog> getAuditLogs(List<Class<?>> clazzes, List<Action> actions, Date startDate,
-	                                   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length);
+	public List<AuditLog> getAuditLogs(List<Class<?>> clazzes, List<Action> actions, Date startDate, Date endDate,
+	                                   boolean excludeChildAuditLogs, Integer start, Integer length);
 	
 	/**
 	 * Fetches a saved object with the specified objectId
 	 * 
-	 * @param id the id to match against
-	 * @return the matching saved object
+	 *
+     * @param id the id to match against
+     * @return the matching saved object
 	 * @should get the saved object matching the specified arguments
 	 */
 	@Authorized(AuditLogConstants.PRIV_GET_ITEMS)
-	public <T> T getObjectById(Class<T> clazz, Integer id);
+	public <T> T getObjectById(Class<T> clazz, Serializable id);
 	
 	/**
 	 * Fetches a saved object with the specified uuid
@@ -168,7 +169,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * Gets all audit logs for the object that matches the specified uuid and class that match the
 	 * other specified arguments
 	 * 
-	 * @param uuid the uuid of the object to match against
+	 * @param id
 	 * @param clazz the Class of the object to match against
 	 * @param actions the actions to match against
 	 * @param startDate the start date to match against
@@ -181,8 +182,8 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should exclude child logs for object if excludeChildAuditLogs is set to true
 	 */
 	@Authorized(AuditLogConstants.PRIV_GET_AUDITLOGS)
-	public List<AuditLog> getAuditLogs(String uuid, Class<?> clazz, List<Action> actions,
-	                                   Date startDate, Date endDate, boolean excludeChildAuditLogs);
+	public List<AuditLog> getAuditLogs(Serializable id, Class<?> clazz, List<Action> actions, Date startDate, Date endDate,
+	                                   boolean excludeChildAuditLogs);
 	
 	/**
 	 * Gets all audit logs for the object that match the other specified arguments
@@ -197,6 +198,6 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should get all logs for the specified object
 	 */
 	@Authorized(AuditLogConstants.PRIV_GET_AUDITLOGS)
-	public List<AuditLog> getAuditLogs(OpenmrsObject object, List<Action> actions, Date startDate, Date endDate,
+	public List<AuditLog> getAuditLogs(Object object, List<Action> actions, Date startDate, Date endDate,
 	                                   boolean excludeChildAuditLogs);
 }

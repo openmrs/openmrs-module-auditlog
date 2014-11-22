@@ -222,4 +222,8 @@ final class InterceptorUtil {
 	static boolean storeLastStateOfDeletedItems() {
 		return auditLogDao.storeLastStateOfDeletedItems();
 	}
+	
+	static Serializable getId(Object object) {
+		return auditLogDao.getId(object);
+	}
 }
