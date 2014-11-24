@@ -152,13 +152,7 @@ public class DWRAuditLogService {
 					Object item = null;
 					currUuidOrStr = currUuidOrStr.trim();
 					Class<?> itemType = AuditLogUtil.getCollectionElementType(owningType, propertyName);
-					if (currUuidOrStr.startsWith(AuditLogConstants.UUID_LABEL)) {
-						currUuidOrStr = currUuidOrStr.substring(currUuidOrStr.indexOf(AuditLogConstants.UUID_LABEL)
-						        + AuditLogConstants.UUID_LABEL.length());
-						item = getService().getObjectByUuid(itemType, currUuidOrStr);
-					} else {
-						currUuidOrStr = currUuidOrStr.substring(currUuidOrStr.indexOf(AuditLogConstants.ID_LABEL)
-						        + AuditLogConstants.ID_LABEL.length());
+					if (AuditLogUtil.isPersistent(propertyType)) {
 						try {
 							item = getService().getObjectById(itemType, Integer.valueOf(currUuidOrStr));
 						}
@@ -185,17 +179,8 @@ public class DWRAuditLogService {
 				}
 				sb.append("</ul>");
 				displayString += sb.toString();
-			} else {
-				if (propertyValue.startsWith(AuditLogConstants.UUID_LABEL)) {
-					propertyValue = propertyValue.substring(propertyValue.indexOf(AuditLogConstants.UUID_LABEL)
-					        + AuditLogConstants.UUID_LABEL.length());
-					actualObject = getService().getObjectByUuid(propertyType, propertyValue);
-				} else {
-					propertyValue = propertyValue.substring(propertyValue.indexOf(AuditLogConstants.ID_LABEL)
-					        + AuditLogConstants.ID_LABEL.length());
-					actualObject = getService().getObjectById(propertyType, Integer.valueOf(propertyValue));
-				}
-				
+			} else if (AuditLogUtil.isPersistent(propertyType)) {
+				actualObject = getService().getObjectById(propertyType, Integer.valueOf(propertyValue));
 				if (actualObject != null) {
 					displayString = getDisplayString(actualObject, true);
 				} else {
@@ -289,9 +274,7 @@ public class DWRAuditLogService {
 		//later upgraded to a version where the field was removed
 		if (field != null && value != null) {
 			stringValue = value.toString();
-			if (stringValue.startsWith(AuditLogConstants.UUID_LABEL) || stringValue.startsWith(AuditLogConstants.ID_LABEL)) {
-				prettyValue = getPropertyDisplayString(clazz, propertyName, field.getType(), stringValue);
-			}
+			prettyValue = getPropertyDisplayString(clazz, propertyName, field.getType(), stringValue);
 		}
 		
 		if (prettyValue == null && stringValue != null) {

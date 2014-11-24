@@ -31,11 +31,11 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.hibernate.EntityMode;
 import org.hibernate.SessionFactory;
 import org.hibernate.metadata.ClassMetadata;
-import org.openmrs.OpenmrsObject;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
+import org.openmrs.module.auditlog.util.AuditLogUtil;
 
 /**
  * Contains utility methods used by the interceptor
@@ -146,7 +146,7 @@ final class InterceptorUtil {
 	static String serializeObject(Object obj) {
 		String serializedValue = null;
 		if (obj != null) {
-			Class<?> clazz = obj.getClass();
+			Class<?> clazz = AuditLogUtil.getActualType(obj);
 			if (Date.class.isAssignableFrom(clazz)) {
 				//TODO We need to handle time zones issues better
 				serializedValue = new SimpleDateFormat(AuditLogConstants.DATE_FORMAT).format(obj);
@@ -160,21 +160,13 @@ final class InterceptorUtil {
 				serializedValue = serializeCollection((Collection) obj);
 			} else if (Map.class.isAssignableFrom(clazz)) {
 				serializedValue = serializeMap((Map) obj);
-			} else if (OpenmrsObject.class.isAssignableFrom(clazz)) {
-				try {
-					serializedValue = AuditLogConstants.UUID_LABEL + ((OpenmrsObject) obj).getUuid();
-				}
-				catch (Exception e) {
-					//In case the object doesn't support uuids, but why?
-				}
 			}
-			
 			if (StringUtils.isBlank(serializedValue)) {
 				ClassMetadata metadata = getClassMetadata(clazz);
 				if (metadata != null) {
 					Serializable id = metadata.getIdentifier(obj, EntityMode.POJO);
 					if (id != null) {
-						serializedValue = AuditLogConstants.ID_LABEL + id.toString();
+						serializedValue = id.toString();
 					}
 				}
 			}
@@ -196,7 +188,7 @@ final class InterceptorUtil {
 	static String serializePersistentObject(Object object) {
 		//TODO Might be better to use xstream
 		Map<String, Serializable> propertyNameValueMap = null;
-		ClassMetadata cmd = InterceptorUtil.getClassMetadata(object.getClass());
+		ClassMetadata cmd = getClassMetadata(AuditLogUtil.getActualType(object));
 		if (cmd != null) {
 			propertyNameValueMap = new HashMap<String, Serializable>();
 			propertyNameValueMap.put(cmd.getIdentifierPropertyName(), cmd.getIdentifier(object, EntityMode.POJO));

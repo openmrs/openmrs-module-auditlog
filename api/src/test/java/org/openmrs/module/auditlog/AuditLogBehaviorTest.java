@@ -106,20 +106,18 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(1, logs.size());
 		AuditLog al = logs.get(0);
 		assertEquals(DELETED, al.getAction());
-		assertEquals("{\"encounterTypeId\":6," + "\"retireReason\":\"for testing\","
-		        + "\"retiredBy\":\"uuid:1010d442-e134-11de-babe-001e378eb67e\","
+		assertEquals("{\"encounterTypeId\":6," + "\"retireReason\":\"for testing\"," + "\"retiredBy\":\"1\","
 		        + "\"description\":\"Visit to the laboratory\"," + "\"name\":\"Laboratory\"," + "\"retired\":\"true\","
 		        + "\"dateRetired\":\"2008-08-15 00:00:00\"," + "\"dateCreated\":\"2008-08-15 15:39:55\","
-		        + "\"uuid\":\"02c533ab-b74b-4ee4-b6e5-ffb6d09a0ac8\","
-		        + "\"creator\":\"uuid:1010d442-e134-11de-babe-001e378eb67e\"}", al.getSerializedData());
+		        + "\"uuid\":\"02c533ab-b74b-4ee4-b6e5-ffb6d09a0ac8\"," + "\"creator\":\"1\"}", al.getSerializedData());
 	}
 	
 	@Test
 	@NotTransactional
 	public void shouldCreateAnAuditLogEntryWhenAnObjectIsEdited() throws Exception {
 		Concept concept = conceptService.getConcept(3);
-		String oldConceptClassUuid = concept.getConceptClass().getUuid();
-		String oldDatatypeUuid = concept.getDatatype().getUuid();
+		Integer oldConceptClassId = concept.getConceptClass().getId();
+		Integer oldDatatypeId = concept.getDatatype().getId();
 		ConceptClass cc = conceptService.getConceptClass(2);
 		ConceptDatatype dt = conceptService.getConceptDatatype(3);
 		String oldVersion = concept.getVersion();
@@ -132,7 +130,6 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		concept.setDatatype(dt);
 		concept.setVersion(newVersion);
 		conceptService.saveConcept(concept);
-		
 		List<AuditLog> logs = getAllLogs();
 		//Should have created a log entry for edited concept
 		assertEquals(1, logs.size());
@@ -143,16 +140,12 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		//Check that there are 3 property tag entries
 		Map<String, List> changes = AuditLogUtil.getChangesOfUpdatedItem(auditLog);
 		assertEquals(3, changes.size());
-		assertEquals(AuditLogConstants.UUID_LABEL + oldConceptClassUuid,
-		    AuditLogUtil.getPreviousValueOfUpdatedItem("conceptClass", auditLog));
-		assertEquals(AuditLogConstants.UUID_LABEL + oldDatatypeUuid,
-		    AuditLogUtil.getPreviousValueOfUpdatedItem("datatype", auditLog));
+		assertEquals(oldConceptClassId.toString(), AuditLogUtil.getPreviousValueOfUpdatedItem("conceptClass", auditLog));
+		assertEquals(oldDatatypeId.toString(), AuditLogUtil.getPreviousValueOfUpdatedItem("datatype", auditLog));
 		assertEquals(oldVersion, AuditLogUtil.getPreviousValueOfUpdatedItem("version", auditLog));
 		
-		assertEquals(AuditLogConstants.UUID_LABEL + cc.getUuid(),
-		    AuditLogUtil.getNewValueOfUpdatedItem("conceptClass", auditLog));
-		assertEquals(AuditLogConstants.UUID_LABEL + dt.getUuid(),
-		    AuditLogUtil.getNewValueOfUpdatedItem("datatype", auditLog));
+		assertEquals(cc.getId().toString(), AuditLogUtil.getNewValueOfUpdatedItem("conceptClass", auditLog));
+		assertEquals(dt.getId().toString(), AuditLogUtil.getNewValueOfUpdatedItem("datatype", auditLog));
 		assertEquals(newVersion, AuditLogUtil.getNewValueOfUpdatedItem("version", auditLog));
 	}
 	

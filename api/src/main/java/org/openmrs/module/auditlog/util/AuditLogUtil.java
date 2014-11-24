@@ -34,7 +34,9 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.hibernate.MappingException;
 import org.hibernate.SessionFactory;
 import org.hibernate.engine.SessionFactoryImplementor;
+import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.persister.collection.CollectionPersister;
+import org.hibernate.proxy.HibernateProxy;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
@@ -229,4 +231,19 @@ public class AuditLogUtil {
 		as.saveGlobalProperty(gp);
 	}
 	
+	public static Class<?> getActualType(Object persistentObject) {
+		Class<?> type = persistentObject.getClass();
+		if (persistentObject instanceof HibernateProxy) {
+			type = ((HibernateProxy) persistentObject).getHibernateLazyInitializer().getPersistentClass();
+		}
+		return type;
+	}
+	
+	public static boolean isPersistent(Class<?> clazz) {
+		return getClassMetadata(clazz) != null;
+	}
+	
+	private static ClassMetadata getClassMetadata(Class<?> clazz) {
+		return Context.getRegisteredComponents(SessionFactory.class).get(0).getClassMetadata(clazz);
+	}
 }

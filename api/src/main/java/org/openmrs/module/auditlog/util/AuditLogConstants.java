@@ -27,10 +27,6 @@ public final class AuditLogConstants {
 	
 	public static final String MODULE_ID = "auditlog";
 	
-	public static final String UUID_LABEL = "uuid:";
-	
-	public static final String ID_LABEL = "id:";
-	
 	public static final String SEPARATOR = ",";
 	
 	public static final String MAP_KEY_VALUE_SEPARATOR = ":";

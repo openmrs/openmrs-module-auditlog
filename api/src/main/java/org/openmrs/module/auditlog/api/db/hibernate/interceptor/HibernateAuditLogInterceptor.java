@@ -195,7 +195,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					if (propertyChangesMap == null) {
 						propertyChangesMap = new HashMap<String, String[]>();
 					}
-					
+
 					String serializedPreviousValue = InterceptorUtil.serializeObject(previousValue);
 					String serializedCurrentValue = InterceptorUtil.serializeObject(currentValue);
 					
@@ -270,7 +270,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				Object owningObject = persistentColl.getOwner();
 				String role = persistentColl.getRole();
 				String propertyName = role.substring(role.lastIndexOf('.') + 1);
-				ClassMetadata cmd = InterceptorUtil.getClassMetadata(owningObject.getClass());
+				ClassMetadata cmd = InterceptorUtil.getClassMetadata(AuditLogUtil.getActualType(owningObject));
 				Object currentCollection = cmd.getPropertyValue(owningObject, propertyName, EntityMode.POJO);
 				
 				//Hibernate calls onCollectionRemove whenever the underlying collection is replaced with a
