@@ -16,9 +16,12 @@ package org.openmrs.module.auditlog.util;
 import static org.openmrs.module.auditlog.AuditLog.Action.DELETED;
 import static org.openmrs.module.auditlog.AuditLog.Action.UPDATED;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -126,15 +129,17 @@ public class AuditLogUtil {
 		}
 		
 		Map<String, List> changes = new HashMap<String, List>();
-		if (StringUtils.isNotBlank(auditLog.getSerializedData())) {
+		if (auditLog.getSerializedData() != null) {
 			try {
-				changes = new ObjectMapper().readValue(auditLog.getSerializedData(), Map.class);
+				String serializedStr = getAsString(auditLog.getSerializedData());
+				if (StringUtils.isNotBlank(serializedStr)) {
+					changes = new ObjectMapper().readValue(serializedStr, Map.class);
+				}
 			}
 			catch (Exception e) {
 				log.warn("Failed to convert serialized data to a map", e);
 			}
 		}
-		
 		return changes;
 	}
 	
@@ -150,9 +155,12 @@ public class AuditLogUtil {
 		}
 		
 		Map<String, String> changes = new HashMap<String, String>();
-		if (StringUtils.isNotBlank(auditLog.getSerializedData())) {
+		if (auditLog.getSerializedData() != null) {
 			try {
-				changes = new ObjectMapper().readValue(auditLog.getSerializedData(), Map.class);
+				String serializedStr = getAsString(auditLog.getSerializedData());
+				if (StringUtils.isNotBlank(serializedStr)) {
+					changes = new ObjectMapper().readValue(serializedStr, Map.class);
+				}
 			}
 			catch (Exception e) {
 				log.warn("Failed to convert serialized last state data to a map", e);
@@ -245,5 +253,15 @@ public class AuditLogUtil {
 	
 	private static ClassMetadata getClassMetadata(Class<?> clazz) {
 		return Context.getRegisteredComponents(SessionFactory.class).get(0).getClassMetadata(clazz);
+	}
+	
+	public static String getAsString(Blob blob) throws Exception {
+		BufferedReader br = new BufferedReader(new InputStreamReader(blob.getBinaryStream()));
+		StringBuffer sb = new StringBuffer();
+		String line;
+		while ((line = br.readLine()) != null) {
+			sb.append(line);
+		}
+		return sb.toString();
 	}
 }

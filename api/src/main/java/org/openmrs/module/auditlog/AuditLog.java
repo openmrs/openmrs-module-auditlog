@@ -14,6 +14,7 @@
 package org.openmrs.module.auditlog;
 
 import java.io.Serializable;
+import java.sql.Blob;
 import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -21,6 +22,7 @@ import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.openmrs.User;
+
 
 /**
  * Encapsulates data for a single audit log entry
@@ -58,7 +60,7 @@ public class AuditLog implements Serializable {
 	 * Used to store Json for field new and old values for updated items or last properties values
 	 * of deleted items
 	 */
-	private String serializedData;
+	private Blob serializedData;
 	
 	public enum Action {
 		CREATED, UPDATED, DELETED
@@ -248,14 +250,14 @@ public class AuditLog implements Serializable {
 	/**
 	 * @return the serializedData
 	 */
-	public String getSerializedData() {
+	public Blob getSerializedData() {
 		return serializedData;
 	}
 	
 	/**
 	 * @param serializedData the serializedData to set
 	 */
-	public void setSerializedData(String serializedData) {
+	public void setSerializedData(Blob serializedData) {
 		this.serializedData = serializedData;
 	}
 	

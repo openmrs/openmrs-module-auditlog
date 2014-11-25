@@ -18,7 +18,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.openmrs.module.auditlog.AuditLog.Action.CREATED;
 import static org.openmrs.module.auditlog.AuditLog.Action.DELETED;
 import static org.openmrs.module.auditlog.AuditLog.Action.UPDATED;
@@ -37,7 +36,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.hibernate.persister.collection.CollectionPersister;
 import org.junit.Test;
@@ -768,15 +766,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		List<AuditLog> logs = getAllLogs(user.getId(), User.class, Collections.singletonList(DELETED));
 		assertEquals(1, logs.size());
 		AuditLog al = logs.get(0);
-		Map<String, Object> propertyNameValueMap = new HashMap<String, Object>();
-		if (StringUtils.isNotBlank(al.getSerializedData())) {
-			try {
-				propertyNameValueMap = new ObjectMapper().readValue(al.getSerializedData(), Map.class);
-			}
-			catch (Exception e) {
-				fail("Failed to convert serialized data to a map");
-			}
-		}
+		String serializedData = AuditLogUtil.getAsString(al.getSerializedData());
+		Map<String, Object> propertyNameValueMap = new ObjectMapper().readValue(serializedData, Map.class);
 		assertEquals(userProperties, propertyNameValueMap.get("userProperties"));
 	}
 	

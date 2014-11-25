@@ -14,6 +14,7 @@
 package org.openmrs.module.auditlog.api.db.hibernate.interceptor;
 
 import java.io.Serializable;
+import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -519,13 +520,15 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			if (action == Action.UPDATED) {
 				propertyValuesMap = objectChangesMap.get().peek().get(object);
 				if (propertyValuesMap != null) {
-					auditLog.setSerializedData(InterceptorUtil.serializeToJson(propertyValuesMap));
+					Blob blob = Hibernate.createBlob(InterceptorUtil.serializeToJson(propertyValuesMap).getBytes());
+					auditLog.setSerializedData(blob);
 				}
 			} else if (InterceptorUtil.storeLastStateOfDeletedItems()) {
 				//TODO if one edits and deletes an object in the same API call, the property
 				//value that gets serialized is the new one but actually was never saved
 				//Should we store the value in the DB or the one in the current session?
-				auditLog.setSerializedData(InterceptorUtil.serializePersistentObject(object));
+				Blob blob = Hibernate.createBlob(InterceptorUtil.serializePersistentObject(object).getBytes());
+				auditLog.setSerializedData(blob);
 			}
 		}
 		return auditLog;

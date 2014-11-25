@@ -106,10 +106,11 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(1, logs.size());
 		AuditLog al = logs.get(0);
 		assertEquals(DELETED, al.getAction());
+		String serializedData = AuditLogUtil.getAsString(al.getSerializedData());
 		assertEquals("{\"encounterTypeId\":6," + "\"retireReason\":\"for testing\"," + "\"retiredBy\":\"1\","
 		        + "\"description\":\"Visit to the laboratory\"," + "\"name\":\"Laboratory\"," + "\"retired\":\"true\","
 		        + "\"dateRetired\":\"2008-08-15 00:00:00\"," + "\"dateCreated\":\"2008-08-15 15:39:55\","
-		        + "\"uuid\":\"02c533ab-b74b-4ee4-b6e5-ffb6d09a0ac8\"," + "\"creator\":\"1\"}", al.getSerializedData());
+		        + "\"uuid\":\"02c533ab-b74b-4ee4-b6e5-ffb6d09a0ac8\"," + "\"creator\":\"1\"}", serializedData);
 	}
 	
 	@Test

@@ -25,7 +25,7 @@
 			</type>
 		</property>
 		
-		<property name="serializedData" type="string" column="serialized_data" length="16777215"  />
+		<property name="serializedData" type="blob" column="serialized_data" />
 		
 		<property name="dateCreated" type="java.util.Date" column="date_created" length="19" not-null="true" />
 

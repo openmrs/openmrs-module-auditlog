@@ -22,7 +22,7 @@
 			<column name="identifier" type="varchar(255)"><constraints nullable="false" /></column>
 			<column name="action" type="varchar(50)"><constraints nullable="false" /></column>
 			<column name="user_id" type="int" />
-			<column name="serialized_data" type="mediumtext" />
+			<column name="serialized_data" type="longblob" />
 			<column name="date_created" type="DATETIME"><constraints nullable="false" /></column>
             <column name="openmrs_version" type="varchar(50)"><constraints nullable="false" /></column>
             <column name="module_version" type="varchar(50)"><constraints nullable="false" /></column>
