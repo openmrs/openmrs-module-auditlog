@@ -23,7 +23,6 @@ import java.util.UUID;
 import org.apache.commons.lang.StringUtils;
 import org.openmrs.User;
 
-
 /**
  * Encapsulates data for a single audit log entry
  */
@@ -38,7 +37,7 @@ public class AuditLog implements Serializable {
 	//the fully qualified java class name of the create/updated/deleted object
 	private Class<?> type;
 	
-	//the uuid of the created/updated/deleted object
+	//the unique database id of the created/updated/deleted object
 	private Serializable identifier;
 	
 	//the performed operation that which could be a create, update or delete

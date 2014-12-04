@@ -196,7 +196,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					if (propertyChangesMap == null) {
 						propertyChangesMap = new HashMap<String, String[]>();
 					}
-
+					
 					String serializedPreviousValue = InterceptorUtil.serializeObject(previousValue);
 					String serializedCurrentValue = InterceptorUtil.serializeObject(currentValue);
 					
@@ -511,8 +511,10 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	 * @return the created AuditLog
 	 */
 	private AuditLog instantiateAuditLog(Object object, Action action) {
-		AuditLog auditLog = new AuditLog(object.getClass(), InterceptorUtil.getId(object), action,
-		        Context.getAuthenticatedUser(), date.get().peek());
+		Serializable id = InterceptorUtil.getId(object);
+		String serializedId = InterceptorUtil.serializeObject(id);
+		AuditLog auditLog = new AuditLog(object.getClass(), serializedId, action, Context.getAuthenticatedUser(), date.get()
+		        .peek());
 		auditLog.setOpenmrsVersion(OpenmrsConstants.OPENMRS_VERSION_SHORT);
 		auditLog.setModuleVersion(AuditLogConstants.MODULE_VERSION);
 		if (action == Action.UPDATED || action == Action.DELETED) {

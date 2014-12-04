@@ -203,7 +203,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(AuditLog.class);
 		if (id != null) {
-			criteria.add(Restrictions.eq("identifier", String.valueOf(id)));
+			criteria.add(Restrictions.eq("identifier", id.toString()));
 		}
 		
 		if (types != null) {
@@ -391,7 +391,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 */
 	@Override
 	public Serializable getId(Object object) {
-		return sessionFactory.getClassMetadata(object.getClass()).getIdentifier(object, EntityMode.POJO).toString();
+		return sessionFactory.getClassMetadata(object.getClass()).getIdentifier(object, EntityMode.POJO);
 	}
 	
 	/**
