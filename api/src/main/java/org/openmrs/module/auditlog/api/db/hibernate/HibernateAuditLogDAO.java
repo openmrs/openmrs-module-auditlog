@@ -203,7 +203,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(AuditLog.class);
 		if (id != null) {
-			criteria.add(Restrictions.eq("identifier", id.toString()));
+			criteria.add(Restrictions.eq("identifier", AuditLogUtil.serializeObject(id)));
 		}
 		
 		if (types != null) {

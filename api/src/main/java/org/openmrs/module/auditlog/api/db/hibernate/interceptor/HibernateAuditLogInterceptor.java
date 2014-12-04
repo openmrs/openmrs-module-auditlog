@@ -197,8 +197,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 						propertyChangesMap = new HashMap<String, String[]>();
 					}
 					
-					String serializedPreviousValue = InterceptorUtil.serializeObject(previousValue);
-					String serializedCurrentValue = InterceptorUtil.serializeObject(currentValue);
+					String serializedPreviousValue = AuditLogUtil.serializeObject(previousValue);
+					String serializedCurrentValue = AuditLogUtil.serializeObject(currentValue);
 					
 					propertyChangesMap.put(propertyNames[i],
 					    new String[] { serializedCurrentValue, serializedPreviousValue });
@@ -271,7 +271,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				Object owningObject = persistentColl.getOwner();
 				String role = persistentColl.getRole();
 				String propertyName = role.substring(role.lastIndexOf('.') + 1);
-				ClassMetadata cmd = InterceptorUtil.getClassMetadata(AuditLogUtil.getActualType(owningObject));
+				ClassMetadata cmd = AuditLogUtil.getClassMetadata(AuditLogUtil.getActualType(owningObject));
 				Object currentCollection = cmd.getPropertyValue(owningObject, propertyName, EntityMode.POJO);
 				
 				//Hibernate calls onCollectionRemove whenever the underlying collection is replaced with a
@@ -512,7 +512,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	 */
 	private AuditLog instantiateAuditLog(Object object, Action action) {
 		Serializable id = InterceptorUtil.getId(object);
-		String serializedId = InterceptorUtil.serializeObject(id);
+		String serializedId = AuditLogUtil.serializeObject(id);
 		AuditLog auditLog = new AuditLog(object.getClass(), serializedId, action, Context.getAuthenticatedUser(), date.get()
 		        .peek());
 		auditLog.setOpenmrsVersion(OpenmrsConstants.OPENMRS_VERSION_SHORT);
@@ -522,7 +522,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			if (action == Action.UPDATED) {
 				propertyValuesMap = objectChangesMap.get().peek().get(object);
 				if (propertyValuesMap != null) {
-					Blob blob = Hibernate.createBlob(InterceptorUtil.serializeToJson(propertyValuesMap).getBytes());
+					Blob blob = Hibernate.createBlob(AuditLogUtil.serializeToJson(propertyValuesMap).getBytes());
 					auditLog.setSerializedData(blob);
 				}
 			} else if (InterceptorUtil.storeLastStateOfDeletedItems()) {
@@ -609,8 +609,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 		if (Collection.class.isAssignableFrom(currentCollOrMap.getClass())) {
 			Collection cColl = (Collection) currentCollOrMap;
 			Collection pColl = (Collection) previousCollOrMap;
-			previousSerializedItems = InterceptorUtil.serializeCollection(pColl);
-			newSerializedItems = InterceptorUtil.serializeCollection(cColl);
+			previousSerializedItems = AuditLogUtil.serializeCollection(pColl);
+			newSerializedItems = AuditLogUtil.serializeCollection(cColl);
 			
 			//Track removed items so that when we create logs for them,
 			//and link them to the parent's log
@@ -631,8 +631,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			if (previousCollOrMap.equals(currentCollOrMap)) {
 				return;
 			}
-			previousSerializedItems = InterceptorUtil.serializeMap((Map) previousCollOrMap);
-			newSerializedItems = InterceptorUtil.serializeMap((Map) currentCollOrMap);
+			previousSerializedItems = AuditLogUtil.serializeMap((Map) previousCollOrMap);
+			newSerializedItems = AuditLogUtil.serializeMap((Map) currentCollOrMap);
 		}
 		
 		updates.get().peek().add(owningObject);
