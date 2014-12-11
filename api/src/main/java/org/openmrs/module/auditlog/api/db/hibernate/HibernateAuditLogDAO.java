@@ -14,7 +14,6 @@
 package org.openmrs.module.auditlog.api.db.hibernate;
 
 import java.io.Serializable;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -31,11 +30,7 @@ import org.hibernate.FlushMode;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
-import org.hibernate.engine.SessionFactoryImplementor;
 import org.hibernate.metadata.ClassMetadata;
-import org.hibernate.type.CollectionType;
-import org.hibernate.type.OneToOneType;
-import org.hibernate.type.Type;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
@@ -45,6 +40,7 @@ import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.AuditingStrategy;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
+import org.openmrs.module.auditlog.api.db.DAOUtils;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 
@@ -113,7 +109,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 					try {
 						Class<?> auditedClass = Context.loadClass(classname);
 						exceptionsTypeCache.add(auditedClass);
-						Set<Class<?>> subclasses = getPersistentConcreteSubclasses(auditedClass);
+						Set<Class<?>> subclasses = DAOUtils.getPersistentConcreteSubclasses(auditedClass);
 						for (Class<?> subclass : subclasses) {
 							exceptionsTypeCache.add(subclass);
 						}
@@ -281,22 +277,6 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		return (T) criteria.uniqueResult();
 	}
 	
-	/**
-	 * @see org.openmrs.module.auditlog.api.db.AuditLogDAO#getPersistentConcreteSubclasses(java.lang.Class)
-	 */
-	@Override
-	public Set<Class<?>> getPersistentConcreteSubclasses(Class<?> clazz) {
-		return getPersistentConcreteSubclassesInternal(clazz, null, null);
-	}
-	
-	/**
-	 * @see org.openmrs.module.auditlog.api.db.AuditLogDAO#getAssociationTypesToAudit(java.lang.Class)
-	 */
-	@Override
-	public Set<Class<?>> getAssociationTypesToAudit(Class<?> clazz) {
-		return getAssociationTypesToAuditInternal(clazz, null);
-	}
-	
 	@Override
 	public AuditingStrategy getAuditingStrategy() {
 		if (auditingStrategyCache == null) {
@@ -438,56 +418,6 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	}
 	
 	/**
-	 * Finds all the types for associations to audit in as recursive way i.e if a Persistent type is
-	 * found, then we also find its collection element types and types for fields mapped as one to
-	 * one.
-	 * 
-	 * @param clazz the Class to match against
-	 * @param foundAssocTypes the found association types
-	 * @return a set of found class names
-	 */
-	private Set<Class<?>> getAssociationTypesToAuditInternal(Class<?> clazz, Set<Class<?>> foundAssocTypes) {
-		if (foundAssocTypes == null) {
-			foundAssocTypes = new HashSet<Class<?>>();
-		}
-		
-		ClassMetadata cmd = sessionFactory.getClassMetadata(clazz);
-		if (cmd != null) {
-			for (Type type : cmd.getPropertyTypes()) {
-				//If this is a OneToOne or a collection type
-				if (type.isCollectionType() || OneToOneType.class.isAssignableFrom(type.getClass())) {
-					CollectionType collType = (CollectionType) type;
-					boolean isManyToManyColl = false;
-					if (collType.isCollectionType()) {
-						collType = (CollectionType) type;
-						isManyToManyColl = ((SessionFactoryImplementor) sessionFactory).getCollectionPersister(
-						    collType.getRole()).isManyToMany();
-					}
-					Class<?> assocType = type.getReturnedClass();
-					if (type.isCollectionType()) {
-						assocType = collType.getElementType((SessionFactoryImplementor) sessionFactory).getReturnedClass();
-					}
-					
-					//Ignore non persistent types
-					if (sessionFactory.getClassMetadata(assocType) == null) {
-						continue;
-					}
-					
-					if (!foundAssocTypes.contains(assocType)) {
-						//Don't implicitly audit types for many to many collections items
-						if (!type.isCollectionType() || (type.isCollectionType() && !isManyToManyColl)) {
-							foundAssocTypes.add(assocType);
-							//Recursively inspect each association type
-							foundAssocTypes.addAll(getAssociationTypesToAuditInternal(assocType, foundAssocTypes));
-						}
-					}
-				}
-			}
-		}
-		return foundAssocTypes;
-	}
-	
-	/**
 	 * Update the value of the {@link GlobalProperty} {@link AuditLogConstants#GP_EXCEPTIONS} in the
 	 * database
 	 * 
@@ -510,7 +440,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 				} else {
 					getExceptions().remove(clazz);
 					//remove subclasses too
-					Set<Class<?>> subclasses = getPersistentConcreteSubclasses(clazz);
+					Set<Class<?>> subclasses = DAOUtils.getPersistentConcreteSubclasses(clazz);
 					for (Class<?> subclass : subclasses) {
 						getExceptions().remove(subclass);
 					}
@@ -520,7 +450,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 			for (Class<?> clazz : clazzes) {
 				if (startAuditing) {
 					getExceptions().remove(clazz);
-					Set<Class<?>> subclasses = getPersistentConcreteSubclasses(clazz);
+					Set<Class<?>> subclasses = DAOUtils.getPersistentConcreteSubclasses(clazz);
 					for (Class<?> subclass : subclasses) {
 						getExceptions().remove(subclass);
 					}
@@ -546,48 +476,10 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	}
 	
 	/**
-	 * Gets a set of concrete subclasses for the specified class recursively, note that interfaces
-	 * and abstract classes are excluded
-	 * 
-	 * @param clazz the Super Class
-	 * @param foundSubclasses the list of subclasses found in previous recursive calls, should be
-	 *            null for the first call
-	 * @param mappedClasses the ClassMetadata Collection
-	 * @return a set of subclasses
-	 * @should return a list of subclasses for the specified type
-	 * @should exclude interfaces and abstract classes
-	 */
-	@SuppressWarnings("unchecked")
-	private Set<Class<?>> getPersistentConcreteSubclassesInternal(Class<?> clazz, Set<Class<?>> foundSubclasses,
-	                                                              Collection<ClassMetadata> mappedClasses) {
-		if (foundSubclasses == null) {
-			foundSubclasses = new HashSet<Class<?>>();
-		}
-		if (mappedClasses == null) {
-			mappedClasses = sessionFactory.getAllClassMetadata().values();
-		}
-		
-		if (clazz != null) {
-			for (ClassMetadata cmd : mappedClasses) {
-				Class<?> possibleSubclass = cmd.getMappedClass(EntityMode.POJO);
-				if (!clazz.equals(possibleSubclass) && clazz.isAssignableFrom(possibleSubclass)) {
-					if (!Modifier.isAbstract(possibleSubclass.getModifiers()) && !possibleSubclass.isInterface()) {
-						foundSubclasses.add(possibleSubclass);
-					}
-					foundSubclasses.addAll(getPersistentConcreteSubclassesInternal(possibleSubclass, foundSubclasses,
-					    mappedClasses));
-				}
-			}
-		}
-		
-		return foundSubclasses;
-	}
-	
-	/**
 	 * @param clazz the class whose association types to add
 	 */
 	private void addAssociationTypes(Class<?> clazz) {
-		for (Class<?> assocType : getAssociationTypesToAudit(clazz)) {
+		for (Class<?> assocType : DAOUtils.getAssociationTypesToAudit(clazz)) {
 			//If this type is not explicitly marked as audited
 			if (!isAudited(assocType)) {
 				if (implicitlyAuditedTypeCache == null) {

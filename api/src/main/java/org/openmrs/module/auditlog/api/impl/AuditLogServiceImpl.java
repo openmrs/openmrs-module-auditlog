@@ -29,6 +29,7 @@ import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.AuditingStrategy;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
+import org.openmrs.module.auditlog.api.db.DAOUtils;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,7 +82,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 			classesToMatch = new ArrayList<Class<?>>();
 			for (Class clazz : clazzes) {
 				classesToMatch.add(clazz);
-				for (Class subclass : dao.getPersistentConcreteSubclasses(clazz)) {
+				for (Class subclass : DAOUtils.getPersistentConcreteSubclasses(clazz)) {
 					classesToMatch.add(subclass);
 				}
 			}
@@ -182,7 +183,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 		
 		List<Class<?>> clazzes = new ArrayList<Class<?>>();
 		clazzes.add(clazz);
-		for (Class subclass : dao.getPersistentConcreteSubclasses(clazz)) {
+		for (Class subclass : DAOUtils.getPersistentConcreteSubclasses(clazz)) {
 			clazzes.add(subclass);
 		}
 		

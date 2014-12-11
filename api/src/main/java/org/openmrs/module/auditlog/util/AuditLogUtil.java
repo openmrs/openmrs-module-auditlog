@@ -41,7 +41,6 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.hibernate.EntityMode;
 import org.hibernate.MappingException;
-import org.hibernate.SessionFactory;
 import org.hibernate.engine.SessionFactoryImplementor;
 import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.persister.collection.CollectionPersister;
@@ -51,6 +50,7 @@ import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
+import org.openmrs.module.auditlog.api.db.DAOUtils;
 
 /**
  * Contains utility methods used by the module
@@ -218,7 +218,7 @@ public class AuditLogUtil {
 	public static CollectionPersister getCollectionPersister(String collPropertyName, Class<?> clazz,
 	                                                         SessionFactoryImplementor sfi) {
 		if (sfi == null) {
-			sfi = (SessionFactoryImplementor) Context.getRegisteredComponents(SessionFactory.class).get(0);
+			sfi = (SessionFactoryImplementor) DAOUtils.getSessionFactory();
 		}
 		CollectionPersister cp = null;
 		try {
@@ -258,7 +258,7 @@ public class AuditLogUtil {
 	}
 	
 	public static ClassMetadata getClassMetadata(Class<?> clazz) {
-		return Context.getRegisteredComponents(SessionFactory.class).get(0).getClassMetadata(clazz);
+		return DAOUtils.getClassMetadata(clazz);
 	}
 	
 	public static String getAsString(Blob blob) throws Exception {

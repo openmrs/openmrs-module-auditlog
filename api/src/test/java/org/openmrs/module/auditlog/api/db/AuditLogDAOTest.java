@@ -17,21 +17,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.lang.reflect.Modifier;
 import java.util.Set;
 
 import org.junit.Test;
-import org.openmrs.Concept;
 import org.openmrs.ConceptAnswer;
-import org.openmrs.ConceptComplex;
 import org.openmrs.ConceptDescription;
 import org.openmrs.ConceptMap;
 import org.openmrs.ConceptName;
 import org.openmrs.ConceptNameTag;
-import org.openmrs.ConceptNumeric;
 import org.openmrs.ConceptSet;
 import org.openmrs.Location;
-import org.openmrs.OpenmrsObject;
 import org.openmrs.PersonName;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditingStrategy;
@@ -46,33 +41,6 @@ public class AuditLogDAOTest extends BaseAuditLogTest {
 	
 	@Autowired
 	private AuditLogDAO dao;
-	
-	/**
-	 * @see {@link AuditLogDAO#getPersistentConcreteSubclasses(Class)}
-	 */
-	@Test
-	@Verifies(value = "should return a list of subclasses for the specified type", method = "getPersistentConcreteSubclasses(Class<*>)")
-	public void getPersistentConcreteSubclasses_shouldReturnAListOfSubclassesForTheSpecifiedType() throws Exception {
-		Set<Class<?>> subclasses = dao.getPersistentConcreteSubclasses(Concept.class);
-		assertEquals(2, subclasses.size());
-		assertTrue(subclasses.contains(ConceptNumeric.class));
-		assertTrue(subclasses.contains(ConceptComplex.class));
-	}
-	
-	/**
-	 * @see {@link AuditLogDAO#getPersistentConcreteSubclasses(Class)}
-	 */
-	@Test
-	@Verifies(value = "should exclude interfaces and abstract classes", method = "getPersistentConcreteSubclasses(Class<*>)")
-	public void getPersistentConcreteSubclasses_shouldExcludeInterfacesAndAbstractClasses() throws Exception {
-		Set<Class<?>> subclasses = dao.getPersistentConcreteSubclasses(OpenmrsObject.class);
-		for (Class<?> clazz : subclasses) {
-			assertFalse("Found interface:" + clazz.getName() + ", interfaces should be excluded",
-			    Modifier.isInterface(clazz.getModifiers()));
-			assertFalse("Found abstract class:" + clazz.getName() + ", abstract classes should be excluded",
-			    Modifier.isAbstract(clazz.getModifiers()));
-		}
-	}
 	
 	/**
 	 * @see {@link AuditLogDAO#getImplicitlyAuditedClasses()}

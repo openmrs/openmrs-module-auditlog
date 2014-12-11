@@ -110,27 +110,6 @@ public interface AuditLogDAO {
 	public Set<Class<?>> getExceptions();
 	
 	/**
-	 * Gets a set of concrete subclasses for the specified class recursively, note that interfaces
-	 * and abstract classes are excluded
-	 * 
-	 * @param clazz the Super Class
-	 * @return a set of subclasses
-	 * @should return a list of subclasses for the specified type
-	 * @should exclude interfaces and abstract classes
-	 */
-	public Set<Class<?>> getPersistentConcreteSubclasses(Class<?> clazz);
-	
-	/**
-	 * Finds all the types for associations to audit in as recursive way i.e if a Persistent type is
-	 * found, then we also find its collection element types and types for fields mapped as one to
-	 * one.
-	 * 
-	 * @param clazz the Class to match against
-	 * @return a set of found class names
-	 */
-	public Set<Class<?>> getAssociationTypesToAudit(Class<?> clazz);
-	
-	/**
 	 * Gets implicitly audited classes, this are generated as a result of their owning entity types
 	 * being marked as audited if they are not explicitly marked as audited themselves, i.e if
 	 * Concept is marked as audited, then ConceptName, ConceptDescription, ConceptMapping etc
