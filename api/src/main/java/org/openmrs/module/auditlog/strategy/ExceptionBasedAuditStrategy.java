@@ -13,24 +13,21 @@
  */
 package org.openmrs.module.auditlog.strategy;
 
-import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.openmrs.GlobalProperty;
 import org.openmrs.api.context.Context;
-import org.openmrs.module.auditlog.api.db.DAOUtils;
+import org.openmrs.module.auditlog.AuditLogGlobalPropertyHelper;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 
 public abstract class ExceptionBasedAuditStrategy implements ConfigurableAuditStrategy {
 	
 	protected final Log log = LogFactory.getLog(getClass());
 	
-	public static final String GLOBAL_PROPERTY_EXCEPTION = AuditLogConstants.GP_EXCEPTIONS;
+	public static final String GLOBAL_PROPERTY_EXCEPTION = AuditLogConstants.MODULE_ID + ".exceptions";
 	
-	private static Set<Class<?>> exceptionsTypeCache;
+	private AuditLogGlobalPropertyHelper helper = null;
 	
 	/**
 	 * Returns a set of exception classes as specified by the {@link org.openmrs.GlobalProperty}
@@ -40,28 +37,9 @@ public abstract class ExceptionBasedAuditStrategy implements ConfigurableAuditSt
 	 * @should return a set of exception classes
 	 */
 	public Set<Class<?>> getExceptions() {
-		if (exceptionsTypeCache == null) {
-			exceptionsTypeCache = new HashSet<Class<?>>();
-			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(AuditLogConstants.GP_EXCEPTIONS);
-			if (gp != null && StringUtils.isNotBlank(gp.getPropertyValue())) {
-				String[] classnameArray = StringUtils.split(gp.getPropertyValue(), ",");
-				for (String classname : classnameArray) {
-					classname = classname.trim();
-					try {
-						Class<?> auditedClass = Context.loadClass(classname);
-						exceptionsTypeCache.add(auditedClass);
-						Set<Class<?>> subclasses = DAOUtils.getPersistentConcreteSubclasses(auditedClass);
-						for (Class<?> subclass : subclasses) {
-							exceptionsTypeCache.add(subclass);
-						}
-					}
-					catch (ClassNotFoundException e) {
-						log.error("Failed to load class:" + classname);
-					}
-				}
-			}
+		if (helper == null) {
+			helper = Context.getRegisteredComponents(AuditLogGlobalPropertyHelper.class).get(0);
 		}
-		
-		return exceptionsTypeCache;
+		return helper.getExceptions();
 	}
 }

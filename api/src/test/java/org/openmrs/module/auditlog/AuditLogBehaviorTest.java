@@ -52,6 +52,8 @@ import org.openmrs.api.EncounterService;
 import org.openmrs.api.PatientService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog.Action;
+import org.openmrs.module.auditlog.strategy.AuditStrategy;
+import org.openmrs.module.auditlog.strategy.ExceptionBasedAuditStrategy;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.springframework.jdbc.UncategorizedSQLException;
@@ -296,7 +298,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@NotTransactional
 	public void shouldAuditAnyObjectWhenStrategyIsSetToAll() throws Exception {
 		assertFalse(auditLogService.isAudited(Location.class));
-		setAuditConfiguration(AuditingStrategy.ALL, null, false);
+		setAuditConfiguration(AuditStrategy.ALL, null, false);
 		assertTrue(auditLogService.isAudited(Location.class));
 		Location location = new Location();
 		location.setName("new location");
@@ -308,7 +310,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@NotTransactional
 	public void shouldNotAuditAnyObjectWhenStrategyIsSetToNone() throws Exception {
 		assertTrue(auditLogService.isAudited(EncounterType.class));
-		setAuditConfiguration(AuditingStrategy.NONE, null, false);
+		setAuditConfiguration(AuditStrategy.NONE, null, false);
 		assertFalse(auditLogService.isAudited(EncounterType.class));
 		EncounterType encounterType = encounterService.getEncounterType(6);
 		encounterService.purgeEncounterType(encounterType);
@@ -319,7 +321,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@NotTransactional
 	public void shouldNotCreateLogWhenStrategyIsSetToAllExceptAndObjectTypeIsListedAsExcluded() throws Exception {
 		Class<?> type = EncounterType.class;
-		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, type.getName(), false);
+		setAuditConfiguration(AuditStrategy.ALL_EXCEPT, type.getName(), false);
 		assertFalse(auditLogService.isAudited(type));
 		assertTrue(auditLogService.getExceptions().contains(type));
 		
@@ -331,7 +333,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldCreateLogWhenStrategyIsSetToAllExceptAndObjectTypeIsNotListedAsAnException() throws Exception {
-		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, EncounterType.class.getName(), false);
+		setAuditConfiguration(AuditStrategy.ALL_EXCEPT, EncounterType.class.getName(), false);
 		Location location = new Location();
 		location.setName("new location");
 		Context.getLocationService().saveLocation(location);
@@ -346,7 +348,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		auditedClasses.addAll(auditLogService.getExceptions());
 		auditedClasses.add(Order.class);
 		String exceptions = StringUtils.join(AuditLogUtil.getAsListOfClassnames(auditedClasses), SEPARATOR);
-		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_EXCEPTIONS, exceptions);
+		AuditLogUtil.setGlobalProperty(ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION, exceptions);
 		assertTrue(auditLogService.isAudited(Order.class));
 		assertTrue(auditLogService.isAudited(DrugOrder.class));
 	}
@@ -360,7 +362,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		auditedClasses.addAll(auditLogService.getExceptions());
 		auditedClasses.remove(Concept.class);
 		String exceptions = StringUtils.join(AuditLogUtil.getAsListOfClassnames(auditedClasses), SEPARATOR);
-		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_EXCEPTIONS, exceptions);
+		AuditLogUtil.setGlobalProperty(ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION, exceptions);
 		assertFalse(auditLogService.isAudited(Concept.class));
 		assertTrue(auditLogService.isAudited(ConceptNumeric.class));
 		assertTrue(auditLogService.isAudited(ConceptComplex.class));

@@ -61,6 +61,7 @@ import org.openmrs.api.PersonService;
 import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.api.UserService;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.auditlog.strategy.AuditStrategy;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.springframework.test.annotation.NotTransactional;
@@ -306,8 +307,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldCreateLogForUnAuditedTypeIfTheOwningTypeIsAuditedAndStrategyIsAllExcept() throws Exception {
-		setAuditConfiguration(AuditingStrategy.ALL_EXCEPT, null, false);
-		assertEquals(AuditingStrategy.ALL_EXCEPT, auditLogService.getAuditingStrategy());
+		setAuditConfiguration(AuditStrategy.ALL_EXCEPT, null, false);
+		assertEquals(AuditStrategy.ALL_EXCEPT, auditLogService.getAuditingStrategy());
 		assertEquals(true, auditLogService.isAudited(Person.class));
 		assertEquals(true, auditLogService.isAudited(PersonAddress.class));
 		

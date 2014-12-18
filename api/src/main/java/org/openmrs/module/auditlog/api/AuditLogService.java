@@ -24,7 +24,7 @@ import org.openmrs.annotation.Authorized;
 import org.openmrs.api.OpenmrsService;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
-import org.openmrs.module.auditlog.AuditingStrategy;
+import org.openmrs.module.auditlog.strategy.AuditStrategy;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 
 /**
@@ -79,9 +79,8 @@ public interface AuditLogService extends OpenmrsService {
 	/**
 	 * Fetches a saved object with the specified objectId
 	 * 
-	 *
-     * @param id the id to match against
-     * @return the matching saved object
+	 * @param id the id to match against
+	 * @return the matching saved object
 	 * @should get the saved object matching the specified arguments
 	 */
 	@Authorized(AuditLogConstants.PRIV_GET_ITEMS)
@@ -107,7 +106,8 @@ public interface AuditLogService extends OpenmrsService {
 	
 	/**
 	 * Marks the specified classes as audited by adding their class names to the
-	 * {@link GlobalProperty} {@link AuditLogConstants#GP_EXCEPTIONS}
+	 * {@link GlobalProperty}
+	 * {@link org.openmrs.module.auditlog.strategy.ExceptionBasedAuditStrategy#GLOBAL_PROPERTY_EXCEPTION}
 	 * 
 	 * @param clazzes the classes to audit
 	 * @should update the exception class names global property if the strategy is none_except
@@ -132,7 +132,8 @@ public interface AuditLogService extends OpenmrsService {
 	
 	/**
 	 * Marks the specified classes as not audited by removing their class names from the
-	 * {@link GlobalProperty} {@link AuditLogConstants#GP_EXCEPTIONS}
+	 * {@link GlobalProperty}
+	 * {@link org.openmrs.module.auditlog.strategy.ExceptionBasedAuditStrategy#GLOBAL_PROPERTY_EXCEPTION}
 	 * 
 	 * @param clazzes the class to stop auditing
 	 * @should update the exception class names global property if the strategy is none_except
@@ -147,17 +148,19 @@ public interface AuditLogService extends OpenmrsService {
 	public void stopAuditing(Set<Class<?>> clazzes);
 	
 	/**
-	 * Gets the {@link org.openmrs.module.auditlog.AuditingStrategy} which is the value of the
-	 * {@link AuditLogConstants#GP_AUDITING_STRATEGY} global property
+	 * Gets the {@link org.openmrs.module.auditlog.strategy.AuditStrategy} which is the value of the
+	 * {@link org.openmrs.module.auditlog.strategy.ExceptionBasedAuditStrategy#GLOBAL_PROPERTY_EXCEPTION}
+	 * global property
 	 * 
 	 * @return the auditingStrategy
 	 */
 	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public AuditingStrategy getAuditingStrategy();
+	public AuditStrategy getAuditingStrategy();
 	
 	/**
 	 * Convenience method that returns a set of exception classes as specified by the
-	 * {@link GlobalProperty} {@link AuditLogConstants#GP_EXCEPTIONS}
+	 * {@link GlobalProperty}
+	 * {@link org.openmrs.module.auditlog.strategy.ExceptionBasedAuditStrategy#GLOBAL_PROPERTY_EXCEPTION}
 	 * 
 	 * @return a set of audited classes
 	 * @should return a set of exception classes

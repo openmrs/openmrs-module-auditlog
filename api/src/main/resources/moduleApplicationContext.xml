@@ -38,11 +38,11 @@
 				<property name="transactionManager">
 					<ref bean="transactionManager" />
 				</property>
-				<property name="target">
-					<bean class="${project.parent.groupId}.${project.parent.artifactId}.api.impl.AuditLogServiceImpl" > 				
-					   <property name="dao" ref="auditLogDAO" />				
-					</bean>
-				</property>
+                <property name="target">
+                    <bean class="${project.parent.groupId}.${project.parent.artifactId}.api.impl.AuditLogServiceImpl" >
+                        <property name="dao" ref="auditLogDAO" />
+                    </bean>
+                </property>
 				<property name="preInterceptors">
 					<ref bean="serviceInterceptors" />
 				</property>
@@ -63,6 +63,7 @@
 	    <property name="globalPropertyListeners">
 	        <list value-type="org.openmrs.api.GlobalPropertyListener">
 	            <bean class="${project.parent.groupId}.${project.parent.artifactId}.api.db.hibernate.HibernateAuditLogDAO" />
+                <ref bean="auditLogGlobalPropertyHelper"/>
 	        </list>
 	    </property>
 	</bean>

@@ -15,6 +15,7 @@ package org.openmrs.module.auditlog.api.impl;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -26,18 +27,24 @@ import org.openmrs.api.context.Context;
 import org.openmrs.api.impl.BaseOpenmrsService;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
-import org.openmrs.module.auditlog.AuditingStrategy;
+import org.openmrs.module.auditlog.AuditLogGlobalPropertyHelper;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.api.db.DAOUtils;
+import org.openmrs.module.auditlog.strategy.AuditStrategy;
+import org.openmrs.module.auditlog.strategy.ExceptionBasedAuditStrategy;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.util.OpenmrsUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
 public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogService {
 	
 	private AuditLogDAO dao;
+	
+	@Autowired
+	private AuditLogGlobalPropertyHelper helper;
 	
 	/**
 	 * @param dao the dao to set
@@ -47,10 +54,10 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	}
 	
 	/**
-	 * setter for AuditLogServiceDAO
+	 * @param helper the helper to set
 	 */
-	public void setAuditLogServiceDAO(AuditLogDAO dao) {
-		this.dao = dao;
+	public void setHelper(AuditLogGlobalPropertyHelper helper) {
+		this.helper = helper;
 	}
 	
 	/**
@@ -59,7 +66,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 */
 	@Transactional(readOnly = true)
 	public boolean isAudited(Class<?> clazz) {
-		return dao.isAudited(clazz);
+		return helper.isAudited(clazz);
 	}
 	
 	/**
@@ -129,7 +136,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 */
 	@Override
 	public void startAuditing(Set<Class<?>> clazzes) {
-		dao.startAuditing(clazzes);
+		helper.startAuditing(clazzes);
 	}
 	
 	/**
@@ -147,7 +154,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 */
 	@Override
 	public void stopAuditing(Set<Class<?>> clazzes) {
-		dao.stopAuditing(clazzes);
+		helper.stopAuditing(clazzes);
 	}
 	
 	/**
@@ -155,8 +162,8 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public AuditingStrategy getAuditingStrategy() {
-		return dao.getAuditingStrategy();
+	public AuditStrategy getAuditingStrategy() {
+		return helper.getAuditingStrategy();
 	}
 	
 	/**
@@ -165,7 +172,10 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	@Override
 	@Transactional(readOnly = true)
 	public Set<Class<?>> getExceptions() {
-		return dao.getExceptions();
+		if (getAuditingStrategy() instanceof ExceptionBasedAuditStrategy) {
+			return ((ExceptionBasedAuditStrategy) getAuditingStrategy()).getExceptions();
+		}
+		return Collections.emptySet();
 	}
 	
 	/**

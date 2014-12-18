@@ -16,33 +16,15 @@ package org.openmrs.module.auditlog.api.db;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
-import org.openmrs.module.auditlog.AuditingStrategy;
 import org.openmrs.module.auditlog.api.AuditLogService;
 
 /**
  * Database access methods for {@link AuditLog}s
  */
 public interface AuditLogDAO {
-	
-	/**
-	 * @see AuditLogService#isAudited(Class)
-	 */
-	public boolean isAudited(Class<?> clazz);
-	
-	/**
-	 * Checks if the specified type is implicitly audit
-	 * 
-	 * @should return true if a class is implicitly audited
-	 * @should return false if a class is not implicitly audited for none except strategy
-	 * @should return false if a class is also marked as audited for none except strategy
-	 * @should return false if a class is not implicitly audited for all except strategy
-	 * @should return false if a class is also marked as audited for all except strategy
-	 */
-	public boolean isImplicitlyAudited(Class<?> clazz);
 	
 	/**
 	 * Fetches the audit log entries matching the specified arguments
@@ -88,40 +70,6 @@ public interface AuditLogDAO {
 	 * @see AuditLogService#getObjectByUuid(Class, String)
 	 */
 	public <T> T getObjectByUuid(Class<T> clazz, String uuid);
-	
-	/**
-	 * @see AuditLogService#startAuditing(java.util.Set)
-	 */
-	public void startAuditing(Set<Class<?>> clazzes);
-	
-	/**
-	 * @see AuditLogService#stopAuditing(java.util.Set)
-	 */
-	public void stopAuditing(Set<Class<?>> clazzes);
-	
-	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#getAuditingStrategy()
-	 */
-	public AuditingStrategy getAuditingStrategy();
-	
-	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#getExceptions()
-	 */
-	public Set<Class<?>> getExceptions();
-	
-	/**
-	 * Gets implicitly audited classes, this are generated as a result of their owning entity types
-	 * being marked as audited if they are not explicitly marked as audited themselves, i.e if
-	 * Concept is marked as audited, then ConceptName, ConceptDescription, ConceptMapping etc
-	 * implicitly get marked as audited
-	 * 
-	 * @return a set of implicitly audited classes
-	 * @should return a set of implicitly audited classes for none except strategy
-	 * @should return a set of implicitly audited classes for all except strategy
-	 * @should return an empty set for none strategy
-	 * @should return an empty set for all strategy
-	 */
-	public Set<Class<?>> getImplicitlyAuditedClasses();
 	
 	/**
 	 * Returns true or false depending on the value of the

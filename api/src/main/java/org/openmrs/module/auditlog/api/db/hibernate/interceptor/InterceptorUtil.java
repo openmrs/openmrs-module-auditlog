@@ -24,6 +24,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.metadata.ClassMetadata;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
+import org.openmrs.module.auditlog.AuditLogGlobalPropertyHelper;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 
@@ -36,6 +37,8 @@ final class InterceptorUtil {
 	
 	private static AuditLogDAO auditLogDao;
 	
+	private static AuditLogGlobalPropertyHelper helper;
+	
 	/**
 	 * @return the dao
 	 */
@@ -44,6 +47,16 @@ final class InterceptorUtil {
 			auditLogDao = Context.getRegisteredComponents(AuditLogDAO.class).get(0);
 		}
 		return auditLogDao;
+	}
+	
+	/**
+	 * @return the helper
+	 */
+	static AuditLogGlobalPropertyHelper getHelper() {
+		if (helper == null) {
+			helper = Context.getRegisteredComponents(AuditLogGlobalPropertyHelper.class).get(0);
+		}
+		return helper;
 	}
 	
 	static void saveAuditLog(AuditLog auditLog) {
@@ -57,7 +70,7 @@ final class InterceptorUtil {
 	 * @return true if is audited or implicitly audited otherwise false
 	 */
 	static boolean isAudited(Class<?> clazz) {
-		return getAuditLogDao().isAudited(clazz) || getAuditLogDao().isImplicitlyAudited(clazz);
+		return getHelper().isAudited(clazz) || getHelper().isImplicitlyAudited(clazz);
 	}
 	
 	/**
@@ -90,10 +103,10 @@ final class InterceptorUtil {
 	}
 	
 	static boolean storeLastStateOfDeletedItems() {
-		return auditLogDao.storeLastStateOfDeletedItems();
+		return getAuditLogDao().storeLastStateOfDeletedItems();
 	}
 	
 	static Serializable getId(Object object) {
-		return auditLogDao.getId(object);
+		return getAuditLogDao().getId(object);
 	}
 }
