@@ -18,7 +18,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.context.Context;
-import org.openmrs.module.auditlog.AuditLogGlobalPropertyHelper;
+import org.openmrs.module.auditlog.AuditLogHelper;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 
 public abstract class ExceptionBasedAuditStrategy implements ConfigurableAuditStrategy {
@@ -27,7 +27,7 @@ public abstract class ExceptionBasedAuditStrategy implements ConfigurableAuditSt
 	
 	public static final String GLOBAL_PROPERTY_EXCEPTION = AuditLogConstants.MODULE_ID + ".exceptions";
 	
-	private AuditLogGlobalPropertyHelper helper = null;
+	private AuditLogHelper helper = null;
 	
 	/**
 	 * Returns a set of exception classes as specified by the {@link org.openmrs.GlobalProperty}
@@ -38,7 +38,7 @@ public abstract class ExceptionBasedAuditStrategy implements ConfigurableAuditSt
 	 */
 	public Set<Class<?>> getExceptions() {
 		if (helper == null) {
-			helper = Context.getRegisteredComponents(AuditLogGlobalPropertyHelper.class).get(0);
+			helper = Context.getRegisteredComponents(AuditLogHelper.class).get(0);
 		}
 		return helper.getExceptions();
 	}

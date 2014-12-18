@@ -27,7 +27,7 @@ import org.openmrs.api.context.Context;
 import org.openmrs.api.impl.BaseOpenmrsService;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
-import org.openmrs.module.auditlog.AuditLogGlobalPropertyHelper;
+import org.openmrs.module.auditlog.AuditLogHelper;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.api.db.DAOUtils;
@@ -44,7 +44,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	private AuditLogDAO dao;
 	
 	@Autowired
-	private AuditLogGlobalPropertyHelper helper;
+	private AuditLogHelper helper;
 	
 	/**
 	 * @param dao the dao to set
@@ -56,7 +56,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	/**
 	 * @param helper the helper to set
 	 */
-	public void setHelper(AuditLogGlobalPropertyHelper helper) {
+	public void setHelper(AuditLogHelper helper) {
 		this.helper = helper;
 	}
 	

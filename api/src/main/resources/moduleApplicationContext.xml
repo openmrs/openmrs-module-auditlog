@@ -63,7 +63,7 @@
 	    <property name="globalPropertyListeners">
 	        <list value-type="org.openmrs.api.GlobalPropertyListener">
 	            <bean class="${project.parent.groupId}.${project.parent.artifactId}.api.db.hibernate.HibernateAuditLogDAO" />
-                <ref bean="auditLogGlobalPropertyHelper"/>
+                <ref bean="auditLogHelper"/>
 	        </list>
 	    </property>
 	</bean>

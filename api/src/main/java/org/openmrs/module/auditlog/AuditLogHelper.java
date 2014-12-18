@@ -42,8 +42,8 @@ import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.springframework.stereotype.Component;
 
-@Component("auditLogGlobalPropertyHelper")
-public class AuditLogGlobalPropertyHelper implements GlobalPropertyListener {
+@Component("auditLogHelper")
+public class AuditLogHelper implements GlobalPropertyListener {
 	
 	protected final Log log = LogFactory.getLog(getClass());
 	
@@ -170,7 +170,7 @@ public class AuditLogGlobalPropertyHelper implements GlobalPropertyListener {
 			implicitlyAuditedTypeCache = new HashSet<Class<?>>();
 			if (getAuditingStrategy().equals(AuditStrategy.NONE_EXCEPT)) {
 				for (Class<?> auditedClass : getExceptions()) {
-					if (!AuditLogGlobalPropertyHelper.CORE_EXCEPTIONS.contains(auditedClass)) {
+					if (!AuditLogHelper.CORE_EXCEPTIONS.contains(auditedClass)) {
 						addAssociationTypes(auditedClass);
 					}
 				}
@@ -183,7 +183,7 @@ public class AuditLogGlobalPropertyHelper implements GlobalPropertyListener {
 				for (ClassMetadata classMetadata : allClassMetadata) {
 					Class<?> mappedClass = classMetadata.getMappedClass(EntityMode.POJO);
 					if (!getExceptions().contains(mappedClass)) {
-						if (!AuditLogGlobalPropertyHelper.CORE_EXCEPTIONS.contains(mappedClass)) {
+						if (!AuditLogHelper.CORE_EXCEPTIONS.contains(mappedClass)) {
 							addAssociationTypes(mappedClass);
 						}
 					}

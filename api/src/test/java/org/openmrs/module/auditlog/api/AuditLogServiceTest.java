@@ -51,7 +51,7 @@ import org.openmrs.api.APIException;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
-import org.openmrs.module.auditlog.AuditLogGlobalPropertyHelper;
+import org.openmrs.module.auditlog.AuditLogHelper;
 import org.openmrs.module.auditlog.BaseAuditLogTest;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.strategy.AuditStrategy;
@@ -75,7 +75,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	public ExpectedException expectedException = ExpectedException.none();
 	
 	@Autowired
-	private AuditLogGlobalPropertyHelper helper;
+	private AuditLogHelper helper;
 	
 	private List<AuditLog> getAllAuditLogs() {
 		return auditLogService.getAuditLogs(null, null, null, null, false, null, null);

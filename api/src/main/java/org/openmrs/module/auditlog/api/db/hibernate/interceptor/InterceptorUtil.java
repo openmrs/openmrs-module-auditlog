@@ -24,7 +24,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.metadata.ClassMetadata;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
-import org.openmrs.module.auditlog.AuditLogGlobalPropertyHelper;
+import org.openmrs.module.auditlog.AuditLogHelper;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 
@@ -37,7 +37,7 @@ final class InterceptorUtil {
 	
 	private static AuditLogDAO auditLogDao;
 	
-	private static AuditLogGlobalPropertyHelper helper;
+	private static AuditLogHelper helper;
 	
 	/**
 	 * @return the dao
@@ -52,9 +52,9 @@ final class InterceptorUtil {
 	/**
 	 * @return the helper
 	 */
-	static AuditLogGlobalPropertyHelper getHelper() {
+	static AuditLogHelper getHelper() {
 		if (helper == null) {
-			helper = Context.getRegisteredComponents(AuditLogGlobalPropertyHelper.class).get(0);
+			helper = Context.getRegisteredComponents(AuditLogHelper.class).get(0);
 		}
 		return helper;
 	}

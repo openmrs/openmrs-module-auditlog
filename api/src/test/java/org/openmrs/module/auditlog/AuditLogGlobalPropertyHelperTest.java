@@ -46,11 +46,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class AuditLogGlobalPropertyHelperTest extends BaseAuditLogTest {
 	
 	@Autowired
-	private AuditLogGlobalPropertyHelper helper;
+	private AuditLogHelper helper;
 	
 	/**
 	 * @verifies return a set of exception classes
-	 * @see AuditLogGlobalPropertyHelper#getExceptions()
+	 * @see AuditLogHelper#getExceptions()
 	 */
 	@Test
 	public void getExceptions_shouldReturnASetOfExceptionClasses() throws Exception {
@@ -64,7 +64,7 @@ public class AuditLogGlobalPropertyHelperTest extends BaseAuditLogTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogGlobalPropertyHelper#getImplicitlyAuditedClasses()}
+	 * @see {@link AuditLogHelper#getImplicitlyAuditedClasses()}
 	 */
 	@Test
 	@Verifies(value = "should return a set of implicitly audited classes for none except strategy", method = "getImplicitlyAuditedClasses()")
@@ -84,7 +84,7 @@ public class AuditLogGlobalPropertyHelperTest extends BaseAuditLogTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogGlobalPropertyHelper#getImplicitlyAuditedClasses()}
+	 * @see {@link AuditLogHelper#getImplicitlyAuditedClasses()}
 	 */
 	@Test
 	@Verifies(value = "should return a set of implicitly audited classes for all except strategy", method = "getImplicitlyAuditedClasses()")
@@ -108,7 +108,7 @@ public class AuditLogGlobalPropertyHelperTest extends BaseAuditLogTest {
 	
 	/**
 	 * @verifies return an empty set for all strategy
-	 * @see AuditLogGlobalPropertyHelper#getImplicitlyAuditedClasses()
+	 * @see AuditLogHelper#getImplicitlyAuditedClasses()
 	 */
 	@Test
 	public void getImplicitlyAuditedClasses_shouldReturnAnEmptySetForAllStrategy() throws Exception {
@@ -118,7 +118,7 @@ public class AuditLogGlobalPropertyHelperTest extends BaseAuditLogTest {
 	
 	/**
 	 * @verifies return an empty set for none strategy
-	 * @see AuditLogGlobalPropertyHelper#getImplicitlyAuditedClasses()
+	 * @see AuditLogHelper#getImplicitlyAuditedClasses()
 	 */
 	@Test
 	public void getImplicitlyAuditedClasses_shouldReturnAnEmptySetForNoneStrategy() throws Exception {
@@ -127,7 +127,7 @@ public class AuditLogGlobalPropertyHelperTest extends BaseAuditLogTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogGlobalPropertyHelper#isImplicitlyAudited(Class)}
+	 * @see {@link AuditLogHelper#isImplicitlyAudited(Class)}
 	 */
 	@Test
 	@Verifies(value = "should return true if a class is implicitly audited", method = "isImplicitlyAudited(Class<*>)")
@@ -138,7 +138,7 @@ public class AuditLogGlobalPropertyHelperTest extends BaseAuditLogTest {
 	
 	/**
 	 * @verifies return false if a class is already explicitly marked already as audited
-	 * @see AuditLogGlobalPropertyHelper#isImplicitlyAudited(Class)
+	 * @see AuditLogHelper#isImplicitlyAudited(Class)
 	 */
 	@Test
 	public void isImplicitlyAudited_shouldReturnFalseIfAClassIsAlreadyExplicitlyMarkedAlreadyAsAudited() throws Exception {
@@ -151,7 +151,7 @@ public class AuditLogGlobalPropertyHelperTest extends BaseAuditLogTest {
 	
 	/**
 	 * @verifies return false if a class is not implicitly marked as audited
-	 * @see AuditLogGlobalPropertyHelper#isImplicitlyAudited(Class)
+	 * @see AuditLogHelper#isImplicitlyAudited(Class)
 	 */
 	@Test
 	public void isImplicitlyAudited_shouldReturnFalseIfAClassIsNotImplicitlyMarkedAsAudited() throws Exception {
@@ -162,7 +162,7 @@ public class AuditLogGlobalPropertyHelperTest extends BaseAuditLogTest {
 	
 	/**
 	 * @verifies return true if a class is implicitly audited and strategy is all except
-	 * @see AuditLogGlobalPropertyHelper#isImplicitlyAudited(Class)
+	 * @see AuditLogHelper#isImplicitlyAudited(Class)
 	 */
 	@Test
 	public void isImplicitlyAudited_shouldReturnTrueIfAClassIsImplicitlyAuditedAndStrategyIsAllExcept() throws Exception {
@@ -176,7 +176,7 @@ public class AuditLogGlobalPropertyHelperTest extends BaseAuditLogTest {
 	 * \
 	 * 
 	 * @verifies return false if a class is already explicitly audited and strategy is all except
-	 * @see AuditLogGlobalPropertyHelper#isImplicitlyAudited(Class)
+	 * @see AuditLogHelper#isImplicitlyAudited(Class)
 	 */
 	@Test
 	public void isImplicitlyAudited_shouldReturnFalseIfAClassIsAlreadyExplicitlyAuditedAndStrategyIsAllExcept()
@@ -188,7 +188,7 @@ public class AuditLogGlobalPropertyHelperTest extends BaseAuditLogTest {
 	
 	/**
 	 * @verifies return false if a class is not implicitly audited and strategy is all except
-	 * @see AuditLogGlobalPropertyHelper#isImplicitlyAudited(Class)
+	 * @see AuditLogHelper#isImplicitlyAudited(Class)
 	 */
 	@Test
 	public void isImplicitlyAudited_shouldReturnFalseIfAClassIsNotImplicitlyAuditedAndStrategyIsAllExcept() throws Exception {
