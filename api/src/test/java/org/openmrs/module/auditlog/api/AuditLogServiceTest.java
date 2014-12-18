@@ -277,7 +277,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	@Test
 	@Verifies(value = "should update the exception class names global property if the strategy is none_except", method = "startAuditing(Set<Class<?>>)")
 	public void startAuditing_shouldUpdateTheExceptionClassNamesGlobalPropertyIfTheStrategyIsNone_except() throws Exception {
-		Set<Class<?>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = helper.getExceptions();
 		int originalCount = exceptions.size();
 		assertFalse(auditLogService.isAudited(ConceptDescription.class));
 		assertTrue(auditLogService.isAudited(Concept.class));
@@ -288,7 +288,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 		
 		auditLogService.startAuditing(ConceptDescription.class);
 		
-		exceptions = auditLogService.getExceptions();
+		exceptions = helper.getExceptions();
 		assertEquals(++originalCount, exceptions.size());
 		//Should have added it and maintained the existing ones
 		assertTrue(auditLogService.isAudited(ConceptDescription.class));
@@ -332,7 +332,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	@Verifies(value = "should update the exception class names global property if the strategy is all_except", method = "startAuditing(Set<Class<?>>)")
 	public void startAuditing_shouldUpdateTheExceptionClassNamesGlobalPropertyIfTheStrategyIsAll_except() throws Exception {
 		setAuditConfiguration(AuditStrategy.ALL_EXCEPT, EXCEPTIONS_FOR_ALL_EXCEPT, false);
-		Set<Class<?>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = helper.getExceptions();
 		int originalCount = exceptions.size();
 		assertTrue(OpenmrsUtil.collectionContains(exceptions, EncounterType.class));
 		assertTrue(OpenmrsUtil.collectionContains(exceptions, Concept.class));
@@ -343,7 +343,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 		assertEquals(false, auditLogService.isAudited(ConceptNumeric.class));
 		assertEquals(false, auditLogService.isAudited(ConceptComplex.class));
 		auditLogService.startAuditing(Concept.class);
-		exceptions = auditLogService.getExceptions();
+		exceptions = helper.getExceptions();
 		assertEquals(originalCount -= 3, exceptions.size());
 		//Should have removed it and maintained the existing ones
 		assertTrue(OpenmrsUtil.collectionContains(exceptions, EncounterType.class));
@@ -362,13 +362,13 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	@Test
 	@Verifies(value = "should mark a class and its known subclasses as audited", method = "startAuditing(Set<Class<?>>)")
 	public void startAuditing_shouldMarkAClassAndItsKnownSubclassesAsAudited() throws Exception {
-		Set<Class<?>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = helper.getExceptions();
 		assertFalse(exceptions.contains(Order.class));
 		assertFalse(exceptions.contains(DrugOrder.class));
 		assertEquals(false, auditLogService.isAudited(Order.class));
 		assertEquals(false, auditLogService.isAudited(DrugOrder.class));
 		auditLogService.startAuditing(Order.class);
-		exceptions = auditLogService.getExceptions();
+		exceptions = helper.getExceptions();
 		assertTrue(exceptions.contains(Order.class));
 		assertTrue(exceptions.contains(DrugOrder.class));
 		assertEquals(true, auditLogService.isAudited(Order.class));
@@ -382,7 +382,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	@Verifies(value = "should mark a class and its known subclasses as audited for all_except strategy", method = "startAuditing(Set<Class<?>>)")
 	public void startAuditing_shouldMarkAClassAndItsKnownSubclassesAsAuditedForAll_exceptStrategy() throws Exception {
 		setAuditConfiguration(AuditStrategy.ALL_EXCEPT, EXCEPTIONS_FOR_ALL_EXCEPT, false);
-		Set<Class<?>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = helper.getExceptions();
 		assertTrue(exceptions.contains(Concept.class));
 		assertTrue(exceptions.contains(ConceptNumeric.class));
 		assertTrue(exceptions.contains(ConceptComplex.class));
@@ -393,7 +393,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 		Set<Class<?>> classes = new HashSet<Class<?>>();
 		classes.add(Concept.class);
 		auditLogService.startAuditing(classes);
-		exceptions = auditLogService.getExceptions();
+		exceptions = helper.getExceptions();
 		assertFalse(exceptions.contains(Concept.class));
 		assertFalse(exceptions.contains(ConceptNumeric.class));
 		assertFalse(exceptions.contains(ConceptComplex.class));
@@ -444,7 +444,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	@Test
 	@Verifies(value = "should update the exception class names global property if the strategy is none_except", method = "stopAuditing(Set<Class<?>>)")
 	public void stopAuditing_shouldUpdateTheExceptionClassNamesGlobalPropertyIfTheStrategyIsNone_except() throws Exception {
-		Set<Class<?>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = helper.getExceptions();
 		int originalCount = exceptions.size();
 		assertTrue(OpenmrsUtil.collectionContains(exceptions, Concept.class));
 		assertTrue(auditLogService.isAudited(Concept.class));
@@ -455,7 +455,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 		
 		auditLogService.stopAuditing(Concept.class);
 		
-		exceptions = auditLogService.getExceptions();
+		exceptions = helper.getExceptions();
 		assertEquals(originalCount -= 3, exceptions.size());
 		//Should have added it and maintained the existing ones
 		assertFalse(auditLogService.isAudited(Concept.class));
@@ -498,13 +498,13 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	@Verifies(value = "should update the exception class names global property if the strategy is all_except", method = "stopAuditing(Set<Class<?>>)")
 	public void stopAuditing_shouldUpdateTheExceptionClassNamesGlobalPropertyIfTheStrategyIsAll_except() throws Exception {
 		setAuditConfiguration(AuditStrategy.ALL_EXCEPT, EXCEPTIONS_FOR_ALL_EXCEPT, false);
-		Set<Class<?>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = helper.getExceptions();
 		int originalCount = exceptions.size();
 		assertFalse(OpenmrsUtil.collectionContains(exceptions, Location.class));
 		assertEquals(true, auditLogService.isAudited(Location.class));
 		
 		auditLogService.stopAuditing(Location.class);
-		exceptions = auditLogService.getExceptions();
+		exceptions = helper.getExceptions();
 		assertEquals(++originalCount, exceptions.size());
 		assertTrue(OpenmrsUtil.collectionContains(exceptions, Location.class));
 		assertEquals(false, auditLogService.isAudited(Location.class));
@@ -516,7 +516,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	@Test
 	@Verifies(value = "should mark a class and its known subclasses as un audited", method = "stopAuditing(Set<Class<?>>)")
 	public void stopAuditing_shouldMarkAClassAndItsKnownSubclassesAsUnAudited() throws Exception {
-		Set<Class<?>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = helper.getExceptions();
 		assertTrue(exceptions.contains(Concept.class));
 		assertTrue(exceptions.contains(ConceptNumeric.class));
 		assertTrue(exceptions.contains(ConceptComplex.class));
@@ -543,7 +543,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	@Verifies(value = "should mark a class and its known subclasses as un audited for all_except strategy", method = "stopAuditing(Set<Class<?>>)")
 	public void stopAuditing_shouldMarkAClassAndItsKnownSubclassesAsUnAuditedForAll_exceptStrategy() throws Exception {
 		setAuditConfiguration(AuditStrategy.ALL_EXCEPT, EXCEPTIONS_FOR_ALL_EXCEPT, false);
-		Set<Class<?>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = helper.getExceptions();
 		assertFalse(exceptions.contains(Order.class));
 		assertFalse(exceptions.contains(DrugOrder.class));
 		assertEquals(true, auditLogService.isAudited(Order.class));
@@ -552,7 +552,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 		Set<Class<?>> classes = new HashSet<Class<?>>();
 		classes.add(Order.class);
 		auditLogService.stopAuditing(classes);
-		exceptions = auditLogService.getExceptions();
+		exceptions = helper.getExceptions();
 		assertTrue(exceptions.contains(Order.class));
 		assertTrue(exceptions.contains(DrugOrder.class));
 		assertEquals(false, auditLogService.isAudited(Order.class));

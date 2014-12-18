@@ -158,17 +158,6 @@ public interface AuditLogService extends OpenmrsService {
 	public AuditStrategy getAuditingStrategy();
 	
 	/**
-	 * Convenience method that returns a set of exception classes as specified by the
-	 * {@link GlobalProperty}
-	 * {@link org.openmrs.module.auditlog.strategy.ExceptionBasedAuditStrategy#GLOBAL_PROPERTY_EXCEPTION}
-	 * 
-	 * @return a set of audited classes
-	 * @should return a set of exception classes
-	 */
-	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public Set<Class<?>> getExceptions();
-	
-	/**
 	 * Gets all audit logs for the object that matches the specified uuid and class that match the
 	 * other specified arguments
 	 * 

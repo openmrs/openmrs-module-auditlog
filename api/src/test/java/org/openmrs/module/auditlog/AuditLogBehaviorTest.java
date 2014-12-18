@@ -323,7 +323,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		Class<?> type = EncounterType.class;
 		setAuditConfiguration(AuditStrategy.ALL_EXCEPT, type.getName(), false);
 		assertFalse(auditLogService.isAudited(type));
-		assertTrue(auditLogService.getExceptions().contains(type));
+		assertTrue(helper.getExceptions().contains(type));
 		
 		EncounterType encounterType = encounterService.getEncounterType(6);
 		encounterService.purgeEncounterType(encounterType);
@@ -345,7 +345,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		assertFalse(auditLogService.isAudited(Order.class));
 		assertFalse(auditLogService.isAudited(DrugOrder.class));
 		Set<Class<?>> auditedClasses = new HashSet<Class<?>>();
-		auditedClasses.addAll(auditLogService.getExceptions());
+		auditedClasses.addAll(helper.getExceptions());
 		auditedClasses.add(Order.class);
 		String exceptions = StringUtils.join(AuditLogUtil.getAsListOfClassnames(auditedClasses), SEPARATOR);
 		AuditLogUtil.setGlobalProperty(ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION, exceptions);
@@ -359,7 +359,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		assertTrue(auditLogService.isAudited(ConceptNumeric.class));
 		assertTrue(auditLogService.isAudited(ConceptComplex.class));
 		Set<Class<?>> auditedClasses = new HashSet<Class<?>>();
-		auditedClasses.addAll(auditLogService.getExceptions());
+		auditedClasses.addAll(helper.getExceptions());
 		auditedClasses.remove(Concept.class);
 		String exceptions = StringUtils.join(AuditLogUtil.getAsListOfClassnames(auditedClasses), SEPARATOR);
 		AuditLogUtil.setGlobalProperty(ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION, exceptions);

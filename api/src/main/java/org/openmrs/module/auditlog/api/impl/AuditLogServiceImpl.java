@@ -167,18 +167,6 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#getExceptions()
-	 */
-	@Override
-	@Transactional(readOnly = true)
-	public Set<Class<?>> getExceptions() {
-		if (getAuditingStrategy() instanceof ExceptionBasedAuditStrategy) {
-			return ((ExceptionBasedAuditStrategy) getAuditingStrategy()).getExceptions();
-		}
-		return Collections.emptySet();
-	}
-	
-	/**
 	 * @see org.openmrs.module.auditlog.api.AuditLogService#getAuditLogs(java.io.Serializable,
 	 *      Class, java.util.List, java.util.Date, java.util.Date, boolean)
 	 */

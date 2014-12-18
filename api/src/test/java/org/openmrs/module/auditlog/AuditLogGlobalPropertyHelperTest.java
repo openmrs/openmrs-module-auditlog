@@ -54,7 +54,7 @@ public class AuditLogGlobalPropertyHelperTest extends BaseAuditLogTest {
 	 */
 	@Test
 	public void getExceptions_shouldReturnASetOfExceptionClasses() throws Exception {
-		Set<Class<?>> exceptions = auditLogService.getExceptions();
+		Set<Class<?>> exceptions = helper.getExceptions();
 		junit.framework.Assert.assertEquals(5, exceptions.size());
 		junit.framework.Assert.assertTrue(OpenmrsUtil.collectionContains(exceptions, Concept.class));
 		junit.framework.Assert.assertTrue(OpenmrsUtil.collectionContains(exceptions, ConceptNumeric.class));
