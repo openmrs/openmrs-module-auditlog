@@ -200,8 +200,13 @@ public class AuditLogHelper implements GlobalPropertyListener {
 	 * 
 	 * @return a set of audited classes
 	 * @should return a set of exception classes
+	 * @should fail for non exception based audit strategies
 	 */
 	public Set<Class<?>> getExceptions() {
+		if (!(getAuditingStrategy() instanceof ExceptionBasedAuditStrategy)) {
+			throw new APIException("Not supported by the configured audit strategy");
+		}
+		
 		if (exceptionsTypeCache == null) {
 			exceptionsTypeCache = new HashSet<Class<?>>();
 			GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(

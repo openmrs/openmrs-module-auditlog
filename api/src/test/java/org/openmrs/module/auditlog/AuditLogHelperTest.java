@@ -19,7 +19,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Set;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.openmrs.Concept;
 import org.openmrs.ConceptAnswer;
 import org.openmrs.ConceptComplex;
@@ -33,6 +35,7 @@ import org.openmrs.EncounterType;
 import org.openmrs.PatientIdentifierType;
 import org.openmrs.Person;
 import org.openmrs.PersonName;
+import org.openmrs.api.APIException;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.strategy.AuditStrategy;
@@ -43,10 +46,13 @@ import org.openmrs.test.Verifies;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class AuditLogGlobalPropertyHelperTest extends BaseAuditLogTest {
+public class AuditLogHelperTest extends BaseAuditLogTest {
 	
 	@Autowired
 	private AuditLogHelper helper;
+	
+	@Rule
+	public ExpectedException expectedException = ExpectedException.none();
 	
 	/**
 	 * @verifies return a set of exception classes
@@ -196,5 +202,17 @@ public class AuditLogGlobalPropertyHelperTest extends BaseAuditLogTest {
 		assertFalse(helper.isAudited(Concept.class));
 		assertFalse(helper.isAudited(ConceptName.class));
 		assertFalse(helper.isImplicitlyAudited(ConceptName.class));
+	}
+	
+	/**
+	 * @verifies fail for non exception based audit strategies
+	 * @see AuditLogHelper#getExceptions()
+	 */
+	@Test
+	public void getExceptions_shouldFailForNonExceptionBasedAuditStrategies() throws Exception {
+		setAuditConfiguration(AuditStrategy.ALL, null, false);
+		expectedException.expect(APIException.class);
+		expectedException.expectMessage("Not supported by the configured audit strategy");
+		helper.getExceptions();
 	}
 }
