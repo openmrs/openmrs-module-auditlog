@@ -335,7 +335,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		classes.add(PersonName.class);
 		classes.add(Patient.class);
 		
-		auditLogService.startAuditing(classes);
+		startAuditing(classes);
 		patient = ps.savePatient(patient);
 		//Ensure that no log will be created unless we actually perform an update
 		assertEquals(0, getAllLogs(patient.getId(), Patient.class, Collections.singletonList(UPDATED)).size());
@@ -501,7 +501,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		classes.add(PatientIdentifier.class);
 		classes.add(Patient.class);
 		
-		auditLogService.startAuditing(classes);
+		startAuditing(classes);
 		patient = ps.savePatient(patient);
 		//Ensure that no log will be created unless we actually perform an update
 		assertEquals(0, getAllLogs(patient.getId(), Patient.class, Collections.singletonList(UPDATED)).size());

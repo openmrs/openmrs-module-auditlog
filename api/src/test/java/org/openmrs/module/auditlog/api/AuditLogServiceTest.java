@@ -390,9 +390,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 		assertEquals(false, auditLogService.isAudited(ConceptNumeric.class));
 		assertEquals(false, auditLogService.isAudited(ConceptComplex.class));
 		
-		Set<Class<?>> classes = new HashSet<Class<?>>();
-		classes.add(Concept.class);
-		auditLogService.startAuditing(classes);
+		auditLogService.startAuditing(Concept.class);
 		exceptions = helper.getExceptions();
 		assertFalse(exceptions.contains(Concept.class));
 		assertFalse(exceptions.contains(ConceptNumeric.class));

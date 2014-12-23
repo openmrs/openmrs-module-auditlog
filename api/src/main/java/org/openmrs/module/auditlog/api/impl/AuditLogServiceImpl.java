@@ -15,7 +15,6 @@ package org.openmrs.module.auditlog.api.impl;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -32,7 +31,6 @@ import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.api.db.DAOUtils;
 import org.openmrs.module.auditlog.strategy.AuditStrategy;
-import org.openmrs.module.auditlog.strategy.ExceptionBasedAuditStrategy;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,15 +126,7 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	public void startAuditing(Class<?> clazz) {
 		Set<Class<?>> classes = new HashSet<Class<?>>();
 		classes.add(clazz);
-		startAuditing(classes);
-	}
-	
-	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#startAuditing(java.util.Set)
-	 */
-	@Override
-	public void startAuditing(Set<Class<?>> clazzes) {
-		helper.startAuditing(clazzes);
+		helper.startAuditing(classes);
 	}
 	
 	/**

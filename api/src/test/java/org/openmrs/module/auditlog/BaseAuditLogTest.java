@@ -16,6 +16,7 @@ package org.openmrs.module.auditlog;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
@@ -28,6 +29,7 @@ import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.strategy.AuditStrategy;
+import org.openmrs.module.auditlog.strategy.ConfigurableAuditStrategy;
 import org.openmrs.module.auditlog.strategy.ExceptionBasedAuditStrategy;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
@@ -64,8 +66,8 @@ public abstract class BaseAuditLogTest extends BaseModuleContextSensitiveTest {
 		assertTrue(OpenmrsUtil.collectionContains(exceptions, PatientIdentifierType.class));
 	}
 	
-	public void setAuditConfiguration(AuditStrategy strategy, String exceptionsString, boolean storeLastStateOfDeletedItems)
-	    throws Exception {
+	protected void setAuditConfiguration(AuditStrategy strategy, String exceptionsString,
+	                                     boolean storeLastStateOfDeletedItems) throws Exception {
 		
 		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_AUDITING_STRATEGY, strategy.getClass().getName());
 		assertEquals(strategy, auditLogService.getAuditingStrategy());
@@ -79,5 +81,27 @@ public abstract class BaseAuditLogTest extends BaseModuleContextSensitiveTest {
 			    ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION);
 			assertEquals(true, StringUtils.isBlank(exceptionsGpValue));
 		}
+	}
+	
+	protected void startAuditing(Class<?> clazz) throws Exception {
+		Set<Class<?>> classes = new HashSet<Class<?>>();
+		classes.add(clazz);
+		startAuditing(classes);
+	}
+	
+	protected void startAuditing(Set<Class<?>> classes) throws Exception {
+		((ConfigurableAuditStrategy) auditLogService.getAuditingStrategy()).startAuditing(classes);
+		helper.startAuditing(classes);
+	}
+	
+	protected void stopAuditing(Class<?> clazz) throws Exception {
+		Set<Class<?>> classes = new HashSet<Class<?>>();
+		classes.add(clazz);
+		stopAuditing(classes);
+	}
+	
+	protected void stopAuditing(Set<Class<?>> classes) throws Exception {
+		((ConfigurableAuditStrategy) auditLogService.getAuditingStrategy()).stopAuditing(classes);
+		helper.stopAuditing(classes);
 	}
 }
