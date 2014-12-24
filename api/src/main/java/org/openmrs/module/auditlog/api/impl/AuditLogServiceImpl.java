@@ -120,16 +120,6 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	}
 	
 	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#startAuditing(java.lang.Class)
-	 */
-	@Override
-	public void startAuditing(Class<?> clazz) {
-		Set<Class<?>> classes = new HashSet<Class<?>>();
-		classes.add(clazz);
-		helper.startAuditing(classes);
-	}
-	
-	/**
 	 * @see org.openmrs.module.auditlog.api.AuditLogService#stopAuditing(java.lang.Class)
 	 */
 	@Override

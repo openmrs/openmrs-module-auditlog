@@ -18,11 +18,16 @@ import java.util.Set;
 public interface ConfigurableAuditStrategy extends AuditStrategy {
 	
 	/**
-	 * Marks the specified classes as audited
+	 * Implementing classes should mark the specified classes as audited
 	 * 
 	 * @param clazzes the classes to audit
 	 */
 	public void startAuditing(Set<Class<?>> clazzes);
 	
+	/**
+	 * Implementing classes should un mark the specified classes as audited
+	 * 
+	 * @param clazzes the classes to stop auditing
+	 */
 	public void stopAuditing(Set<Class<?>> clazzes);
 }

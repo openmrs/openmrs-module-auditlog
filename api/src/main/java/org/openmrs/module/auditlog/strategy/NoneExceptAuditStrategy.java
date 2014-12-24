@@ -15,13 +15,20 @@ package org.openmrs.module.auditlog.strategy;
 
 import java.util.Set;
 
+import org.openmrs.api.APIException;
+
 public class NoneExceptAuditStrategy extends ExceptionBasedAuditStrategy {
 	
 	/**
 	 * @see ConfigurableAuditStrategy#startAuditing(java.util.Set)
+	 * @should update the exception class names global property
+	 * @should mark a class and its known subclasses as audited
+	 * @should also mark association types as audited
+	 * @should not mark association types for many to many collections as audited
 	 */
 	@Override
 	public void startAuditing(Set<Class<?>> clazzes) {
+		getHelper().updateGlobalProperty(clazzes, true);
 	}
 	
 	/**
@@ -29,6 +36,7 @@ public class NoneExceptAuditStrategy extends ExceptionBasedAuditStrategy {
 	 */
 	@Override
 	public void stopAuditing(Set<Class<?>> clazzes) {
+		throw new APIException("Fail");
 	}
 	
 	/**
@@ -36,6 +44,6 @@ public class NoneExceptAuditStrategy extends ExceptionBasedAuditStrategy {
 	 */
 	@Override
 	public boolean isAudited(Class<?> clazz) {
-		return false;
+		throw new APIException("Fail");
 	}
 }

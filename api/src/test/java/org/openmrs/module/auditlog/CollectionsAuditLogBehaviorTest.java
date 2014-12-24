@@ -87,8 +87,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		int originalCount = patient.getNames().size();
 		assertTrue(originalCount > 1);
 		
-		auditLogService.startAuditing(Patient.class);
-		auditLogService.startAuditing(PersonName.class);
+		startAuditing(Patient.class);
+		startAuditing(PersonName.class);
 		assertTrue(auditLogService.isAudited(PersonName.class));
 		PersonName nameToRemove = null;
 		for (PersonName name : patient.getNames()) {
@@ -129,7 +129,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertTrue(originalCount == 1);
 		Integer previousDescriptionId = concept.getDescription().getId();
 		
-		auditLogService.startAuditing(ConceptDescription.class);
+		startAuditing(ConceptDescription.class);
 		assertTrue(auditLogService.isAudited(ConceptDescription.class));
 		
 		ConceptDescription cd1 = new ConceptDescription("desc1", Locale.ENGLISH);
@@ -162,7 +162,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		int originalDescriptionCount = concept.getDescriptions().size();
 		assertTrue(originalDescriptionCount > 0);
 		
-		auditLogService.startAuditing(ConceptDescription.class);
+		startAuditing(ConceptDescription.class);
 		assertTrue(auditLogService.isAudited(ConceptDescription.class));
 		
 		ConceptDescription description = concept.getDescription();
@@ -191,7 +191,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		int originalCount = patient.getNames().size();
 		assertTrue(originalCount > 1);
 		
-		auditLogService.startAuditing(Patient.class);
+		startAuditing(Patient.class);
 		PersonName nameToRemove = null;
 		for (PersonName name : patient.getNames()) {
 			if (!name.isPreferred()) {
@@ -420,7 +420,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		int originalDescriptionCount = concept.getDescriptions().size();
 		assertTrue(originalDescriptionCount > 3);
 		
-		auditLogService.startAuditing(ConceptDescription.class);
+		startAuditing(ConceptDescription.class);
 		concept = conceptService.saveConcept(concept);
 		//Ensure that no log will be created unless we actually perform an update
 		assertEquals(0, getAllLogs(concept.getId(), Concept.class, Collections.singletonList(UPDATED)).size());
@@ -629,7 +629,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		String previousUserProperties = "\"" + entry.getKey() + "\"" + MAP_KEY_VALUE_SEPARATOR + "\"" + entry.getValue()
 		        + "\"";
 		assertEquals(0, getAllLogs(user.getId(), User.class, null).size());
-		auditLogService.startAuditing(User.class);
+		startAuditing(User.class);
 		assertEquals(true, auditLogService.isAudited(User.class));
 		final String newPropKey1 = "locale";
 		final String newPropValue1 = "fr";
@@ -661,7 +661,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		String previousUserProperties = "{\"" + entry.getKey() + "\"" + MAP_KEY_VALUE_SEPARATOR + "\"" + entry.getValue()
 		        + "\"}";
 		assertEquals(0, getAllLogs(user.getId(), User.class, null).size());
-		auditLogService.startAuditing(User.class);
+		startAuditing(User.class);
 		assertEquals(true, auditLogService.isAudited(User.class));
 		user.getUserProperties().clear();//since it is 1, just clear
 		us.saveUser(user, null);
@@ -684,7 +684,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		String previousUserProperties = "{\"" + entry.getKey() + "\"" + MAP_KEY_VALUE_SEPARATOR + "\"" + entry.getValue()
 		        + "\"}";
 		assertEquals(0, getAllLogs(user.getId(), User.class, null).size());
-		auditLogService.startAuditing(User.class);
+		startAuditing(User.class);
 		assertEquals(true, auditLogService.isAudited(User.class));
 		Map<String, String> newProperties = new HashMap<String, String>();
 		final String newKey = "this is new";
@@ -714,7 +714,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		String previousUserProperties = "{\"" + entry.getKey() + "\"" + MAP_KEY_VALUE_SEPARATOR + "\"" + entry.getValue()
 		        + "\"}";
 		assertEquals(0, getAllLogs(user.getId(), User.class, null).size());
-		auditLogService.startAuditing(User.class);
+		startAuditing(User.class);
 		assertEquals(true, auditLogService.isAudited(User.class));
 		user.setUserProperties(null);
 		//Should work even for detached owners
@@ -739,7 +739,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(key, user.getUserProperties().keySet().iterator().next());
 		assertEquals(value, user.getUserProperties().values().iterator().next());
 		assertEquals(0, getAllLogs(user.getId(), User.class, null).size());
-		auditLogService.startAuditing(User.class);
+		startAuditing(User.class);
 		assertEquals(true, auditLogService.isAudited(User.class));
 		//We are setting the same original value but the string are new objects
 		user.setUserProperty(key, value);
@@ -757,7 +757,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		User user = us.getUser(505);
 		assertEquals(1, user.getUserProperties().size());
 		assertEquals(0, getAllLogs(user.getId(), User.class, null).size());
-		auditLogService.startAuditing(User.class);
+		startAuditing(User.class);
 		Map.Entry<String, String> entry = user.getUserProperties().entrySet().iterator().next();
 		String userProperties = "{\"" + entry.getKey() + "\"" + MAP_KEY_VALUE_SEPARATOR + "\"" + entry.getValue() + "\"}";
 		assertEquals(true, auditLogService.isAudited(User.class));
@@ -789,8 +789,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(false, auditLogService.isAudited(User.class));
 		assertEquals(false, auditLogService.isAudited(Role.class));
 		
-		auditLogService.startAuditing(User.class);
-		auditLogService.startAuditing(Role.class);
+		startAuditing(User.class);
+		startAuditing(Role.class);
 		assertEquals(true, auditLogService.isAudited(User.class));
 		assertEquals(true, auditLogService.isAudited(Role.class));
 		
@@ -824,8 +824,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(false, auditLogService.isAudited(User.class));
 		assertEquals(false, auditLogService.isAudited(Role.class));
 		
-		auditLogService.startAuditing(User.class);
-		auditLogService.startAuditing(Role.class);
+		startAuditing(User.class);
+		startAuditing(Role.class);
 		assertEquals(true, auditLogService.isAudited(User.class));
 		assertEquals(true, auditLogService.isAudited(Role.class));
 		
@@ -856,7 +856,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertTrue(cp.isManyToMany());
 		assertEquals(false, auditLogService.isAudited(User.class));
 		
-		auditLogService.startAuditing(User.class);
+		startAuditing(User.class);
 		assertEquals(true, auditLogService.isAudited(User.class));
 		
 		user.removeRole(role);
@@ -888,7 +888,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertTrue(cp.isManyToMany());
 		assertEquals(false, auditLogService.isAudited(User.class));
 		
-		auditLogService.startAuditing(User.class);
+		startAuditing(User.class);
 		assertEquals(true, auditLogService.isAudited(User.class));
 		
 		user.setUsername("New");
@@ -920,8 +920,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(false, auditLogService.isAudited(User.class));
 		assertEquals(false, auditLogService.isAudited(Role.class));
 		
-		auditLogService.startAuditing(User.class);
-		auditLogService.startAuditing(Role.class);
+		startAuditing(User.class);
+		startAuditing(Role.class);
 		assertEquals(true, auditLogService.isAudited(User.class));
 		assertEquals(true, auditLogService.isAudited(Role.class));
 		
@@ -956,7 +956,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertTrue(cp.isManyToMany());
 		assertEquals(false, auditLogService.isAudited(User.class));
 		
-		auditLogService.startAuditing(User.class);
+		startAuditing(User.class);
 		assertEquals(true, auditLogService.isAudited(User.class));
 		
 		user.addRole(role);
@@ -986,8 +986,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(false, auditLogService.isAudited(User.class));
 		assertEquals(false, auditLogService.isAudited(Role.class));
 		
-		auditLogService.startAuditing(User.class);
-		auditLogService.startAuditing(Role.class);
+		startAuditing(User.class);
+		startAuditing(Role.class);
 		assertEquals(true, auditLogService.isAudited(User.class));
 		assertEquals(true, auditLogService.isAudited(Role.class));
 		
@@ -1024,7 +1024,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertTrue(cp.isManyToMany());
 		assertEquals(false, auditLogService.isAudited(User.class));
 		
-		auditLogService.startAuditing(User.class);
+		startAuditing(User.class);
 		assertEquals(true, auditLogService.isAudited(User.class));
 		
 		user.setUsername("New");
@@ -1055,8 +1055,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(0, existingUpdateLogs.size());
 		assertEquals(2, location.getTags().size());
 		
-		auditLogService.startAuditing(Location.class);
-		auditLogService.startAuditing(LocationTag.class);
+		startAuditing(Location.class);
+		startAuditing(LocationTag.class);
 		assertTrue(auditLogService.isAudited(Location.class));
 		assertTrue(auditLogService.isAudited(LocationTag.class));
 		Iterator<LocationTag> i = location.getTags().iterator();
@@ -1103,8 +1103,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		previousTags.addAll(location.getTags());
 		assertEquals(2, previousTags.size());
 		
-		auditLogService.startAuditing(Location.class);
-		auditLogService.startAuditing(LocationTag.class);
+		startAuditing(Location.class);
+		startAuditing(LocationTag.class);
 		assertTrue(auditLogService.isAudited(Location.class));
 		assertTrue(auditLogService.isAudited(LocationTag.class));
 		LocationTag tagToAdd = ls.getLocationTag(2);
@@ -1154,8 +1154,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		previousTags.addAll(location.getTags());
 		assertEquals(2, previousTags.size());
 		
-		auditLogService.startAuditing(Location.class);
-		auditLogService.startAuditing(LocationTag.class);
+		startAuditing(Location.class);
+		startAuditing(LocationTag.class);
 		assertTrue(auditLogService.isAudited(Location.class));
 		assertTrue(auditLogService.isAudited(LocationTag.class));
 		Iterator<LocationTag> i = location.getTags().iterator();
@@ -1210,8 +1210,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		int originalCount = patient.getNames().size();
 		assertTrue(originalCount > 1);
 		
-		auditLogService.startAuditing(Patient.class);
-		auditLogService.startAuditing(PersonName.class);
+		startAuditing(Patient.class);
+		startAuditing(PersonName.class);
 		assertTrue(auditLogService.isAudited(PersonName.class));
 		PersonName nameToRemove = null;
 		for (PersonName name : patient.getNames()) {
@@ -1260,8 +1260,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		previousTags.addAll(location.getTags());
 		assertEquals(2, previousTags.size());
 		
-		auditLogService.startAuditing(Location.class);
-		auditLogService.startAuditing(LocationTag.class);
+		startAuditing(Location.class);
+		startAuditing(LocationTag.class);
 		assertTrue(auditLogService.isAudited(Location.class));
 		assertTrue(auditLogService.isAudited(LocationTag.class));
 		location.getTags().clear();
@@ -1305,8 +1305,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		previousTags.addAll(location.getTags());
 		assertEquals(2, previousTags.size());
 		
-		auditLogService.startAuditing(Location.class);
-		auditLogService.startAuditing(LocationTag.class);
+		startAuditing(Location.class);
+		startAuditing(LocationTag.class);
 		assertTrue(auditLogService.isAudited(Location.class));
 		assertTrue(auditLogService.isAudited(LocationTag.class));
 		location.setTags(new HashSet<LocationTag>());
@@ -1350,8 +1350,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		previousTags.addAll(location.getTags());
 		assertEquals(2, previousTags.size());
 		
-		auditLogService.startAuditing(Location.class);
-		auditLogService.startAuditing(LocationTag.class);
+		startAuditing(Location.class);
+		startAuditing(LocationTag.class);
 		assertTrue(auditLogService.isAudited(Location.class));
 		assertTrue(auditLogService.isAudited(LocationTag.class));
 		location.setTags(null);

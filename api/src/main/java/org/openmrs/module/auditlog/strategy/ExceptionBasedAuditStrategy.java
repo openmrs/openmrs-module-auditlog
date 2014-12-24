@@ -30,6 +30,18 @@ public abstract class ExceptionBasedAuditStrategy implements ConfigurableAuditSt
 	private AuditLogHelper helper = null;
 	
 	/**
+	 * Gets the AuditLogHelper instance
+	 * 
+	 * @return
+	 */
+	public AuditLogHelper getHelper() {
+		if (helper == null) {
+			helper = Context.getRegisteredComponents(AuditLogHelper.class).get(0);
+		}
+		return helper;
+	}
+	
+	/**
 	 * Returns a set of exception classes as specified by the {@link org.openmrs.GlobalProperty}
 	 * GLOBAL_PROPERTY_EXCEPTION
 	 * 
@@ -37,9 +49,6 @@ public abstract class ExceptionBasedAuditStrategy implements ConfigurableAuditSt
 	 * @should return a set of exception classes
 	 */
 	public Set<Class<?>> getExceptions() {
-		if (helper == null) {
-			helper = Context.getRegisteredComponents(AuditLogHelper.class).get(0);
-		}
-		return helper.getExceptions();
+		return getHelper().getExceptions();
 	}
 }

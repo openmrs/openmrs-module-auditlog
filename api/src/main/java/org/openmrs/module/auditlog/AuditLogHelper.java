@@ -270,15 +270,6 @@ public class AuditLogHelper implements GlobalPropertyListener {
 		}
 	}
 	
-	public void startAuditing(Set<Class<?>> clazzes) {
-		if (getAuditingStrategy().equals(AuditStrategy.NONE) || getAuditingStrategy().equals(AuditStrategy.ALL)) {
-			throw new APIException("Can't call AuditLogService.startAuditing when the Audit strategy is set to "
-			        + AuditStrategy.NONE + " or " + AuditStrategy.ALL);
-		}
-		
-		updateGlobalProperty(clazzes, true);
-	}
-	
 	public void stopAuditing(Set<Class<?>> clazzes) {
 		if (getAuditingStrategy().equals(AuditStrategy.NONE) || getAuditingStrategy().equals(AuditStrategy.ALL)) {
 			throw new APIException("Can't call AuditLogService.stopAuditing when the Audit strategy is set to "
@@ -288,7 +279,7 @@ public class AuditLogHelper implements GlobalPropertyListener {
 		updateGlobalProperty(clazzes, false);
 	}
 	
-	private void updateGlobalProperty(Set<Class<?>> clazzes, boolean startAuditing) {
+	public void updateGlobalProperty(Set<Class<?>> clazzes, boolean startAuditing) {
 		boolean isNoneExceptStrategy = getAuditingStrategy().equals(AuditStrategy.NONE_EXCEPT);
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION);

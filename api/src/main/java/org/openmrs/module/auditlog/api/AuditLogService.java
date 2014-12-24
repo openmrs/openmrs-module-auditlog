@@ -97,14 +97,6 @@ public interface AuditLogService extends OpenmrsService {
 	public <T> T getObjectByUuid(Class<T> clazz, String uuid);
 	
 	/**
-	 * Convenience method that marks a given object type as audited
-	 * 
-	 * @param clazz the type to start auditing
-	 */
-	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public void startAuditing(Class<?> clazz);
-	
-	/**
 	 * Convenience method that marks a given object type as un audited
 	 * 
 	 * @param clazz the type to stop auditing

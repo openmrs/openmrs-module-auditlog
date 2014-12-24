@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.hibernate.persister.collection.CollectionPersister;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -41,12 +39,9 @@ import org.openmrs.ConceptNumeric;
 import org.openmrs.DrugOrder;
 import org.openmrs.EncounterType;
 import org.openmrs.Location;
-import org.openmrs.LocationTag;
 import org.openmrs.OpenmrsObject;
 import org.openmrs.Order;
 import org.openmrs.PatientIdentifierType;
-import org.openmrs.Person;
-import org.openmrs.PersonName;
 import org.openmrs.api.APIException;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
@@ -70,7 +65,7 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	private static final String MODULE_TEST_DATA_AUDIT_LOGS = "moduleTestData-initialAuditLogs.xml";
 	
 	private static final String EXCEPTIONS_FOR_ALL_EXCEPT = "org.openmrs.Concept, org.openmrs.EncounterType";
-	
+
 	@Rule
 	public ExpectedException expectedException = ExpectedException.none();
 	
@@ -269,171 +264,6 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 		clazzes.clear();
 		clazzes.add(Concept.class);
 		assertEquals(3, auditLogService.getAuditLogs(clazzes, null, null, null, false, null, null).size());
-	}
-	
-	/**
-	 * @see {@link AuditLogService#startAuditing(java.util.Set)}
-	 */
-	@Test
-	@Verifies(value = "should update the exception class names global property if the strategy is none_except", method = "startAuditing(Set<Class<?>>)")
-	public void startAuditing_shouldUpdateTheExceptionClassNamesGlobalPropertyIfTheStrategyIsNone_except() throws Exception {
-		Set<Class<?>> exceptions = helper.getExceptions();
-		int originalCount = exceptions.size();
-		assertFalse(auditLogService.isAudited(ConceptDescription.class));
-		assertTrue(auditLogService.isAudited(Concept.class));
-		assertTrue(auditLogService.isAudited(ConceptNumeric.class));
-		assertTrue(auditLogService.isAudited(ConceptComplex.class));
-		assertTrue(auditLogService.isAudited(EncounterType.class));
-		assertTrue(auditLogService.isAudited(PatientIdentifierType.class));
-		
-		auditLogService.startAuditing(ConceptDescription.class);
-		
-		exceptions = helper.getExceptions();
-		assertEquals(++originalCount, exceptions.size());
-		//Should have added it and maintained the existing ones
-		assertTrue(auditLogService.isAudited(ConceptDescription.class));
-		assertTrue(auditLogService.isAudited(Concept.class));
-		assertTrue(auditLogService.isAudited(ConceptNumeric.class));
-		assertTrue(auditLogService.isAudited(ConceptComplex.class));
-		assertTrue(auditLogService.isAudited(EncounterType.class));
-		assertTrue(auditLogService.isAudited(PatientIdentifierType.class));
-	}
-	
-	/**
-	 * @see {@link AuditLogService#startAuditing(java.util.Set)}
-	 */
-	@Test
-	@Verifies(value = "should fail if the strategy is set to all", method = "startAuditing(Set<Class<?>>)")
-	public void startAuditing_shouldFailIfTheStrategyIsSetToAll() throws Exception {
-		setAuditConfiguration(AuditStrategy.ALL);
-		expectedException.expect(APIException.class);
-		expectedException.expectMessage("Can't call AuditLogService.startAuditing when the Audit strategy is set to "
-		        + AuditStrategy.NONE + " or " + AuditStrategy.ALL);
-		auditLogService.startAuditing(EncounterType.class);
-	}
-	
-	/**
-	 * @see {@link AuditLogService#startAuditing(java.util.Set)}
-	 */
-	@Test
-	@Verifies(value = "should fail if the strategy is set to none", method = "startAuditing(Set<Class<?>>)")
-	public void startAuditing_shouldFailIfTheStrategyIsSetToNone() throws Exception {
-		setAuditConfiguration(AuditStrategy.NONE);
-		expectedException.expect(APIException.class);
-		expectedException.expectMessage("Can't call AuditLogService.startAuditing when the Audit strategy is set to "
-		        + AuditStrategy.NONE + " or " + AuditStrategy.ALL);
-		auditLogService.startAuditing(EncounterType.class);
-	}
-	
-	/**
-	 * @see {@link AuditLogService#startAuditing(java.util.Set)}
-	 */
-	@Test
-	@Verifies(value = "should update the exception class names global property if the strategy is all_except", method = "startAuditing(Set<Class<?>>)")
-	public void startAuditing_shouldUpdateTheExceptionClassNamesGlobalPropertyIfTheStrategyIsAll_except() throws Exception {
-		setAuditConfiguration(AuditStrategy.ALL_EXCEPT, EXCEPTIONS_FOR_ALL_EXCEPT, false);
-		Set<Class<?>> exceptions = helper.getExceptions();
-		int originalCount = exceptions.size();
-		assertTrue(OpenmrsUtil.collectionContains(exceptions, EncounterType.class));
-		assertTrue(OpenmrsUtil.collectionContains(exceptions, Concept.class));
-		assertTrue(OpenmrsUtil.collectionContains(exceptions, ConceptNumeric.class));
-		assertTrue(OpenmrsUtil.collectionContains(exceptions, ConceptComplex.class));
-		assertEquals(false, auditLogService.isAudited(EncounterType.class));
-		assertEquals(false, auditLogService.isAudited(Concept.class));
-		assertEquals(false, auditLogService.isAudited(ConceptNumeric.class));
-		assertEquals(false, auditLogService.isAudited(ConceptComplex.class));
-		auditLogService.startAuditing(Concept.class);
-		exceptions = helper.getExceptions();
-		assertEquals(originalCount -= 3, exceptions.size());
-		//Should have removed it and maintained the existing ones
-		assertTrue(OpenmrsUtil.collectionContains(exceptions, EncounterType.class));
-		assertFalse(OpenmrsUtil.collectionContains(exceptions, Concept.class));
-		assertFalse(OpenmrsUtil.collectionContains(exceptions, ConceptNumeric.class));
-		assertFalse(OpenmrsUtil.collectionContains(exceptions, ConceptComplex.class));
-		assertEquals(false, auditLogService.isAudited(EncounterType.class));
-		assertEquals(true, auditLogService.isAudited(Concept.class));
-		assertEquals(true, auditLogService.isAudited(ConceptNumeric.class));
-		assertEquals(true, auditLogService.isAudited(ConceptComplex.class));
-	}
-	
-	/**
-	 * @see {@link AuditLogService#startAuditing(java.util.Set)}
-	 */
-	@Test
-	@Verifies(value = "should mark a class and its known subclasses as audited", method = "startAuditing(Set<Class<?>>)")
-	public void startAuditing_shouldMarkAClassAndItsKnownSubclassesAsAudited() throws Exception {
-		Set<Class<?>> exceptions = helper.getExceptions();
-		assertFalse(exceptions.contains(Order.class));
-		assertFalse(exceptions.contains(DrugOrder.class));
-		assertEquals(false, auditLogService.isAudited(Order.class));
-		assertEquals(false, auditLogService.isAudited(DrugOrder.class));
-		auditLogService.startAuditing(Order.class);
-		exceptions = helper.getExceptions();
-		assertTrue(exceptions.contains(Order.class));
-		assertTrue(exceptions.contains(DrugOrder.class));
-		assertEquals(true, auditLogService.isAudited(Order.class));
-		assertEquals(true, auditLogService.isAudited(DrugOrder.class));
-	}
-	
-	/**
-	 * @see {@link AuditLogService#startAuditing(java.util.Set)}
-	 */
-	@Test
-	@Verifies(value = "should mark a class and its known subclasses as audited for all_except strategy", method = "startAuditing(Set<Class<?>>)")
-	public void startAuditing_shouldMarkAClassAndItsKnownSubclassesAsAuditedForAll_exceptStrategy() throws Exception {
-		setAuditConfiguration(AuditStrategy.ALL_EXCEPT, EXCEPTIONS_FOR_ALL_EXCEPT, false);
-		Set<Class<?>> exceptions = helper.getExceptions();
-		assertTrue(exceptions.contains(Concept.class));
-		assertTrue(exceptions.contains(ConceptNumeric.class));
-		assertTrue(exceptions.contains(ConceptComplex.class));
-		assertEquals(false, auditLogService.isAudited(Concept.class));
-		assertEquals(false, auditLogService.isAudited(ConceptNumeric.class));
-		assertEquals(false, auditLogService.isAudited(ConceptComplex.class));
-		
-		auditLogService.startAuditing(Concept.class);
-		exceptions = helper.getExceptions();
-		assertFalse(exceptions.contains(Concept.class));
-		assertFalse(exceptions.contains(ConceptNumeric.class));
-		assertFalse(exceptions.contains(ConceptComplex.class));
-		assertEquals(true, auditLogService.isAudited(Concept.class));
-		assertEquals(true, auditLogService.isAudited(ConceptNumeric.class));
-		assertEquals(true, auditLogService.isAudited(ConceptComplex.class));
-	}
-	
-	/**
-	 * @verifies also mark association types as audited
-	 * @see AuditLogService#startAuditing(java.util.Set>)
-	 */
-	@Test
-	public void startAuditing_shouldAlsoMarkAssociationTypesAsAudited() throws Exception {
-		assertFalse(auditLogService.isAudited(Person.class));
-		assertFalse(auditLogService.isAudited(PersonName.class));
-		assertFalse(helper.isImplicitlyAudited(PersonName.class));
-		
-		auditLogService.startAuditing(Person.class);
-		
-		assertTrue(auditLogService.isAudited(Person.class));
-		assertFalse(auditLogService.isAudited(PersonName.class));
-		assertTrue(helper.isImplicitlyAudited(PersonName.class));
-	}
-	
-	/**
-	 * @verifies not mark association types for many to many collections as audited
-	 * @see AuditLogService#startAuditing(java.util.Set>)
-	 */
-	@Test
-	public void startAuditing_shouldNotMarkAssociationTypesForManyToManyCollectionsAsAudited() throws Exception {
-		assertFalse(auditLogService.isAudited(Location.class));
-		assertFalse(auditLogService.isAudited(LocationTag.class));
-		assertFalse(helper.isImplicitlyAudited(LocationTag.class));
-		CollectionPersister cp = AuditLogUtil.getCollectionPersister("tags", Location.class, null);
-		Assert.assertTrue(cp.isManyToMany());
-		
-		auditLogService.startAuditing(Location.class);
-		
-		assertTrue(auditLogService.isAudited(Location.class));
-		assertFalse(auditLogService.isAudited(LocationTag.class));
-		assertFalse(helper.isImplicitlyAudited(LocationTag.class));
 	}
 	
 	/**

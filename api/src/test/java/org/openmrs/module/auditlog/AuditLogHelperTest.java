@@ -36,8 +36,6 @@ import org.openmrs.PatientIdentifierType;
 import org.openmrs.Person;
 import org.openmrs.PersonName;
 import org.openmrs.api.APIException;
-import org.openmrs.api.context.Context;
-import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.strategy.AuditStrategy;
 import org.openmrs.module.auditlog.strategy.ExceptionBasedAuditStrategy;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
@@ -150,7 +148,7 @@ public class AuditLogHelperTest extends BaseAuditLogTest {
 	public void isImplicitlyAudited_shouldReturnFalseIfAClassIsAlreadyExplicitlyMarkedAlreadyAsAudited() throws Exception {
 		assertTrue(helper.isAudited(Concept.class));//sanity checks
 		assertTrue(helper.isImplicitlyAudited(ConceptName.class));
-		Context.getService(AuditLogService.class).startAuditing(ConceptName.class);
+		startAuditing(ConceptName.class);
 		assertTrue(helper.isAudited(Concept.class));
 		assertFalse(helper.isImplicitlyAudited(ConceptName.class));
 	}

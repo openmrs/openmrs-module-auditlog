@@ -371,7 +371,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldNotCreateAnAuditLogWhenTheTransactionIsRolledBack() throws Exception {
-		auditLogService.startAuditing(ConceptClass.class);
+		startAuditing(ConceptClass.class);
 		assertTrue(auditLogService.isAudited(ConceptClass.class));
 		ConceptService cs = Context.getConceptService();
 		
@@ -395,7 +395,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldCreateLogsForActionsSavedInNestedTransactions() throws Exception {
-		auditLogService.startAuditing(Location.class);
+		startAuditing(Location.class);
 		try {
 			assertEquals(true, auditLogService.isAudited(Location.class));
 			final String newLocationName = "Some strange new name";
@@ -430,7 +430,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldNotCreateLogsForActionsSavedInInnerTransactionIfRollback() throws Exception {
-		auditLogService.startAuditing(Location.class);
+		startAuditing(Location.class);
 		assertEquals(true, auditLogService.isAudited(Location.class));
 		assertEquals(true, auditLogService.isAudited(EncounterType.class));
 		final String newLocationName = "Some strange new name";
@@ -461,7 +461,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldNotCreateLogsForActionsSavedInOuterTransactionIfRollback() throws Exception {
-		auditLogService.startAuditing(Location.class);
+		startAuditing(Location.class);
 		assertTrue(auditLogService.isAudited(Location.class));
 		assertTrue(auditLogService.isAudited(EncounterType.class));
 		final String newLocationName = "Some strange new name";
@@ -493,7 +493,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 	@Test
 	@NotTransactional
 	public void shouldNotCreateLogsForActionsSavedInBothTransactionsIfBothRollbacked() throws Exception {
-		auditLogService.startAuditing(Location.class);
+		startAuditing(Location.class);
 		assertTrue(auditLogService.isAudited(Location.class));
 		assertTrue(auditLogService.isAudited(EncounterType.class));
 		final String newLocationName = "Some strange new name";

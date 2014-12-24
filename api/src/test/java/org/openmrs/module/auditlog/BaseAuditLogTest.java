@@ -91,7 +91,6 @@ public abstract class BaseAuditLogTest extends BaseModuleContextSensitiveTest {
 	
 	protected void startAuditing(Set<Class<?>> classes) throws Exception {
 		((ConfigurableAuditStrategy) auditLogService.getAuditingStrategy()).startAuditing(classes);
-		helper.startAuditing(classes);
 	}
 	
 	protected void stopAuditing(Class<?> clazz) throws Exception {
