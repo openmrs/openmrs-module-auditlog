@@ -92,5 +92,30 @@
 	</messages>
 	<!-- /Internationalization -->
 
+    <privilege>
+        <name>Get Audit Logs</name>
+        <description>Able to get audit logs</description>
+    </privilege>
+
+    <privilege>
+        <name>Get Audit Strategy</name>
+        <description>Able to get audit strategy</description>
+    </privilege>
+
+    <privilege>
+        <name>Get Items</name>
+        <description>Able to get any item from the database via the audit log</description>
+    </privilege>
+
+    <privilege>
+        <name>Check For Audited Items</name>
+        <description>Able to check if a given type is audited</description>
+    </privilege>
+
+    <privilege>
+        <name>Manage Audit Log</name>
+        <description>Able to get manage teh audit log</description>
+    </privilege>
+
 </module>
 

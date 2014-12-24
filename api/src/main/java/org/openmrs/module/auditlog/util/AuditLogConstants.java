@@ -42,9 +42,13 @@ public final class AuditLogConstants {
 	/* MODULE PRIVILEGES */
 	public static final String PRIV_GET_AUDITLOGS = "Get Audit Logs";
 	
-	public static final String PRIV_MANAGE_AUDITLOG = "Manage Audit Log";
+	public static final String PRIV_GET_AUDIT_STRATEGY = "Get Audit Strategy";
 	
 	public static final String PRIV_GET_ITEMS = "Get Items";
+	
+	public static final String CHECK_FOR_AUDITED_ITEMS = "Check For Audited Items";
+	
+	public static final String PRIV_MANAGE_AUDITLOG = "Manage Audit Log";
 	
 	public static final String MODULE_VERSION;
 	

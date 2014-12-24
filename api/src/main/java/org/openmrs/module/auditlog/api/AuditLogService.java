@@ -42,7 +42,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @should return true if the class is audited for all except strategy
 	 * @should return false if the class is not audited for all except strategy
 	 */
-	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
+	@Authorized(AuditLogConstants.CHECK_FOR_AUDITED_ITEMS)
 	public boolean isAudited(Class<?> clazz);
 	
 	/**
@@ -128,7 +128,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * 
 	 * @return the auditingStrategy
 	 */
-	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
+	@Authorized(AuditLogConstants.PRIV_GET_AUDIT_STRATEGY)
 	public AuditStrategy getAuditingStrategy();
 	
 	/**
