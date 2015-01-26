@@ -33,10 +33,13 @@ public class AllExceptAuditStrategy extends ExceptionBasedAuditStrategy {
 	
 	/**
 	 * @see ConfigurableAuditStrategy#stopAuditing(java.util.Set)
+	 * @should update the exception class names global property
+	 * @should mark a class and its known subclasses as un audited
+	 * @should not remove explicitly monitored association types when the parent is removed
 	 */
 	@Override
 	public void stopAuditing(Set<Class<?>> clazzes) {
-		throw new APIException("Fail");
+		getHelper().updateGlobalProperty(clazzes, false);
 	}
 	
 	/**

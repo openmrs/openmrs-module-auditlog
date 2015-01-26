@@ -16,9 +16,7 @@ package org.openmrs.module.auditlog.api.impl;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.openmrs.api.APIException;
@@ -117,24 +115,6 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 		}
 		
 		return dao.getObjectByUuid(clazz, uuid);
-	}
-	
-	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#stopAuditing(java.lang.Class)
-	 */
-	@Override
-	public void stopAuditing(Class<?> clazz) {
-		Set<Class<?>> classes = new HashSet<Class<?>>();
-		classes.add(clazz);
-		stopAuditing(classes);
-	}
-	
-	/**
-	 * @see org.openmrs.module.auditlog.api.AuditLogService#stopAuditing(java.util.Set)
-	 */
-	@Override
-	public void stopAuditing(Set<Class<?>> clazzes) {
-		helper.stopAuditing(clazzes);
 	}
 	
 	/**

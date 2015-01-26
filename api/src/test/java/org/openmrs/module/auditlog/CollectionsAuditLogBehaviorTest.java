@@ -312,7 +312,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(true, auditLogService.isAudited(Person.class));
 		assertEquals(true, auditLogService.isAudited(PersonAddress.class));
 		
-		auditLogService.stopAuditing(PersonAddress.class);
+		stopAuditing(PersonAddress.class);
 		assertEquals(false, auditLogService.isAudited(PersonAddress.class));
 		PersonService ps = Context.getPersonService();
 		Person person = ps.getPerson(2);

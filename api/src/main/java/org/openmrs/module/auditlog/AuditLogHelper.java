@@ -280,7 +280,6 @@ public class AuditLogHelper implements GlobalPropertyListener {
 	}
 	
 	public void updateGlobalProperty(Set<Class<?>> clazzes, boolean startAuditing) {
-		boolean isNoneExceptStrategy = getAuditingStrategy().equals(AuditStrategy.NONE_EXCEPT);
 		AdministrationService as = Context.getAdministrationService();
 		GlobalProperty gp = as.getGlobalPropertyObject(ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION);
 		if (gp == null) {
@@ -288,7 +287,7 @@ public class AuditLogHelper implements GlobalPropertyListener {
 			gp = new GlobalProperty(ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION, null, description);
 		}
 		
-		if (isNoneExceptStrategy) {
+		if (getAuditingStrategy().equals(AuditStrategy.NONE_EXCEPT)) {
 			for (Class<?> clazz : clazzes) {
 				if (startAuditing) {
 					getExceptions().add(clazz);
@@ -301,7 +300,7 @@ public class AuditLogHelper implements GlobalPropertyListener {
 					}
 				}
 			}
-		} else {
+		} else if (getAuditingStrategy().equals(AuditStrategy.ALL_EXCEPT)) {
 			for (Class<?> clazz : clazzes) {
 				if (startAuditing) {
 					getExceptions().remove(clazz);
@@ -313,6 +312,8 @@ public class AuditLogHelper implements GlobalPropertyListener {
 					getExceptions().add(clazz);
 				}
 			}
+		} else {
+			throw new APIException("Un supported audit strategy type:" + getAuditingStrategy().getClass());
 		}
 		
 		gp.setPropertyValue(StringUtils.join(AuditLogUtil.getAsListOfClassnames(getExceptions()), ","));

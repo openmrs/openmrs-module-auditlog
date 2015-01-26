@@ -16,10 +16,8 @@ package org.openmrs.module.auditlog.api;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 import org.openmrs.Concept;
-import org.openmrs.GlobalProperty;
 import org.openmrs.annotation.Authorized;
 import org.openmrs.api.OpenmrsService;
 import org.openmrs.module.auditlog.AuditLog;
@@ -95,31 +93,6 @@ public interface AuditLogService extends OpenmrsService {
 	 */
 	@Authorized(AuditLogConstants.PRIV_GET_ITEMS)
 	public <T> T getObjectByUuid(Class<T> clazz, String uuid);
-	
-	/**
-	 * Convenience method that marks a given object type as un audited
-	 * 
-	 * @param clazz the type to stop auditing
-	 */
-	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public void stopAuditing(Class<?> clazz);
-	
-	/**
-	 * Marks the specified classes as not audited by removing their class names from the
-	 * {@link GlobalProperty}
-	 * {@link org.openmrs.module.auditlog.strategy.ExceptionBasedAuditStrategy#GLOBAL_PROPERTY_EXCEPTION}
-	 * 
-	 * @param clazzes the class to stop auditing
-	 * @should update the exception class names global property if the strategy is none_except
-	 * @should fail if the strategy is set to all
-	 * @should fail if the strategy is set to none
-	 * @should update the exception class names global property if the strategy is all_except
-	 * @should mark a class and its known subclasses as un audited
-	 * @should mark a class and its known subclasses as un audited for all_except strategy
-	 * @should remove association types from audited classes
-	 */
-	@Authorized(AuditLogConstants.PRIV_MANAGE_AUDITLOG)
-	public void stopAuditing(Set<Class<?>> clazzes);
 	
 	/**
 	 * Gets the {@link org.openmrs.module.auditlog.strategy.AuditStrategy} which is the value of the

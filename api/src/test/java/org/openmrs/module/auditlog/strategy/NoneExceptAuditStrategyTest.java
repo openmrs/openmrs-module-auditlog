@@ -17,6 +17,7 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.hibernate.persister.collection.CollectionPersister;
@@ -24,6 +25,7 @@ import org.junit.Test;
 import org.openmrs.Concept;
 import org.openmrs.ConceptComplex;
 import org.openmrs.ConceptDescription;
+import org.openmrs.ConceptName;
 import org.openmrs.ConceptNumeric;
 import org.openmrs.DrugOrder;
 import org.openmrs.EncounterType;
@@ -35,6 +37,7 @@ import org.openmrs.Person;
 import org.openmrs.PersonName;
 import org.openmrs.module.auditlog.BaseAuditLogTest;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
+import org.openmrs.util.OpenmrsUtil;
 
 public class NoneExceptAuditStrategyTest extends BaseAuditLogTest {
 	
@@ -113,5 +116,88 @@ public class NoneExceptAuditStrategyTest extends BaseAuditLogTest {
 		assertTrue(auditLogService.isAudited(Location.class));
 		assertFalse(auditLogService.isAudited(LocationTag.class));
 		assertFalse(helper.isImplicitlyAudited(LocationTag.class));
+	}
+	
+	/**
+	 * @verifies update the exception class names global property
+	 * @see NoneExceptAuditStrategy#stopAuditing(java.util.Set>)
+	 */
+	@Test
+	public void stopAuditing_shouldUpdateTheExceptionClassNamesGlobalProperty() throws Exception {
+		Set<Class<?>> exceptions = helper.getExceptions();
+		int originalCount = exceptions.size();
+		assertTrue(OpenmrsUtil.collectionContains(exceptions, Concept.class));
+		assertTrue(auditLogService.isAudited(Concept.class));
+		assertTrue(auditLogService.isAudited(ConceptNumeric.class));
+		assertTrue(auditLogService.isAudited(ConceptComplex.class));
+		assertTrue(auditLogService.isAudited(EncounterType.class));
+		assertTrue(auditLogService.isAudited(PatientIdentifierType.class));
+		stopAuditing(Concept.class);
+		exceptions = helper.getExceptions();
+		assertEquals(originalCount -= 3, exceptions.size());
+		assertFalse(OpenmrsUtil.collectionContains(exceptions, Concept.class));
+		//Should have added it and maintained the existing ones
+		assertFalse(auditLogService.isAudited(Concept.class));
+		assertFalse(auditLogService.isAudited(ConceptNumeric.class));
+		assertFalse(auditLogService.isAudited(ConceptComplex.class));
+		assertTrue(auditLogService.isAudited(EncounterType.class));
+		assertTrue(auditLogService.isAudited(PatientIdentifierType.class));
+	}
+	
+	/**
+	 * @verifies mark a class and its known subclasses as un audited
+	 * @see NoneExceptAuditStrategy#stopAuditing(java.util.Set>)
+	 */
+	@Test
+	public void stopAuditing_shouldMarkAClassAndItsKnownSubclassesAsUnAudited() throws Exception {
+		Set<Class<?>> exceptions = helper.getExceptions();
+		assertTrue(exceptions.contains(Concept.class));
+		assertTrue(exceptions.contains(ConceptNumeric.class));
+		assertTrue(exceptions.contains(ConceptComplex.class));
+		assertEquals(true, auditLogService.isAudited(Concept.class));
+		assertEquals(true, auditLogService.isAudited(ConceptNumeric.class));
+		assertEquals(true, auditLogService.isAudited(ConceptComplex.class));
+		Set<Class<?>> classes = new HashSet<Class<?>>();
+		classes.add(Concept.class);
+		stopAuditing(classes);
+		assertFalse(exceptions.contains(Concept.class));
+		assertFalse(exceptions.contains(ConceptNumeric.class));
+		assertFalse(exceptions.contains(ConceptComplex.class));
+		assertEquals(false, auditLogService.isAudited(Concept.class));
+		assertEquals(false, auditLogService.isAudited(ConceptNumeric.class));
+		assertEquals(false, auditLogService.isAudited(ConceptComplex.class));
+	}
+	
+	/**
+	 * @verifies remove association types from audited classes
+	 * @see NoneExceptAuditStrategy#stopAuditing(java.util.Set>)
+	 */
+	@Test
+	public void stopAuditing_shouldRemoveAssociationTypesFromAuditedClasses() throws Exception {
+		assertTrue(auditLogService.isAudited(Concept.class));
+		assertFalse(auditLogService.isAudited(ConceptName.class));
+		assertTrue(helper.isImplicitlyAudited(ConceptName.class));
+		stopAuditing(Concept.class);
+		assertFalse(auditLogService.isAudited(Concept.class));
+		assertFalse(auditLogService.isAudited(ConceptName.class));
+		assertFalse(helper.isImplicitlyAudited(ConceptName.class));
+	}
+	
+	/**
+	 * @verifies not remove explicitly monitored association types when the parent is removed
+	 * @see NoneExceptAuditStrategy#stopAuditing(java.util.Set>)
+	 */
+	@Test
+	public void stopAuditing_shouldNotRemoveExplicitlyMonitoredAssociationTypesWhenTheParentIsRemoved() throws Exception {
+		assertTrue(auditLogService.isAudited(Concept.class));
+		assertFalse(auditLogService.isAudited(ConceptName.class));
+		assertTrue(helper.isImplicitlyAudited(ConceptName.class));
+		startAuditing(ConceptName.class);
+		assertTrue(auditLogService.isAudited(ConceptName.class));
+		assertFalse(helper.isImplicitlyAudited(ConceptName.class));
+		stopAuditing(Concept.class);
+		assertFalse(auditLogService.isAudited(Concept.class));
+		assertTrue(auditLogService.isAudited(ConceptName.class));
+		assertFalse(helper.isImplicitlyAudited(ConceptName.class));
 	}
 }

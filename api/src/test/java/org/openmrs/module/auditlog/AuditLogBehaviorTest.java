@@ -422,7 +422,7 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 			assertEquals(UPDATED, encounterTypeLogs.get(0).getAction());
 		}
 		finally {
-			auditLogService.stopAuditing(Location.class);
+			stopAuditing(Location.class);
 		}
 		assertEquals(false, auditLogService.isAudited(Location.class));
 	}

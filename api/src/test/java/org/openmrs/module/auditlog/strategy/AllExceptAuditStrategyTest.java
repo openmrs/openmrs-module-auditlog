@@ -17,16 +17,19 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.hibernate.persister.collection.CollectionPersister;
 import org.junit.Test;
 import org.openmrs.Concept;
 import org.openmrs.ConceptComplex;
+import org.openmrs.ConceptName;
 import org.openmrs.ConceptNumeric;
 import org.openmrs.EncounterType;
 import org.openmrs.Location;
 import org.openmrs.LocationTag;
+import org.openmrs.PatientIdentifierType;
 import org.openmrs.Person;
 import org.openmrs.PersonName;
 import org.openmrs.module.auditlog.BaseAuditLogTest;
@@ -124,5 +127,69 @@ public class AllExceptAuditStrategyTest extends BaseAuditLogTest {
 		assertTrue(auditLogService.isAudited(Location.class));
 		assertFalse(auditLogService.isAudited(LocationTag.class));
 		assertFalse(helper.isImplicitlyAudited(LocationTag.class));
+	}
+	
+	/**
+	 * @verifies update the exception class names global property
+	 * @see AllExceptAuditStrategy#stopAuditing(java.util.Set>)
+	 */
+	@Test
+	public void stopAuditing_shouldUpdateTheExceptionClassNamesGlobalProperty() throws Exception {
+		setAuditConfiguration(AuditStrategy.ALL_EXCEPT, null, false);
+		Set<Class<?>> exceptions = helper.getExceptions();
+		int originalCount = exceptions.size();
+		assertFalse(OpenmrsUtil.collectionContains(exceptions, Concept.class));
+		assertTrue(auditLogService.isAudited(Concept.class));
+		assertTrue(auditLogService.isAudited(EncounterType.class));
+		assertTrue(auditLogService.isAudited(PatientIdentifierType.class));
+		stopAuditing(Concept.class);
+		exceptions = helper.getExceptions();
+		assertTrue(OpenmrsUtil.collectionContains(exceptions, Concept.class));
+		assertEquals(originalCount += 3, exceptions.size());
+		//Should have added it and maintained the existing ones
+		assertFalse(auditLogService.isAudited(Concept.class));
+		assertTrue(auditLogService.isAudited(EncounterType.class));
+		assertTrue(auditLogService.isAudited(PatientIdentifierType.class));
+	}
+	
+	/**
+	 * @verifies mark a class and its known subclasses as un audited
+	 * @see AllExceptAuditStrategy#stopAuditing(java.util.Set>)
+	 */
+	@Test
+	public void stopAuditing_shouldMarkAClassAndItsKnownSubclassesAsUnAudited() throws Exception {
+		setAuditConfiguration(AuditStrategy.ALL_EXCEPT, null, false);
+		Set<Class<?>> exceptions = helper.getExceptions();
+		assertFalse(exceptions.contains(Concept.class));
+		assertFalse(exceptions.contains(ConceptNumeric.class));
+		assertFalse(exceptions.contains(ConceptComplex.class));
+		assertEquals(true, auditLogService.isAudited(Concept.class));
+		assertEquals(true, auditLogService.isAudited(ConceptNumeric.class));
+		assertEquals(true, auditLogService.isAudited(ConceptComplex.class));
+		Set<Class<?>> classes = new HashSet<Class<?>>();
+		classes.add(Concept.class);
+		stopAuditing(classes);
+		assertTrue(exceptions.contains(Concept.class));
+		//assertTrue(exceptions.contains(ConceptNumeric.class));
+		//assertTrue(exceptions.contains(ConceptComplex.class));
+		assertEquals(false, auditLogService.isAudited(Concept.class));
+		assertEquals(false, auditLogService.isAudited(ConceptNumeric.class));
+		assertEquals(false, auditLogService.isAudited(ConceptComplex.class));
+	}
+	
+	/**
+	 * @verifies not remove explicitly monitored association types when the parent is removed
+	 * @see AllExceptAuditStrategy#stopAuditing(java.util.Set>)
+	 */
+	@Test
+	public void stopAuditing_shouldNotRemoveExplicitlyMonitoredAssociationTypesWhenTheParentIsRemoved() throws Exception {
+		setAuditConfiguration(AuditStrategy.ALL_EXCEPT, "org.openmrs.ConceptName", false);
+		assertTrue(auditLogService.isAudited(Concept.class));
+		assertFalse(auditLogService.isAudited(ConceptName.class));
+		assertTrue(helper.isImplicitlyAudited(ConceptName.class));
+		stopAuditing(Concept.class);
+		assertFalse(auditLogService.isAudited(Concept.class));
+		assertFalse(auditLogService.isAudited(ConceptName.class));
+		assertFalse(helper.isImplicitlyAudited(ConceptName.class));
 	}
 }
