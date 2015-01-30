@@ -13,13 +13,30 @@
  */
 package org.openmrs.module.auditlog.strategy;
 
+import org.openmrs.api.context.Context;
+import org.openmrs.module.auditlog.AuditLogHelper;
+
 public final class AllAuditStrategy implements AuditStrategy {
+	
+	private AuditLogHelper helper = null;
+	
+	/**
+	 * Gets the AuditLogHelper instance
+	 * 
+	 * @return
+	 */
+	public AuditLogHelper getHelper() {
+		if (helper == null) {
+			helper = Context.getRegisteredComponents(AuditLogHelper.class).get(0);
+		}
+		return helper;
+	}
 	
 	/**
 	 * @see AuditStrategy#isAudited(Class)
 	 */
 	@Override
 	public boolean isAudited(Class<?> clazz) {
-		return true;
+		return getHelper().isAudited(clazz);
 	}
 }

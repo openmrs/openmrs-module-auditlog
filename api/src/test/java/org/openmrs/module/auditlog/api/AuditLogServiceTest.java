@@ -298,13 +298,13 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 		assertFalse(auditLogService.isAudited(Cohort.class));
 		AuditStrategy newStrategy = AuditStrategy.ALL_EXCEPT;
 		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_AUDITING_STRATEGY, newStrategy.getClass().getName());
+		assertEquals(newStrategy, auditLogService.getAuditingStrategy());
 		assertTrue(auditLogService.isAudited(Cohort.class));
 		assertTrue(auditLogService.isAudited(Concept.class));
 		assertTrue(auditLogService.isAudited(ConceptNumeric.class));
 		assertTrue(auditLogService.isAudited(ConceptComplex.class));
 		assertTrue(auditLogService.isAudited(EncounterType.class));
 		assertTrue(auditLogService.isAudited(PatientIdentifierType.class));
-		assertEquals(newStrategy, auditLogService.getAuditingStrategy());
 	}
 	
 	/**

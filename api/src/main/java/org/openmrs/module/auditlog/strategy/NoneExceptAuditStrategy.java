@@ -15,8 +15,6 @@ package org.openmrs.module.auditlog.strategy;
 
 import java.util.Set;
 
-import org.openmrs.api.APIException;
-
 public class NoneExceptAuditStrategy extends ExceptionBasedAuditStrategy {
 	
 	/**
@@ -48,6 +46,6 @@ public class NoneExceptAuditStrategy extends ExceptionBasedAuditStrategy {
 	 */
 	@Override
 	public boolean isAudited(Class<?> clazz) {
-		throw new APIException("Fail");
+		return getHelper().isAudited(clazz);
 	}
 }
