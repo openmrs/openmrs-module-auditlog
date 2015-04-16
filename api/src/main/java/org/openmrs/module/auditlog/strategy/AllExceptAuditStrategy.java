@@ -42,9 +42,11 @@ public class AllExceptAuditStrategy extends ExceptionBasedAuditStrategy {
 	
 	/**
 	 * @see ConfigurableAuditStrategy#isAudited(Class)
+	 * @should return true if the class is audited for all except strategy
+	 * @should return false if the class is not audited for all except strategy
 	 */
 	@Override
 	public boolean isAudited(Class<?> clazz) {
-		return getHelper().isAudited(clazz);
+		return !getExceptions().contains(clazz);
 	}
 }

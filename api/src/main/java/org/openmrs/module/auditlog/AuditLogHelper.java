@@ -338,21 +338,10 @@ public class AuditLogHelper implements GlobalPropertyListener {
 	 * @return true if it is audited otherwise false
 	 */
 	private boolean isAuditedInternal(Class<?> clazz) {
-		if (CORE_EXCEPTIONS.contains(clazz)) {
+		if (CORE_EXCEPTIONS.contains(clazz) || getAuditingStrategy() == null) {
 			return false;
 		}
-		if (getAuditingStrategy() == null || getAuditingStrategy().equals(AuditStrategy.NONE)) {
-			return false;
-		}
-		if (getAuditingStrategy().equals(AuditStrategy.ALL)) {
-			return true;
-		}
-		
-		if (getAuditingStrategy().equals(AuditStrategy.NONE_EXCEPT)) {
-			return getExceptions().contains(clazz);
-		}
-		//Strategy is ALL_EXCEPT or NONE_EXCEPT
-		return !getExceptions().contains(clazz);
+		return getAuditingStrategy().isAudited(clazz);
 	}
 	
 	/**

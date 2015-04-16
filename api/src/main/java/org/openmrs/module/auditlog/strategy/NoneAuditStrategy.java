@@ -17,6 +17,7 @@ public final class NoneAuditStrategy implements AuditStrategy {
 	
 	/**
 	 * @see AuditStrategy#isAudited(Class)
+	 * @should always return false
 	 */
 	@Override
 	public final boolean isAudited(Class<?> clazz) {

@@ -28,16 +28,12 @@ import org.apache.commons.lang.ArrayUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.openmrs.Cohort;
 import org.openmrs.Concept;
-import org.openmrs.ConceptComplex;
 import org.openmrs.ConceptDescription;
 import org.openmrs.ConceptName;
 import org.openmrs.ConceptNumeric;
-import org.openmrs.EncounterType;
 import org.openmrs.Location;
 import org.openmrs.OpenmrsObject;
-import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.APIException;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
@@ -45,9 +41,6 @@ import org.openmrs.module.auditlog.AuditLog.Action;
 import org.openmrs.module.auditlog.BaseAuditLogTest;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
 import org.openmrs.module.auditlog.strategy.AuditStrategy;
-import org.openmrs.module.auditlog.strategy.ExceptionBasedAuditStrategy;
-import org.openmrs.module.auditlog.util.AuditLogConstants;
-import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.test.Verifies;
 import org.openmrs.util.OpenmrsUtil;
 
@@ -268,62 +261,6 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	}
 	
 	/**
-	 * @see {@link AuditLogService#isAudited(Class)}
-	 */
-	@Test
-	@Verifies(value = "should return true if the class is audited for none except strategy", method = "isAudited(Class<*>)")
-	public void isAudited_shouldReturnTrueIfTheClassIsAuditedForNoneExceptStrategy() throws Exception {
-		assertTrue(auditLogService.isAudited(Concept.class));
-		assertTrue(auditLogService.isAudited(ConceptNumeric.class));
-		assertTrue(auditLogService.isAudited(ConceptComplex.class));
-		assertTrue(auditLogService.isAudited(EncounterType.class));
-		assertTrue(auditLogService.isAudited(PatientIdentifierType.class));
-	}
-	
-	/**
-	 * @see {@link AuditLogService#isAudited(Class)}
-	 */
-	@Test
-	@Verifies(value = "should return false if the class is not audited for none except strategy", method = "isAudited(Class<*>)")
-	public void isAudited_shouldReturnFalseIfTheClassIsNotAuditedForNoneExceptStrategy() throws Exception {
-		assertFalse(auditLogService.isAudited(Cohort.class));
-	}
-	
-	/**
-	 * @see {@link AuditLogService#isAudited(Class)}
-	 */
-	@Test
-	@Verifies(value = "should return true if the class is audited for all except strategy", method = "isAudited(Class<*>)")
-	public void isAudited_shouldReturnTrueIfTheClassIsAuditedForAllExceptStrategy() throws Exception {
-		assertFalse(auditLogService.isAudited(Cohort.class));
-		AuditStrategy newStrategy = AuditStrategy.ALL_EXCEPT;
-		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_AUDITING_STRATEGY, newStrategy.getClass().getName());
-		assertEquals(newStrategy, auditLogService.getAuditingStrategy());
-		assertTrue(auditLogService.isAudited(Cohort.class));
-		assertTrue(auditLogService.isAudited(Concept.class));
-		assertTrue(auditLogService.isAudited(ConceptNumeric.class));
-		assertTrue(auditLogService.isAudited(ConceptComplex.class));
-		assertTrue(auditLogService.isAudited(EncounterType.class));
-		assertTrue(auditLogService.isAudited(PatientIdentifierType.class));
-	}
-	
-	/**
-	 * @see {@link AuditLogService#isAudited(Class)}
-	 */
-	@Test
-	@Verifies(value = "should return false if the class is not audited for all except strategy", method = "isAudited(Class<*>)")
-	public void isAudited_shouldReturnFalseIfTheClassIsNotAuditedForAllExceptStrategy() throws Exception {
-		assertFalse(auditLogService.isAudited(Cohort.class));
-		AuditStrategy newStrategy = AuditStrategy.ALL_EXCEPT;
-		AuditLogUtil.setGlobalProperty(AuditLogConstants.GP_AUDITING_STRATEGY, newStrategy.getClass().getName());
-		AuditLogUtil.setGlobalProperty(ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION, EncounterType.class.getName()
-		        + "," + Location.class.getName());
-		assertEquals(newStrategy, auditLogService.getAuditingStrategy());
-		assertFalse(auditLogService.isAudited(EncounterType.class));
-		assertFalse(auditLogService.isAudited(Location.class));
-	}
-	
-	/**
 	 * @see {@link AuditLogService#getAuditLogs(java.io.Serializable, Class, java.util.List, java.util.Date, java.util.Date, boolean)}
 	 */
 	@Test
@@ -365,5 +302,15 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 		Object obj = auditLogService.getObjectByUuid(ConceptNumeric.class, "c607c80f-1ea9-4da3-bb88-6276ce8868dd");
 		assertNotNull(obj);
 		assertEquals(2, auditLogService.getAuditLogs(obj, null, null, null, false).size());
+	}
+	
+	/**
+	 * @verifies return false for core exceptions
+	 * @see AuditLogService#isAudited(Class)
+	 */
+	@Test
+	public void isAudited_shouldReturnFalseForCoreExceptions() throws Exception {
+		startAuditing(AuditLog.class);
+		assertEquals(false, auditLogService.isAudited(AuditLog.class));
 	}
 }

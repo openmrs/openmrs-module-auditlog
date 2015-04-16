@@ -22,6 +22,7 @@ import java.util.Set;
 
 import org.hibernate.persister.collection.CollectionPersister;
 import org.junit.Test;
+import org.openmrs.Cohort;
 import org.openmrs.Concept;
 import org.openmrs.ConceptComplex;
 import org.openmrs.ConceptDescription;
@@ -199,5 +200,27 @@ public class NoneExceptAuditStrategyTest extends BaseAuditLogTest {
 		assertFalse(auditLogService.isAudited(Concept.class));
 		assertTrue(auditLogService.isAudited(ConceptName.class));
 		assertFalse(helper.isImplicitlyAudited(ConceptName.class));
+	}
+	
+	/**
+	 * @verifies return true if the class is audited for none except strategy
+	 * @see NoneExceptAuditStrategy#isAudited(Class)
+	 */
+	@Test
+	public void isAudited_shouldReturnTrueIfTheClassIsAuditedForNoneExceptStrategy() throws Exception {
+		assertTrue(auditLogService.isAudited(Concept.class));
+		assertTrue(auditLogService.isAudited(ConceptNumeric.class));
+		assertTrue(auditLogService.isAudited(ConceptComplex.class));
+		assertTrue(auditLogService.isAudited(EncounterType.class));
+		assertTrue(auditLogService.isAudited(PatientIdentifierType.class));
+	}
+	
+	/**
+	 * @verifies return false if the class is not audited for none except strategy
+	 * @see NoneExceptAuditStrategy#isAudited(Class)
+	 */
+	@Test
+	public void isAudited_shouldReturnFalseIfTheClassIsNotAuditedForNoneExceptStrategy() throws Exception {
+		assertFalse(auditLogService.isAudited(Cohort.class));
 	}
 }

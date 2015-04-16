@@ -35,10 +35,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * 
 	 * @param clazz the class to check
 	 * @return true if the object is an audited one otherwise false
-	 * @should return true if the class is audited for none except strategy
-	 * @should return false if the class is not audited for none except strategy
-	 * @should return true if the class is audited for all except strategy
-	 * @should return false if the class is not audited for all except strategy
+     * @should return false for core exceptions
 	 */
 	@Authorized(AuditLogConstants.CHECK_FOR_AUDITED_ITEMS)
 	public boolean isAudited(Class<?> clazz);

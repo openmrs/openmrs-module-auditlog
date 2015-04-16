@@ -34,9 +34,10 @@ public final class AllAuditStrategy implements AuditStrategy {
 	
 	/**
 	 * @see AuditStrategy#isAudited(Class)
+	 * @should always return true
 	 */
 	@Override
 	public boolean isAudited(Class<?> clazz) {
-		return getHelper().isAudited(clazz);
+		return true;
 	}
 }
