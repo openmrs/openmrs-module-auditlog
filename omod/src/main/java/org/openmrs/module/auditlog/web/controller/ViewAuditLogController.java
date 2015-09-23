@@ -24,13 +24,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
  * This class configured as controller using annotation and mapped with the URL of
- * 'module/auditlog/viewAuditLog.form'.
+ * 'module/auditlog/viewAuditLog.htm'.
  */
 @Controller
-public class ViewAuditLogFormController {
+public class ViewAuditLogController {
 	
 	/** Logger for this class and subclasses */
-	private static final Log log = LogFactory.getLog(ViewAuditLogFormController.class);
+	private static final Log log = LogFactory.getLog(ViewAuditLogController.class);
 	
 	/** Success form view name */
 	private final String VIEW_AUDIT_LOG_FORM = "module/" + AuditLogConstants.MODULE_ID + "/viewAuditLog";
