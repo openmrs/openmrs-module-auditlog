@@ -45,24 +45,6 @@
 	
 	<!-- Global properties -->
 	<globalProperty>
-		<property>${project.parent.artifactId}.auditedClasses</property>
-		<defaultValue></defaultValue>
-		<description>
-			Specifies the class names of objects for which to maintain an audit log, this property is only used when the
-			auditing strategy is set to NONE_EXCEPT
-		</description>
-	</globalProperty>
-	
-	<globalProperty>
-		<property>${project.parent.artifactId}.unAuditedClasses</property>
-		<defaultValue></defaultValue>
-		<description>
-			Specifies the class names of objects for which not to maintain an audit log, this property is only used when the
-			auditing strategy is set to ALL_EXCEPT
-		</description>
-	</globalProperty>
-	
-	<globalProperty>
 		<property>${project.parent.artifactId}.auditingStrategy</property>
 		<defaultValue>NONE</defaultValue>
 		<description>
@@ -76,6 +58,15 @@
         <defaultValue>false</defaultValue>
         <description>
             Specifies whether the last states of deleted items should be stored
+        </description>
+    </globalProperty>
+
+    <globalProperty>
+        <property>${project.parent.artifactId}.exceptions</property>
+        <description>
+            Specifies the class names of objects for which to maintain an audit log when the auditing strategy is set
+            to NONE_EXCEPT otherwise specifies the class names of objects for which not to maintain an audit log,
+            when the auditing strategy is set to ALL_EXCEPT
         </description>
     </globalProperty>
 	

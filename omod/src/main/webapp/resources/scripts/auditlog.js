@@ -36,7 +36,7 @@ function auditlog_initTable(){
         modal: true,
         beforeClose: function(event, ui){
             //reset
-            $j("#"+auditlog_moduleId+"-changes-objectId").html("");
+            $j("#"+auditlog_moduleId+"-changes-identifier").html("");
             $j("#"+auditlog_moduleId+"-changes-summary").html("");
             $j("#"+auditlog_moduleId+"-changes-objectUuid").html("");
             $j("#"+auditlog_moduleId+"-changes-openmrsVersion").html("");
@@ -58,7 +58,7 @@ function auditlog_initTable(){
         modal: true,
         beforeClose: function(event, ui){
             //reset
-            $j("#"+auditlog_moduleId+"-child-changes-objectId").html("");
+            $j("#"+auditlog_moduleId+"-child-changes-identifier").html("");
             $j("#"+auditlog_moduleId+"-child-changes-summary").html("");
             $j("#"+auditlog_moduleId+"-child-changes-objectUuid").html("");
             $j("#"+auditlog_moduleId+"-child-changes-openmrsVersion").html("");
@@ -91,23 +91,20 @@ function displayLogDetails(logDetails, isChildLog){
     var idPart = (isChildLog) ? "-child" : "";
     $j("#"+auditlog_moduleId+idPart+"-changes-table").hide();
     $j("#"+auditlog_moduleId+idPart+"-delete-otherData-table").hide();
-    if(logDetails){
-        if(logDetails.objectExists == true){
-            $j("#"+auditlog_moduleId+idPart+"-changes-summary").html(logDetails.displayString);
+    if(logDetails) {
+        if (logDetails.objectExists == true) {
+            $j("#" + auditlog_moduleId + idPart + "-changes-summary").html(logDetails.displayString);
         }
-        else if(logDetails.action != 'DELETED'){
-            $j("#"+auditlog_moduleId+idPart+"-changes-summary").html("<span class='auditlog_deleted'>"+auditlog_messages.objectDoesnotExit+"</span>");
+        else if (logDetails.action != 'DELETED') {
+            $j("#" + auditlog_moduleId + idPart + "-changes-summary").html("<span class='auditlog_deleted'>" + auditlog_messages.objectDoesnotExit + "</span>");
         }
 
-        if(logDetails.objectId)
-            $j("#"+auditlog_moduleId+idPart+"-changes-objectId").html(logDetails.objectId);
-
-        if(logDetails.objectUuid)
-            $j("#"+auditlog_moduleId+idPart+"-changes-objectUuid").html(logDetails.objectUuid);
-
-        if(logDetails.openmrsVersion)
-            $j("#"+auditlog_moduleId+idPart+"-changes-openmrsVersion").html(logDetails.openmrsVersion);
-
+        if (logDetails.identifier) {
+            $j("#" + auditlog_moduleId + idPart + "-changes-identifier").html(logDetails.identifier);
+        }
+        if (logDetails.openmrsVersion) {
+            $j("#" + auditlog_moduleId + idPart + "-changes-openmrsVersion").html(logDetails.openmrsVersion);
+        }
         if(logDetails.changes){
             var auditLogChanges = logDetails.changes;
             var isUpdate = logDetails.action == 'UPDATED' ? true : false;

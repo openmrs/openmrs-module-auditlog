@@ -17,6 +17,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Criteria;
@@ -122,7 +123,25 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getObjectById(Class<T> clazz, Serializable id) {
-		return (T) sessionFactory.getCurrentSession().get(clazz, id);
+		if (id == null) {
+			return null;
+		}
+		Serializable serializable = id;
+		String str = id.toString();
+		if (NumberUtils.isDigits(str)) {
+			try {
+				serializable = Integer.valueOf(str);
+			}
+			catch (NumberFormatException nfe1) {
+				try {
+					serializable = Long.valueOf(str);
+				}
+				catch (NumberFormatException nfe2) {
+					//ignore
+				}
+			}
+		}
+		return (T) sessionFactory.getCurrentSession().get(clazz, serializable);
 	}
 	
 	/**

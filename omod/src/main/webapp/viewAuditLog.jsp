@@ -66,12 +66,8 @@
 <br />
 <table id="${moduleId}-details" width="100%" cellpadding="0" cellspacing="5">
     <tr>
-        <th valign="top" class="${moduleId}_align_text_left" style="width:15%"><spring:message code="${moduleId}.uuid" /></th>
-        <td id="${moduleId}-changes-objectUuid" width="100%"></td>
-    </tr>
-    <tr>
-        <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.id" /></th>
-        <td id="${moduleId}-changes-objectId" width="100%"></td>
+        <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.identifier" /></th>
+        <td id="${moduleId}-changes-identifier" width="100%"></td>
     </tr>
     <tr>
         <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.summary" /></th>
@@ -150,12 +146,8 @@
 <br />
 <table id="${moduleId}-child-details" width="100%" cellpadding="0" cellspacing="5">
     <tr>
-        <th valign="top" class="${moduleId}_align_text_left" style="width:15%"><spring:message code="${moduleId}.uuid" /></th>
-        <td id="${moduleId}-child-changes-objectUuid" width="100%"></td>
-    </tr>
-    <tr>
-        <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.id" /></th>
-        <td id="${moduleId}-child-changes-objectId" width="100%"></td>
+        <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.identifier" /></th>
+        <td id="${moduleId}-child-changes-identifier" width="100%"></td>
     </tr>
     <tr>
         <th valign="top" class="${moduleId}_align_text_left"><spring:message code="${moduleId}.summary" /></th>

@@ -40,9 +40,6 @@ public class AuditLogDetails {
 	
 	private String action;
 	
-	//The database Id
-	private String objectId;
-	
 	private String uuid;
 	
 	private String openmrsVersion;
@@ -56,14 +53,13 @@ public class AuditLogDetails {
 	/**
 	 * Convenience constructor that created an {@link AuditLogDetails} from an {@link AuditLog}
 	 */
-	public AuditLogDetails(String displayString, Serializable identifier, String simpleTypeName, String action,
-	    String objectId, String uuid, String openmrsVersion, boolean objectExists, Map<String, Object> changes) {
+	public AuditLogDetails(String displayString, Serializable identifier, String simpleTypeName, String action, String uuid,
+	    String openmrsVersion, boolean objectExists, Map<String, Object> changes) {
 		this.displayString = displayString;
 		this.objectExists = objectExists;
 		this.identifier = identifier;
 		this.simpleTypeName = simpleTypeName;
 		this.action = action;
-		this.objectId = objectId;
 		this.uuid = uuid;
 		this.openmrsVersion = openmrsVersion;
 		this.changes = changes;
@@ -137,20 +133,6 @@ public class AuditLogDetails {
 	 */
 	public void setAction(String action) {
 		this.action = action;
-	}
-	
-	/**
-	 * @return the objectId
-	 */
-	public String getObjectId() {
-		return objectId;
-	}
-	
-	/**
-	 * @param objectId the objectId to set
-	 */
-	public void setString(String objectId) {
-		this.objectId = objectId;
 	}
 	
 	/**

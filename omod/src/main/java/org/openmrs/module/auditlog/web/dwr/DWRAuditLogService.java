@@ -70,7 +70,6 @@ public class DWRAuditLogService {
 			if (auditLog != null) {
 				String displayString = "";
 				boolean objectExists = false;
-				String objectId = null;
 				Map<String, Object> otherData = new HashMap<String, Object>();
 				Class<?> clazz = auditLog.getType();
 				if (!auditLog.getAction().equals(Action.DELETED)) {
@@ -112,14 +111,13 @@ public class DWRAuditLogService {
 				}
 				
 				AuditLogDetails details = new AuditLogDetails(displayString, auditLog.getIdentifier(),
-				        auditLog.getSimpleTypeName(), auditLog.getAction().name(), objectId, auditLog.getUuid(),
+				        auditLog.getSimpleTypeName(), auditLog.getAction().name(), auditLog.getUuid(),
 				        auditLog.getOpenmrsVersion(), objectExists, otherData);
 				if (auditLog.hasChildLogs()) {
 					List<AuditLogDetails> childDetails = new ArrayList<AuditLogDetails>();
 					for (AuditLog childLog : auditLog.getChildAuditLogs()) {
-						childDetails.add(new AuditLogDetails(null, childLog.getUuid(), childLog.getSimpleTypeName(),
-						        childLog.getAction().name(), null, childLog.getUuid(), auditLog.getOpenmrsVersion(), false,
-						        null));
+						childDetails.add(new AuditLogDetails(null, childLog.getIdentifier(), childLog.getSimpleTypeName(),
+						        childLog.getAction().name(), childLog.getUuid(), auditLog.getOpenmrsVersion(), false, null));
 					}
 					details.setChildAuditLogDetails(childDetails);
 				}
