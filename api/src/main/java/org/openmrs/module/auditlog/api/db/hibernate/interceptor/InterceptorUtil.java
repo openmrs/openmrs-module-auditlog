@@ -26,6 +26,7 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLogHelper;
 import org.openmrs.module.auditlog.api.db.AuditLogDAO;
+import org.openmrs.module.auditlog.api.db.DAOUtils;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 
 /**
@@ -82,7 +83,7 @@ final class InterceptorUtil {
 	static String serializePersistentObject(Object object) {
 		//TODO Might be better to use xstream
 		Map<String, Serializable> propertyNameValueMap = null;
-		ClassMetadata cmd = AuditLogUtil.getClassMetadata(AuditLogUtil.getActualType(object));
+		ClassMetadata cmd = DAOUtils.getClassMetadata(AuditLogUtil.getActualType(object));
 		if (cmd != null) {
 			propertyNameValueMap = new HashMap<String, Serializable>();
 			propertyNameValueMap.put(cmd.getIdentifierPropertyName(), cmd.getIdentifier(object, EntityMode.POJO));

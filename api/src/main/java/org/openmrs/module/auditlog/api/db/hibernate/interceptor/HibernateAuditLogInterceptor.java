@@ -54,6 +54,7 @@ import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.util.OpenmrsConstants;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.orm.hibernate3.SessionFactoryUtils;
+import org.springframework.stereotype.Component;
 
 /**
  * A hibernate {@link org.hibernate.Interceptor} implementation, intercepts any database inserts,
@@ -61,13 +62,20 @@ import org.springframework.orm.hibernate3.SessionFactoryUtils;
  * single session meaning that if User A and B concurrently make changes to the same object, there
  * will be 2 log entries in the DB, one for each user's session. Any changes/inserts/deletes made to
  * the DB that are not made through the application won't be detected by the module.
+ * 
+ * <pre>
+ * Trying to make this the very last intercepter in order to catch all updates, inserts and deletes. Typically this
+ * should be after the AuditableInterceptor from core so that dateChanged and changedBy field are
+ * ignored but it might give way for other intercepters come after this
+ * </pre>
  */
+@Component("zzz-auditLogInterceptor")
 public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	
 	private static final long serialVersionUID = 1L;
 	
 	private static final Log log = LogFactory.getLog(HibernateAuditLogInterceptor.class);
-	
+
 	//Use stacks to take care of nested transactions to avoid NPE since on each transaction
 	//completion the ThreadLocals get nullified, see code below, i.e a stack of two elements implies
 	//the element at the top of the stack is the inserts made in the inner/nested transaction
@@ -100,14 +108,14 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	private static final String[] IGNORED_PROPERTIES = new String[] { "changedBy", "dateChanged", "creator", "dateCreated",
 	        "voidedBy", "dateVoided", "retiredBy", "dateRetired", "personChangedBy", "personDateChanged", "personCreator",
 	        "personDateCreated" };
-	
+
 	/**
 	 * @see org.hibernate.EmptyInterceptor#afterTransactionBegin(org.hibernate.Transaction)
 	 */
 	@Override
 	public void afterTransactionBegin(Transaction tx) {
 		initializeStacksIfNecessary();
-		
+
 		inserts.get().push(new HashSet<Object>());
 		updates.get().push(new HashSet<Object>());
 		deletes.get().push(new HashSet<Object>());
@@ -442,7 +450,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 						}
 					}
 				}
-				
+
 				List<AuditLog> logs = new ArrayList<AuditLog>();
 				for (Object insert : inserts.get().peek()) {
 					logs.add(createAuditLogIfNecessary(insert, Action.CREATED));
@@ -476,7 +484,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			childbjectUuidAuditLogMap.get().pop();
 			entityRemovedChildrenMap.get().pop();
 			date.get().pop();
-			
+
 			removeStacksIfEmpty();
 		}
 	}

@@ -6,13 +6,6 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans
   		    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 
-  <!-- 
-  	Trying to make this the very last intercepter in order to catch all updates, inserts and deletes.
-  	Typically this should be after the AuditableInterceptor from core so that dateChanged and changedBy
-  	field are ignored but it might give way for other intercepters come after this
-  -->
-  <bean id="zzz-auditLogInterceptor" class="${project.parent.groupId}.${project.parent.artifactId}.api.db.hibernate.interceptor.HibernateAuditLogInterceptor" />
-  
   <!-- Mapping Service -->
   <bean parent="serviceContext">
 	<property name="moduleService">

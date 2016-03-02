@@ -236,7 +236,7 @@ public class AuditLogUtil {
 	
 	public static void setGlobalProperty(String property, String propertyValue) {
 		AdministrationService as = Context.getAdministrationService();
-		GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(property);
+		GlobalProperty gp = as.getGlobalPropertyObject(property);
 		if (gp == null) {
 			gp = new GlobalProperty(property, propertyValue);
 		} else {
