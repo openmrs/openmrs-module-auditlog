@@ -17,8 +17,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -32,10 +34,15 @@ import org.openmrs.ConceptNameTag;
 import org.openmrs.ConceptNumeric;
 import org.openmrs.ConceptSet;
 import org.openmrs.EncounterType;
+import org.openmrs.GlobalProperty;
+import org.openmrs.Location;
 import org.openmrs.PatientIdentifierType;
 import org.openmrs.Person;
 import org.openmrs.PersonName;
+import org.openmrs.Program;
 import org.openmrs.api.APIException;
+import org.openmrs.api.AdministrationService;
+import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.strategy.AuditStrategy;
 import org.openmrs.module.auditlog.strategy.ExceptionBasedAuditStrategy;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
@@ -212,5 +219,57 @@ public class AuditLogHelperTest extends BaseAuditLogTest {
 		expectedException.expect(APIException.class);
 		expectedException.expectMessage("Not supported by the configured audit strategy");
 		helper.getExceptions();
+	}
+	
+	@Test
+	public void shouldNotClearTheExceptionsGpIfTheStrategyGpHasnotChangedWithExceptionsGpGettingSavedFirst()
+	    throws Exception {
+		setAuditConfiguration(AuditStrategy.NONE_EXCEPT, "org.openmrs.Program", false);
+		assertTrue(auditLogService.isAudited(Program.class));
+		
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty strategy = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITING_STRATEGY);
+		GlobalProperty exceptions = as.getGlobalPropertyObject(ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION);
+		as.saveGlobalProperties(Arrays.asList(exceptions, strategy));
+		assertTrue(auditLogService.isAudited(Program.class));
+		
+		strategy = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITING_STRATEGY);
+		exceptions = as.getGlobalPropertyObject(ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION);
+		exceptions.setPropertyValue("org.openmrs.Location");
+		as.saveGlobalProperties(Arrays.asList(exceptions, strategy));
+		assertFalse(auditLogService.isAudited(Program.class));
+		assertTrue(auditLogService.isAudited(Location.class));
+	}
+	
+	@Test
+	public void shouldNotClearTheExceptionsGpIfTheStrategyGpHasnotChangedWithStrategyGpGettingSavedFirst() throws Exception {
+		setAuditConfiguration(AuditStrategy.NONE_EXCEPT, "org.openmrs.Program", false);
+		assertTrue(auditLogService.isAudited(Program.class));
+		
+		AdministrationService as = Context.getAdministrationService();
+		GlobalProperty strategy = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITING_STRATEGY);
+		GlobalProperty exceptions = as.getGlobalPropertyObject(ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION);
+		as.saveGlobalProperties(Arrays.asList(strategy, exceptions));
+		assertTrue(auditLogService.isAudited(Program.class));
+		
+		strategy = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITING_STRATEGY);
+		exceptions = as.getGlobalPropertyObject(ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION);
+		exceptions.setPropertyValue("org.openmrs.Location");
+		as.saveGlobalProperties(Arrays.asList(strategy, exceptions));
+		assertFalse(auditLogService.isAudited(Program.class));
+		assertTrue(auditLogService.isAudited(Location.class));
+	}
+	
+	@Test
+	public void shouldClearTheExceptionsGpIfTheStrategyGpHasChangedWithExceptionsGpGettingSavedFirst() throws Exception {
+		AdministrationService as = Context.getAdministrationService();
+		setAuditConfiguration(AuditStrategy.NONE_EXCEPT, "org.openmrs.Program", false);
+		assertFalse(StringUtils.isBlank(as.getGlobalProperty(ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION)));
+		assertTrue(auditLogService.isAudited(Program.class));
+		
+		GlobalProperty strategy = as.getGlobalPropertyObject(AuditLogConstants.GP_AUDITING_STRATEGY);
+		strategy.setPropertyValue("ALL_EXCEPT");
+		as.saveGlobalProperties(Arrays.asList(strategy));
+		assertTrue(StringUtils.isBlank(as.getGlobalProperty(ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION)));
 	}
 }

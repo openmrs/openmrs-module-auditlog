@@ -66,7 +66,7 @@ import org.springframework.stereotype.Component;
  * <pre>
  * Trying to make this the very last intercepter in order to catch all updates, inserts and deletes. Typically this
  * should be after the AuditableInterceptor from core so that dateChanged and changedBy field are
- * ignored but it might give way for other intercepters come after this
+ * ignored but it might give way for other interceptors come after this
  * </pre>
  */
 @Component("zzz-auditLogInterceptor")

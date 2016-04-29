@@ -15,19 +15,19 @@ package org.openmrs.module.auditlog.strategy;
 
 import java.util.Set;
 
-public interface ConfigurableAuditStrategy extends AuditStrategy {
+public abstract class ConfigurableAuditStrategy extends BaseAuditStrategy {
 	
 	/**
 	 * Implementing classes should mark the specified classes as audited
 	 * 
 	 * @param clazzes the classes to audit
 	 */
-	public void startAuditing(Set<Class<?>> clazzes);
+	public abstract void startAuditing(Set<Class<?>> clazzes);
 	
 	/**
 	 * Implementing classes should un mark the specified classes as audited
 	 * 
 	 * @param clazzes the classes to stop auditing
 	 */
-	public void stopAuditing(Set<Class<?>> clazzes);
+	public abstract void stopAuditing(Set<Class<?>> clazzes);
 }

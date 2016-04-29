@@ -17,7 +17,13 @@ package org.openmrs.module.auditlog.strategy;
  * Super interface for auditing Strategies, an audit strategy encapsulates the logic that determines
  * which persistent types are audited and the ones that are not, in case an audit strategy supports
  * manipulation of which types are audited, then it would typically provide methods to start or stop
- * monitoring a given type
+ * monitoring a given type.
+ * 
+ * <pre>
+ * Note: Developers are highly recommended to extend BaseAuditStrategy
+ * rather than implementing this class directly
+ * 
+ * <pre/>
  */
 public interface AuditStrategy {
 	
@@ -43,6 +49,6 @@ public interface AuditStrategy {
 	 * 
 	 * @param clazz the class to check
 	 */
-	public boolean isAudited(Class<?> clazz);
+	boolean isAudited(Class<?> clazz);
 	
 }

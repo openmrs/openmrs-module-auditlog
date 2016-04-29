@@ -21,7 +21,7 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLogHelper;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 
-public abstract class ExceptionBasedAuditStrategy implements ConfigurableAuditStrategy {
+public abstract class ExceptionBasedAuditStrategy extends ConfigurableAuditStrategy {
 	
 	protected final Log log = LogFactory.getLog(getClass());
 	

@@ -16,7 +16,7 @@ package org.openmrs.module.auditlog.strategy;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLogHelper;
 
-public final class AllAuditStrategy implements AuditStrategy {
+public final class AllAuditStrategy extends BaseAuditStrategy {
 	
 	private AuditLogHelper helper = null;
 	

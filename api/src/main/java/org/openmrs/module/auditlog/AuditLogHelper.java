@@ -67,32 +67,8 @@ public class AuditLogHelper implements GlobalPropertyListener {
 				//for the GP value until it gets set so that we only cache a set value
 				return AuditStrategy.NONE;
 			} else {
-				//We should allow short values like all, all_except, none, none_except
-				if (AuditStrategy.SHORT_NAME_NONE.equalsIgnoreCase(gpValue)) {
-					auditingStrategyCache = AuditStrategy.NONE;
-				} else if (AuditStrategy.SHORT_NAME_NONE_EXCEPT.equalsIgnoreCase(gpValue)) {
-					auditingStrategyCache = AuditStrategy.NONE_EXCEPT;
-				} else if (AuditStrategy.SHORT_NAME_ALL.equalsIgnoreCase(gpValue)) {
-					auditingStrategyCache = AuditStrategy.ALL;
-				} else if (AuditStrategy.SHORT_NAME_ALL_EXCEPT.equalsIgnoreCase(gpValue)) {
-					auditingStrategyCache = AuditStrategy.ALL_EXCEPT;
-				}
-			}
-			
-			if (auditingStrategyCache == null) {
 				try {
-					Class<AuditStrategy> clazz = (Class<AuditStrategy>) Context.loadClass(gpValue);
-					if (NoneAuditStrategy.class.equals(clazz)) {
-						auditingStrategyCache = AuditStrategy.NONE;
-					} else if (NoneExceptAuditStrategy.class.equals(clazz)) {
-						auditingStrategyCache = AuditStrategy.NONE_EXCEPT;
-					} else if (AllAuditStrategy.class.equals(clazz)) {
-						auditingStrategyCache = AuditStrategy.ALL;
-					} else if (AllExceptAuditStrategy.class.equals(clazz)) {
-						auditingStrategyCache = AuditStrategy.ALL_EXCEPT;
-					} else {
-						auditingStrategyCache = clazz.newInstance();
-					}
+					auditingStrategyCache = getAuditStrategyFromString(gpValue);
 				}
 				catch (Exception e) {
 					throw new APIException("Failed to set the audit strategy", e);
@@ -249,11 +225,30 @@ public class AuditLogHelper implements GlobalPropertyListener {
 	 */
 	@Override
 	public void globalPropertyChanged(GlobalProperty gp) {
-		auditingStrategyCache = null;
 		implicitlyAuditedTypeCache = null;
 		exceptionsTypeCache = null;
 		if (AuditLogConstants.GP_AUDITING_STRATEGY.equals(gp.getProperty())) {
-			AuditLogUtil.setGlobalProperty(ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION, "");
+			AuditStrategy oldStrategy = null;
+			if (auditingStrategyCache != null) {
+				oldStrategy = auditingStrategyCache;
+			}
+			auditingStrategyCache = null;
+			if (StringUtils.isBlank(gp.getPropertyValue())) {
+				AuditLogUtil.setGlobalProperty(ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION, "");
+			} else {
+				//If both GPS for strategy and exceptions are saved together in one call, we need
+				//to be able to avoid clearing the exceptions GP in case the strategy hasn't changed
+				try {
+					AuditStrategy newStrategy = getAuditStrategyFromString(gp.getPropertyValue());
+					if (!newStrategy.equals(oldStrategy)) {
+						AuditLogUtil.setGlobalProperty(ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION, "");
+					}
+				}
+				catch (Exception e) {
+					throw new APIException("Failed to create an AuditStrategy instance from the String:"
+					        + gp.getPropertyValue(), e);
+				}
+			}
 		}
 	}
 	
@@ -262,21 +257,12 @@ public class AuditLogHelper implements GlobalPropertyListener {
 	 */
 	@Override
 	public void globalPropertyDeleted(String gpName) {
-		auditingStrategyCache = null;
 		implicitlyAuditedTypeCache = null;
 		exceptionsTypeCache = null;
 		if (AuditLogConstants.GP_AUDITING_STRATEGY.equals(gpName)) {
+			auditingStrategyCache = null;
 			AuditLogUtil.setGlobalProperty(ExceptionBasedAuditStrategy.GLOBAL_PROPERTY_EXCEPTION, "");
 		}
-	}
-	
-	public void stopAuditing(Set<Class<?>> clazzes) {
-		if (getAuditingStrategy().equals(AuditStrategy.NONE) || getAuditingStrategy().equals(AuditStrategy.ALL)) {
-			throw new APIException("Can't call AuditLogService.stopAuditing when the Audit strategy is set to "
-			        + AuditStrategy.NONE + " or " + AuditStrategy.ALL);
-		}
-		
-		updateGlobalProperty(clazzes, false);
 	}
 	
 	public void updateGlobalProperty(Set<Class<?>> clazzes, boolean startAuditing) {
@@ -374,5 +360,34 @@ public class AuditLogHelper implements GlobalPropertyListener {
 		}
 		
 		return getImplicitlyAuditedClasses().contains(clazz);
+	}
+	
+	private AuditStrategy getAuditStrategyFromString(String value) throws Exception {
+		AuditStrategy strategy;
+		//We should allow short values like all, all_except, none, none_except
+		if (AuditStrategy.SHORT_NAME_NONE.equalsIgnoreCase(value)) {
+			strategy = AuditStrategy.NONE;
+		} else if (AuditStrategy.SHORT_NAME_NONE_EXCEPT.equalsIgnoreCase(value)) {
+			strategy = AuditStrategy.NONE_EXCEPT;
+		} else if (AuditStrategy.SHORT_NAME_ALL.equalsIgnoreCase(value)) {
+			strategy = AuditStrategy.ALL;
+		} else if (AuditStrategy.SHORT_NAME_ALL_EXCEPT.equalsIgnoreCase(value)) {
+			strategy = AuditStrategy.ALL_EXCEPT;
+		} else {
+			Class<AuditStrategy> clazz = (Class<AuditStrategy>) Context.loadClass(value);
+			if (NoneAuditStrategy.class.equals(clazz)) {
+				strategy = AuditStrategy.NONE;
+			} else if (NoneExceptAuditStrategy.class.equals(clazz)) {
+				strategy = AuditStrategy.NONE_EXCEPT;
+			} else if (AllAuditStrategy.class.equals(clazz)) {
+				strategy = AuditStrategy.ALL;
+			} else if (AllExceptAuditStrategy.class.equals(clazz)) {
+				strategy = AuditStrategy.ALL_EXCEPT;
+			} else {
+				strategy = clazz.newInstance();
+			}
+		}
+		
+		return strategy;
 	}
 }

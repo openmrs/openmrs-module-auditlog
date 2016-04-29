@@ -13,14 +13,21 @@
  */
 package org.openmrs.module.auditlog.strategy;
 
-public final class NoneAuditStrategy extends BaseAuditStrategy {
+/**
+ * A Superclass for all AuditStrategy Implementations that base equality on the Type
+ */
+public abstract class BaseAuditStrategy implements AuditStrategy {
 	
-	/**
-	 * @see AuditStrategy#isAudited(Class)
-	 * @should always return false
-	 */
 	@Override
-	public final boolean isAudited(Class<?> clazz) {
-		return false;
+	public boolean equals(Object o) {
+		if (o == null) {
+			return false;
+		}
+		return getClass().equals(o.getClass());
+	}
+	
+	@Override
+	public int hashCode() {
+		return getClass().hashCode();
 	}
 }
