@@ -128,6 +128,28 @@ public class DWRAuditLogService {
 		return null;
 	}
 	
+	private String getPrettyPropertyValue(String propertyName, Object value, Class<?> clazz) {
+		String prettyValue = null;
+		String stringValue = null;
+		Field field = AuditLogUtil.getField(clazz, propertyName);
+		//This can be null if the auditlog was created and then
+		//later upgraded to a version where the field was removed
+		if (field != null && value != null) {
+			stringValue = value.toString();
+			prettyValue = getPropertyDisplayString(clazz, propertyName, field.getType(), stringValue);
+		}
+		
+		if (prettyValue == null && stringValue != null) {
+			prettyValue = stringValue;
+		}
+		
+		if (prettyValue == null) {
+			prettyValue = "";
+		}
+		
+		return prettyValue;
+	}
+	
 	/**
 	 * Gets the display string for a property
 	 * 
@@ -184,6 +206,8 @@ public class DWRAuditLogService {
 				} else {
 					displayString = "<span class=" + AuditLogConstants.MODULE_ID + "'_deleted'>" + propertyValue + "</span>";
 				}
+			} else if (StringUtils.isNotBlank(propertyValue)) {
+				displayString = propertyValue;
 			}
 		}
 		catch (Exception e) {
@@ -197,6 +221,7 @@ public class DWRAuditLogService {
 	 * Generates the display text for the specified object
 	 * 
 	 * @param obj
+	 * @param includeUuidAndId
 	 * @return the display text
 	 */
 	private String getDisplayString(Object obj, boolean includeUuidAndId) {
@@ -262,27 +287,5 @@ public class DWRAuditLogService {
 		}
 		
 		return displayString;
-	}
-	
-	private String getPrettyPropertyValue(String propertyName, Object value, Class<?> clazz) {
-		String prettyValue = null;
-		String stringValue = null;
-		Field field = AuditLogUtil.getField(clazz, propertyName);
-		//This can be null if the auditlog was created and then 
-		//later upgraded to a version where the field was removed
-		if (field != null && value != null) {
-			stringValue = value.toString();
-			prettyValue = getPropertyDisplayString(clazz, propertyName, field.getType(), stringValue);
-		}
-		
-		if (prettyValue == null && stringValue != null) {
-			prettyValue = stringValue;
-		}
-		
-		if (prettyValue == null) {
-			prettyValue = "";
-		}
-		
-		return prettyValue;
 	}
 }
