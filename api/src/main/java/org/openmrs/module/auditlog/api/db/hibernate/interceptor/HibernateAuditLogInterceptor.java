@@ -75,7 +75,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	private static final long serialVersionUID = 1L;
 	
 	private static final Log log = LogFactory.getLog(HibernateAuditLogInterceptor.class);
-
+	
 	//Use stacks to take care of nested transactions to avoid NPE since on each transaction
 	//completion the ThreadLocals get nullified, see code below, i.e a stack of two elements implies
 	//the element at the top of the stack is the inserts made in the inner/nested transaction
@@ -108,14 +108,14 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	private static final String[] IGNORED_PROPERTIES = new String[] { "changedBy", "dateChanged", "creator", "dateCreated",
 	        "voidedBy", "dateVoided", "retiredBy", "dateRetired", "personChangedBy", "personDateChanged", "personCreator",
 	        "personDateCreated" };
-
+	
 	/**
 	 * @see org.hibernate.EmptyInterceptor#afterTransactionBegin(org.hibernate.Transaction)
 	 */
 	@Override
 	public void afterTransactionBegin(Transaction tx) {
 		initializeStacksIfNecessary();
-
+		
 		inserts.get().push(new HashSet<Object>());
 		updates.get().push(new HashSet<Object>());
 		deletes.get().push(new HashSet<Object>());
@@ -309,7 +309,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 						}
 					}
 				} else if (Map.class.isAssignableFrom(collection.getClass())) {
-					if (!isOwnerDeleted && currentCollection == null) {
+					Map map = (Map) collection;
+					if (!map.isEmpty() && !isOwnerDeleted && currentCollection == null) {
 						currentCollection = Collections.EMPTY_MAP;
 					}
 				} else {
@@ -450,7 +451,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 						}
 					}
 				}
-
+				
 				List<AuditLog> logs = new ArrayList<AuditLog>();
 				for (Object insert : inserts.get().peek()) {
 					logs.add(createAuditLogIfNecessary(insert, Action.CREATED));
@@ -484,7 +485,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			childbjectUuidAuditLogMap.get().pop();
 			entityRemovedChildrenMap.get().pop();
 			date.get().pop();
-
+			
 			removeStacksIfEmpty();
 		}
 	}
@@ -606,45 +607,70 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	
 	private void handleUpdatedCollection(Object currentCollOrMap, Object previousCollOrMap, Object owningObject, String role) {
 		
-		String propertyName = role.substring(role.lastIndexOf('.') + 1);
-		
-		if (objectChangesMap.get().peek().get(owningObject) == null) {
-			objectChangesMap.get().peek().put(owningObject, new HashMap<String, String[]>());
-		}
-		
-		String previousSerializedItems = null;
-		String newSerializedItems = null;
-		if (Collection.class.isAssignableFrom(currentCollOrMap.getClass())) {
-			Collection cColl = (Collection) currentCollOrMap;
-			Collection pColl = (Collection) previousCollOrMap;
-			previousSerializedItems = AuditLogUtil.serializeCollection(pColl);
-			newSerializedItems = AuditLogUtil.serializeCollection(cColl);
+		if (currentCollOrMap != null || previousCollOrMap != null) {
+			String propertyName = role.substring(role.lastIndexOf('.') + 1);
 			
-			//Track removed items so that when we create logs for them,
-			//and link them to the parent's log
-			Set<Object> removedItems = new HashSet<Object>();
-			removedItems.addAll(CollectionUtils.subtract(pColl, cColl));
-			if (!removedItems.isEmpty()) {
-				if (entityRemovedChildrenMap.get().peek().get(owningObject) == null) {
-					entityRemovedChildrenMap.get().peek().put(owningObject, new HashSet<Object>());
-				}
-				for (Object removedItem : removedItems) {
-					entityRemovedChildrenMap.get().peek().get(owningObject).add(removedItem);
-				}
+			if (objectChangesMap.get().peek().get(owningObject) == null) {
+				objectChangesMap.get().peek().put(owningObject, new HashMap<String, String[]>());
 			}
-		} else if (Map.class.isAssignableFrom(currentCollOrMap.getClass())) {
-			//For some reason hibernate ends calling onCollectionUpdate even when the map has
-			//no changes. I think it uses object equality for the map entries and assumes the map has
-			//changes. Noticed this happens for user.userProperties and added a unit test to prove it
-			if (previousCollOrMap.equals(currentCollOrMap)) {
-				return;
+			
+			String previousSerializedItems = null;
+			String newSerializedItems = null;
+			Class<?> collectionOrMapType;
+			if (currentCollOrMap != null) {
+				collectionOrMapType = currentCollOrMap.getClass();
+			} else {
+				collectionOrMapType = previousCollOrMap.getClass();
 			}
-			previousSerializedItems = AuditLogUtil.serializeMap((Map) previousCollOrMap);
-			newSerializedItems = AuditLogUtil.serializeMap((Map) currentCollOrMap);
+			
+			if (Collection.class.isAssignableFrom(collectionOrMapType)) {
+				Collection cColl = (Collection) currentCollOrMap;
+				Collection pColl = (Collection) previousCollOrMap;
+				if (List.class.isAssignableFrom(collectionOrMapType)) {
+					if (cColl == null) {
+						cColl = Collections.EMPTY_LIST;
+					}
+					if (pColl == null) {
+						pColl = Collections.EMPTY_LIST;
+					}
+				} else if (Set.class.isAssignableFrom(collectionOrMapType)) {
+					if (cColl == null) {
+						cColl = Collections.EMPTY_SET;
+					}
+					if (pColl == null) {
+						pColl = Collections.EMPTY_SET;
+					}
+				}
+				
+				previousSerializedItems = AuditLogUtil.serializeCollection(pColl);
+				newSerializedItems = AuditLogUtil.serializeCollection(cColl);
+				
+				//Track removed items so that when we create logs for them,
+				//and link them to the parent's log
+				Set<Object> removedItems = new HashSet<Object>();
+				removedItems.addAll(CollectionUtils.subtract(pColl, cColl));
+				if (!removedItems.isEmpty()) {
+					if (entityRemovedChildrenMap.get().peek().get(owningObject) == null) {
+						entityRemovedChildrenMap.get().peek().put(owningObject, new HashSet<Object>());
+					}
+					for (Object removedItem : removedItems) {
+						entityRemovedChildrenMap.get().peek().get(owningObject).add(removedItem);
+					}
+				}
+			} else if (Map.class.isAssignableFrom(collectionOrMapType)) {
+				//For some reason hibernate ends calling onCollectionUpdate even when the map has
+				//no changes. I think it uses object equality for the map entries and assumes the map has
+				//changes. Noticed this happens for user.userProperties and added a unit test to prove it
+				if (previousCollOrMap.equals(currentCollOrMap)) {
+					return;
+				}
+				previousSerializedItems = AuditLogUtil.serializeMap((Map) previousCollOrMap);
+				newSerializedItems = AuditLogUtil.serializeMap((Map) currentCollOrMap);
+			}
+			
+			updates.get().peek().add(owningObject);
+			objectChangesMap.get().peek().get(owningObject)
+			        .put(propertyName, new String[] { newSerializedItems, previousSerializedItems });
 		}
-		
-		updates.get().peek().add(owningObject);
-		objectChangesMap.get().peek().get(owningObject)
-		        .put(propertyName, new String[] { newSerializedItems, previousSerializedItems });
 	}
 }

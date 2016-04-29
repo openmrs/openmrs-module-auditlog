@@ -466,7 +466,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(0, descriptionAuditLogs3.size());
 		
 		List<AuditLog> descriptionAuditLogs4 = getAllLogs(cd4.getId(), ConceptDescription.class,
-		    Collections.singletonList(DELETED));
+                Collections.singletonList(DELETED));
 		assertEquals(0, descriptionAuditLogs4.size());//same here
 		
 		List<AuditLog> descriptionAuditLogs5 = getAllLogs(cd5.getId(), ConceptDescription.class,
@@ -699,7 +699,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		AuditLog al = logs.get(0);
 		assertEquals(previousUserProperties, AuditLogUtil.getPreviousValueOfUpdatedItem("userProperties", al));
 		assertEquals("{\"" + newKey + "\":\"" + newValue + "\"}",
-		    AuditLogUtil.getNewValueOfUpdatedItem("userProperties", al));
+                AuditLogUtil.getNewValueOfUpdatedItem("userProperties", al));
 	}
 	
 	@Test
