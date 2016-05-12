@@ -85,16 +85,15 @@ public class DWRAuditLogService {
 						if (changes.size() > 0) {
 							for (Map.Entry<String, List> entry : changes.entrySet()) {
 								String propertyName = entry.getKey();
-								String previousValue = null;
 								String newValueDisplay = "";
 								String preValueDisplay = "";
-								String newValue = null;
 								if (CollectionUtils.isNotEmpty(entry.getValue())) {
-									newValue = AuditLogUtil.getNewValueOfUpdatedItem(propertyName, auditLog);
-									previousValue = AuditLogUtil.getPreviousValueOfUpdatedItem(propertyName, auditLog);
-									if (StringUtils.isNotBlank(newValue) || StringUtils.isNotBlank(previousValue)) {
-										newValueDisplay += getPrettyPropertyValue(propertyName, newValue, clazz);
-										preValueDisplay += getPrettyPropertyValue(propertyName, previousValue, clazz);
+									Object newValueObj = AuditLogUtil.getNewValueOfUpdatedItem(propertyName, auditLog);
+									Object previousValueObj = AuditLogUtil.getPreviousValueOfUpdatedItem(propertyName,
+									    auditLog);
+									if (newValueObj != null || previousValueObj != null) {
+										newValueDisplay += getPrettyPropertyValue(propertyName, newValueObj, clazz);
+										preValueDisplay += getPrettyPropertyValue(propertyName, previousValueObj, clazz);
 									}
 								}
 								
@@ -130,17 +129,11 @@ public class DWRAuditLogService {
 	
 	private String getPrettyPropertyValue(String propertyName, Object value, Class<?> clazz) {
 		String prettyValue = null;
-		String stringValue = null;
 		Field field = AuditLogUtil.getField(clazz, propertyName);
 		//This can be null if the auditlog was created and then
 		//later upgraded to a version where the field was removed
 		if (field != null && value != null) {
-			stringValue = value.toString();
-			prettyValue = getPropertyDisplayString(clazz, propertyName, field.getType(), stringValue);
-		}
-		
-		if (prettyValue == null && stringValue != null) {
-			prettyValue = stringValue;
+			prettyValue = getPropertyDisplayString(clazz, propertyName, field.getType(), value);
 		}
 		
 		if (prettyValue == null) {
@@ -159,20 +152,24 @@ public class DWRAuditLogService {
 	 * @return the display text
 	 */
 	private String getPropertyDisplayString(Class<?> owningType, String propertyName, Class<?> propertyType,
-	                                        String propertyValue) {
+	                                        Object propertyValue) {
+		
 		String displayString = "";
+		if (propertyValue == null) {
+			return displayString;
+		}
+		
 		try {
-			Object actualObject = null;
 			if (Reflect.isCollection(propertyType)) {
 				//TODO this not to fail if the primary key was a String e.g for privileges and had a ',' in it
-				String[] uuidsOrIds = StringUtils.split(propertyValue, ",");
+				List<Object> uuidsOrIds = (List<Object>) propertyValue;
 				List<Object> items = new ArrayList<Object>();
 				List<String> unmatchedUuidsOrIds = new ArrayList<String>();
-				for (String currUuidOrStr : uuidsOrIds) {
+				for (Object currUuidOrId : uuidsOrIds) {
 					Object item = null;
-					currUuidOrStr = currUuidOrStr.trim();
+					String currUuidOrStr = currUuidOrId.toString().trim();
 					Class<?> itemType = AuditLogUtil.getCollectionElementType(owningType, propertyName);
-					if (AuditLogUtil.isPersistent(propertyType)) {
+					if (AuditLogUtil.isPersistent(itemType)) {
 						try {
 							item = getService().getObjectById(itemType, Integer.valueOf(currUuidOrStr));
 						}
@@ -199,15 +196,21 @@ public class DWRAuditLogService {
 				}
 				sb.append("</ul>");
 				displayString += sb.toString();
-			} else if (AuditLogUtil.isPersistent(propertyType)) {
-				actualObject = getService().getObjectById(propertyType, Integer.valueOf(propertyValue));
-				if (actualObject != null) {
-					displayString = getDisplayString(actualObject, true);
-				} else {
-					displayString = "<span class=" + AuditLogConstants.MODULE_ID + "'_deleted'>" + propertyValue + "</span>";
+			} else {
+				String stringValue = propertyValue.toString();
+				if (StringUtils.isNotBlank(stringValue)) {
+					if (AuditLogUtil.isPersistent(propertyType)) {
+						Object actualObject = getService().getObjectById(propertyType, Integer.valueOf(stringValue));
+						if (actualObject != null) {
+							displayString = getDisplayString(actualObject, true);
+						} else {
+							displayString = "<span class=" + AuditLogConstants.MODULE_ID + "'_deleted'>" + stringValue
+							        + "</span>";
+						}
+					} else {
+						displayString = stringValue;
+					}
 				}
-			} else if (StringUtils.isNotBlank(propertyValue)) {
-				displayString = propertyValue;
 			}
 		}
 		catch (Exception e) {
@@ -236,8 +239,9 @@ public class DWRAuditLogService {
 			User user = (User) obj;
 			displayString += ((user.getPersonName() != null) ? user.getPersonName().getFullName() : "");
 			displayString += " [";
-			if (StringUtils.isNotBlank(user.getUsername()))
+			if (StringUtils.isNotBlank(user.getUsername())) {
 				displayString += user.getUsername() + " - ";
+			}
 			displayString += user.getSystemId() + "]";
 		} else if (Obs.class.isAssignableFrom(obj.getClass())) {
 			Obs obs = (Obs) obj;
@@ -271,6 +275,7 @@ public class DWRAuditLogService {
 			catch (Exception e) {
 				//ignore
 			}
+			
 			try {
 				if (openmrsObj.getId() != null) {
 					id = " [" + openmrsObj.getId() + "]";
@@ -279,6 +284,7 @@ public class DWRAuditLogService {
 			catch (Exception e) {
 				//ignore
 			}
+			
 			if (StringUtils.isBlank(displayString)) {
 				displayString = uuid + id;
 			} else {

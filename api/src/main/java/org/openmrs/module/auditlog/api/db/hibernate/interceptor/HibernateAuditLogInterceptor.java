@@ -87,7 +87,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	
 	//Mapping between objects and maps of their changed property names and their older values,
 	//the first item in the array is the old value while the the second is the new value
-	private ThreadLocal<Stack<Map<Object, Map<String, String[]>>>> objectChangesMap = new ThreadLocal<Stack<Map<Object, Map<String, String[]>>>>();
+	private ThreadLocal<Stack<Map<Object, Map<String, Object[]>>>> objectChangesMap = new ThreadLocal<Stack<Map<Object, Map<String, Object[]>>>>();
 	
 	//Mapping between entities and lists of their Collections in the current session
 	private ThreadLocal<Stack<Map<Object, List<Collection<?>>>>> entityCollectionsMap = new ThreadLocal<Stack<Map<Object, List<Collection<?>>>>>();
@@ -119,7 +119,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 		inserts.get().push(new HashSet<Object>());
 		updates.get().push(new HashSet<Object>());
 		deletes.get().push(new HashSet<Object>());
-		objectChangesMap.get().push(new HashMap<Object, Map<String, String[]>>());
+		objectChangesMap.get().push(new HashMap<Object, Map<String, Object[]>>());
 		entityCollectionsMap.get().push(new HashMap<Object, List<Collection<?>>>());
 		ownerUuidChildLogsMap.get().push(new HashMap<Object, List<AuditLog>>());
 		childbjectUuidAuditLogMap.get().push(new HashMap<Object, AuditLog>());
@@ -170,7 +170,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				}
 				
 			}
-			Map<String, String[]> propertyChangesMap = null;//Map<propertyName, Object[]{currentValue, PreviousValue}>
+			Map<String, Object[]> propertyChangesMap = null;//Map<propertyName, Object[]{currentValue, PreviousValue}>
 			for (int i = 0; i < propertyNames.length; i++) {
 				//we need to ignore dateChanged and changedBy fields in any case they
 				//are actually part of the Auditlog in form of user and dateCreated
@@ -202,7 +202,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					}
 					
 					if (propertyChangesMap == null) {
-						propertyChangesMap = new HashMap<String, String[]>();
+						propertyChangesMap = new HashMap<String, Object[]>();
 					}
 					
 					String serializedPreviousValue = AuditLogUtil.serializeObject(previousValue);
@@ -423,9 +423,9 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 								}
 								
 								//TODO add this collection to the list of changes properties
-								/*Map<String, String[]> propertyValuesMap = objectChangesMap.get().peek().get(owner);
+								/*Map<String, Object[]> propertyValuesMap = objectChangesMap.get().peek().get(owner);
 								if(propertyValuesMap == null)
-									propertyValuesMap = new HashMap<String, String[]>();
+									propertyValuesMap = new HashMap<String, Object[]>();
 									propertyValuesMap.put(arg0, arg1);*/
 							}
 						}
@@ -527,7 +527,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 		auditLog.setOpenmrsVersion(OpenmrsConstants.OPENMRS_VERSION_SHORT);
 		auditLog.setModuleVersion(AuditLogConstants.MODULE_VERSION);
 		if (action == Action.UPDATED || action == Action.DELETED) {
-			Map<String, String[]> propertyValuesMap = null;
+			Map<String, Object[]> propertyValuesMap = null;
 			if (action == Action.UPDATED) {
 				propertyValuesMap = objectChangesMap.get().peek().get(object);
 				if (propertyValuesMap != null) {
@@ -556,7 +556,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			deletes.set(new Stack<HashSet<Object>>());
 		}
 		if (objectChangesMap.get() == null) {
-			objectChangesMap.set(new Stack<Map<Object, Map<String, String[]>>>());
+			objectChangesMap.set(new Stack<Map<Object, Map<String, Object[]>>>());
 		}
 		if (entityCollectionsMap.get() == null) {
 			entityCollectionsMap.set(new Stack<Map<Object, List<Collection<?>>>>());
@@ -611,11 +611,11 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			String propertyName = role.substring(role.lastIndexOf('.') + 1);
 			
 			if (objectChangesMap.get().peek().get(owningObject) == null) {
-				objectChangesMap.get().peek().put(owningObject, new HashMap<String, String[]>());
+				objectChangesMap.get().peek().put(owningObject, new HashMap<String, Object[]>());
 			}
 			
-			String previousSerializedItems = null;
-			String newSerializedItems = null;
+			Object previousSerializedItems = null;
+			Object newSerializedItems = null;
 			Class<?> collectionOrMapType;
 			if (currentCollOrMap != null) {
 				collectionOrMapType = currentCollOrMap.getClass();
@@ -642,8 +642,8 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 					}
 				}
 				
-				previousSerializedItems = AuditLogUtil.serializeCollection(pColl);
-				newSerializedItems = AuditLogUtil.serializeCollection(cColl);
+				previousSerializedItems = AuditLogUtil.serializeCollectionItems(pColl);
+				newSerializedItems = AuditLogUtil.serializeCollectionItems(cColl);
 				
 				//Track removed items so that when we create logs for them,
 				//and link them to the parent's log
@@ -670,7 +670,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 			
 			updates.get().peek().add(owningObject);
 			objectChangesMap.get().peek().get(owningObject)
-			        .put(propertyName, new String[] { newSerializedItems, previousSerializedItems });
+			        .put(propertyName, new Object[] { newSerializedItems, previousSerializedItems });
 		}
 	}
 }

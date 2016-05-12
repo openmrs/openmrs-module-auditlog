@@ -183,10 +183,10 @@ public class AuditLogUtil {
 	 * @param auditLog
 	 * @return the new property value if found
 	 */
-	public static String getNewValueOfUpdatedItem(String propertyName, AuditLog auditLog) {
+	public static Object getNewValueOfUpdatedItem(String propertyName, AuditLog auditLog) {
 		Map<String, List> changes = getChangesOfUpdatedItem(auditLog);
 		if (changes.get(propertyName) != null) {
-			return ((List<String>) changes.get(propertyName)).get(0);
+			return (changes.get(propertyName)).get(0);
 		}
 		return null;
 	}
@@ -198,10 +198,10 @@ public class AuditLogUtil {
 	 * @param auditLog
 	 * @return the old property value if found
 	 */
-	public static String getPreviousValueOfUpdatedItem(String propertyName, AuditLog auditLog) {
+	public static Object getPreviousValueOfUpdatedItem(String propertyName, AuditLog auditLog) {
 		Map<String, List> changes = getChangesOfUpdatedItem(auditLog);
 		if (changes.get(propertyName) != null) {
-			return ((List<String>) changes.get(propertyName)).get(1);
+			return (changes.get(propertyName)).get(1);
 		}
 		return null;
 	}
@@ -294,7 +294,7 @@ public class AuditLogUtil {
 			} else if (Class.class.isAssignableFrom(clazz)) {
 				serializedValue = ((Class<?>) obj).getName();
 			} else if (Collection.class.isAssignableFrom(clazz)) {
-				serializedValue = serializeCollection((Collection) obj);
+				serializedValue = serializeToJson(serializeCollectionItems((Collection) obj));
 			} else if (Map.class.isAssignableFrom(clazz)) {
 				serializedValue = serializeMap((Map) obj);
 			}
@@ -320,9 +320,9 @@ public class AuditLogUtil {
 	 * Utility method that serializes the collection entries to a string
 	 * 
 	 * @param collection the Collection object
-	 * @return The serialized collection elements
+	 * @return A collection of serialized elements
 	 */
-	public static String serializeCollection(Collection<?> collection) {
+	public static List<String> serializeCollectionItems(Collection<?> collection) {
 		List<String> serializedCollectionItems = null;
 		if (CollectionUtils.isNotEmpty(collection)) {
 			serializedCollectionItems = new ArrayList<String>(collection.size());
@@ -334,7 +334,7 @@ public class AuditLogUtil {
 			}
 		}
 		
-		return serializeToJson(serializedCollectionItems);
+		return serializedCollectionItems;
 	}
 	
 	/**

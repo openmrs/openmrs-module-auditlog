@@ -3,12 +3,12 @@
  * Version 1.0 (the "License"); you may not use this file except in
  * compliance with the License. You may obtain a copy of the License at
  * http://license.openmrs.org
- *
+ * <p/>
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
  * License for the specific language governing rights and limitations
  * under the License.
- *
+ * <p/>
  * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
  */
 package org.openmrs.module.auditlog;
@@ -72,8 +72,26 @@ import org.springframework.test.annotation.NotTransactional;
 @SuppressWarnings("deprecation")
 public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
-	private List<String> getAsList(String str) throws Exception {
-		return new ObjectMapper().readValue(str, List.class);
+	private List<Object> getAsList(Object value) throws Exception {
+		return (List<Object>) value;
+	}
+	
+	private <T> boolean compareLists(List<T> list1, List<T> list2) {
+		if (list1.size() != list2.size()) {
+			return false;
+		}
+		for (T t : list1) {
+			if (!list2.contains(t)) {
+				return false;
+			}
+		}
+		for (T t : list2) {
+			if (!list1.contains(t)) {
+				return false;
+			}
+		}
+		
+		return true;
 	}
 	
 	@Test
@@ -107,7 +125,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		AuditLog al = patientLogs.get(0);
 		assertEquals(originalCount - 1, patient.getNames().size());
 		assertFalse(getAsList(AuditLogUtil.getNewValueOfUpdatedItem("names", al)).contains(nameToRemove.getId().toString()));
-		List<String> previousNameIds = getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("names", al));
+		List<Object> previousNameIds = getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("names", al));
 		for (PersonName name : patient.getNames()) {
 			assertTrue(previousNameIds.contains(name.getId().toString()));
 		}
@@ -143,9 +161,13 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		conceptLogs.removeAll(existingUpdateLogs);
 		assertEquals(1, conceptLogs.size());
 		AuditLog al = conceptLogs.get(0);
-		assertEquals(AuditLogUtil.getNewValueOfUpdatedItem("descriptions", al), "[\"" + previousDescriptionId + "\""
-		        + AuditLogConstants.SEPARATOR + "\"" + cd1.getId() + "\"]");
-		assertEquals(AuditLogUtil.getPreviousValueOfUpdatedItem("descriptions", al), "[\"" + previousDescriptionId + "\"]");
+		List<Object> expectedList = new ArrayList<Object>();
+		expectedList.add(previousDescriptionId.toString());
+		expectedList.add(cd1.getId().toString());
+		assertTrue(compareLists(expectedList, getAsList(AuditLogUtil.getNewValueOfUpdatedItem("descriptions", al))));
+		expectedList = new ArrayList<Object>();
+		expectedList.add(previousDescriptionId.toString());
+		assertTrue(compareLists(expectedList, getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("descriptions", al))));
 		
 		List<AuditLog> descriptionLogs = getAllLogs(cd1.getId(), ConceptDescription.class,
 		    Collections.singletonList(CREATED));
@@ -209,7 +231,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		AuditLog al = patientLogs.get(0);
 		assertEquals(originalCount - 1, patient.getNames().size());
 		assertFalse(getAsList(AuditLogUtil.getNewValueOfUpdatedItem("names", al)).contains(nameToRemove.getId().toString()));
-		List<String> previousNameIds = getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("names", al));
+		List<Object> previousNameIds = getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("names", al));
 		for (PersonName name : patient.getNames()) {
 			assertTrue(previousNameIds.contains(name.getId().toString()));
 		}
@@ -243,9 +265,15 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		conceptLogs.removeAll(existingUpdateLogs);
 		assertEquals(1, conceptLogs.size());
 		AuditLog al = conceptLogs.get(0);
-		assertEquals(AuditLogUtil.getNewValueOfUpdatedItem("descriptions", al), "[\"" + previousDescriptionId + "\""
-		        + AuditLogConstants.SEPARATOR + "\"" + cd1.getId() + "\"]");
-		assertEquals(AuditLogUtil.getPreviousValueOfUpdatedItem("descriptions", al), "[\"" + previousDescriptionId + "\"]");
+		
+		//assertTrue(compareLists(expectedList, getAsList(AuditLogUtil.getNewValueOfUpdatedItem("descriptions", al))));
+		List<Object> expectedList = new ArrayList<Object>();
+		expectedList.add(previousDescriptionId.toString());
+		expectedList.add(cd1.getId().toString());
+		assertTrue(compareLists(expectedList, getAsList(AuditLogUtil.getNewValueOfUpdatedItem("descriptions", al))));
+		expectedList = new ArrayList<Object>();
+		expectedList.add(previousDescriptionId.toString());
+		assertTrue(compareLists(expectedList, getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("descriptions", al))));
 		
 		List<AuditLog> descriptionLogs = getAllLogs(cd1.getId(), ConceptDescription.class,
 		    Collections.singletonList(CREATED));
@@ -298,10 +326,11 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(++count, newCount);
 		AuditLog log = logs.get(0);
 		assertNull(AuditLogUtil.getNewValueOfUpdatedItem("descriptions", log));
-		assertNotNull(AuditLogUtil.getPreviousValueOfUpdatedItem("descriptions", log).indexOf(descriptionId1) > -1);
-		assertNotNull(AuditLogUtil.getPreviousValueOfUpdatedItem("descriptions", log).indexOf(descriptionId2) > -1);
-		assertNotNull(AuditLogUtil.getPreviousValueOfUpdatedItem("descriptions", log).indexOf(descriptionId3) > -1);
-		assertNotNull(AuditLogUtil.getPreviousValueOfUpdatedItem("descriptions", log).indexOf(descriptionId4) > -1);
+		List<String> prevValues = (List<String>) AuditLogUtil.getPreviousValueOfUpdatedItem("descriptions", log);
+		assertTrue(prevValues.contains(descriptionId1.toString()));
+		assertTrue(prevValues.contains(descriptionId2.toString()));
+		assertTrue(prevValues.contains(descriptionId3.toString()));
+		assertTrue(prevValues.contains(descriptionId4.toString()));
 	}
 	
 	@Test
@@ -466,7 +495,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(0, descriptionAuditLogs3.size());
 		
 		List<AuditLog> descriptionAuditLogs4 = getAllLogs(cd4.getId(), ConceptDescription.class,
-                Collections.singletonList(DELETED));
+		    Collections.singletonList(DELETED));
 		assertEquals(0, descriptionAuditLogs4.size());//same here
 		
 		List<AuditLog> descriptionAuditLogs5 = getAllLogs(cd5.getId(), ConceptDescription.class,
@@ -699,7 +728,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		AuditLog al = logs.get(0);
 		assertEquals(previousUserProperties, AuditLogUtil.getPreviousValueOfUpdatedItem("userProperties", al));
 		assertEquals("{\"" + newKey + "\":\"" + newValue + "\"}",
-                AuditLogUtil.getNewValueOfUpdatedItem("userProperties", al));
+		    AuditLogUtil.getNewValueOfUpdatedItem("userProperties", al));
 	}
 	
 	@Test
@@ -772,7 +801,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	/**
 	 * This tests assumes that the owner has other changes
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -808,7 +837,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	/**
 	 * This tests assumes that the owner has no other changes
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -840,7 +869,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	/**
 	 * This tests assumes that the owner has no other changes
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -872,7 +901,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	/**
 	 * This tests assumes that the owner has other changes
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -905,7 +934,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	/**
 	 * This tests assumes that the owner has no other changes and the collection item is new
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -940,7 +969,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	/**
 	 * This tests assumes that the owner has no other changes and collection item exists
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -970,7 +999,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	/**
 	 * This tests assumes that the owner has other changes and collection item is new
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -1007,7 +1036,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	
 	/**
 	 * This tests assumes that the owner has other changes and collection item exists
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -1040,7 +1069,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	/**
 	 * For this test we remove the item by replacing the collection with a nw instance that doesn't
 	 * contain it
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -1077,7 +1106,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(0, al.getChildAuditLogs().size());
 		assertFalse(getAsList(AuditLogUtil.getNewValueOfUpdatedItem("tags", al)).contains(tagToRemove.getId().toString()));
 		assertTrue(getAsList(AuditLogUtil.getNewValueOfUpdatedItem("tags", al)).contains(keptTag.getId().toString()));
-		List<String> previousTagIds = getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("tags", al));
+		List<Object> previousTagIds = getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("tags", al));
 		assertTrue(previousTagIds.contains(tagToRemove.getId().toString()));
 		assertTrue(previousTagIds.contains(keptTag.getId().toString()));
 		List<AuditLog> tagLogs = getAllLogs(tagId, LocationTag.class, null);
@@ -1087,7 +1116,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	/**
 	 * For this test we remove the item by replacing the collection with a nw instance that doesn't
 	 * contain it
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -1122,8 +1151,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(1, patientLogs.size());
 		AuditLog al = patientLogs.get(0);
 		assertEquals(0, al.getChildAuditLogs().size());
-		List<String> newTagIds = getAsList(AuditLogUtil.getNewValueOfUpdatedItem("tags", al));
-		List<String> previousTagIds = getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("tags", al));
+		List<Object> newTagIds = getAsList(AuditLogUtil.getNewValueOfUpdatedItem("tags", al));
+		List<Object> previousTagIds = getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("tags", al));
 		assertTrue(newTagIds.contains(tagToAdd.getId().toString()));
 		assertFalse(previousTagIds.contains(tagToAdd.getId().toString()));
 		for (LocationTag tag : previousTags) {
@@ -1137,7 +1166,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	/**
 	 * For this test we remove the item by replacing the collection with a new instance that doesn't
 	 * contain it
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -1180,8 +1209,8 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(1, patientLogs.size());
 		AuditLog al = patientLogs.get(0);
 		assertEquals(0, al.getChildAuditLogs().size());
-		List<String> previousTagIds = getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("tags", al));
-		List<String> newTagIds = getAsList(AuditLogUtil.getNewValueOfUpdatedItem("tags", al));
+		List<Object> previousTagIds = getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("tags", al));
+		List<Object> newTagIds = getAsList(AuditLogUtil.getNewValueOfUpdatedItem("tags", al));
 		assertFalse(newTagIds.contains(tagToRemove.getId().toString()));
 		assertTrue(previousTagIds.contains(tagToRemove.getId().toString()));
 		assertTrue(newTagIds.contains(keptTag.getId().toString()));
@@ -1231,7 +1260,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		AuditLog al = patientLogs.get(0);
 		assertEquals(originalCount - 1, patient.getNames().size());
 		assertFalse(getAsList(AuditLogUtil.getNewValueOfUpdatedItem("names", al)).contains(nameToRemove.getId().toString()));
-		List<String> previousNameIds = getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("names", al));
+		List<Object> previousNameIds = getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("names", al));
 		for (PersonName name : patient.getNames()) {
 			assertTrue(previousNameIds.contains(name.getId().toString()));
 		}
@@ -1244,7 +1273,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	/**
 	 * For this test we remove the item by replacing the collection with a new instance that doesn't
 	 * contain it
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -1273,7 +1302,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		AuditLog al = locationLogs.get(0);
 		assertEquals(0, al.getChildAuditLogs().size());
 		assertNull(AuditLogUtil.getNewValueOfUpdatedItem("tags", al));
-		List<String> previousTagIds = getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("tags", al));
+		List<Object> previousTagIds = getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("tags", al));
 		for (LocationTag tag : previousTags) {
 			assertTrue(previousTagIds.contains(tag.getId().toString()));
 		}
@@ -1288,7 +1317,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	/**
 	 * For this test we remove the item by replacing the collection with a new instance that doesn't
 	 * contain it
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -1318,7 +1347,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		AuditLog al = patientLogs.get(0);
 		assertEquals(0, al.getChildAuditLogs().size());
 		assertNull(AuditLogUtil.getNewValueOfUpdatedItem("tags", al));
-		List<String> previousTagIds = getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("tags", al));
+		List<Object> previousTagIds = getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("tags", al));
 		for (LocationTag tag : previousTags) {
 			assertTrue(previousTagIds.contains(tag.getId().toString()));
 		}
@@ -1333,7 +1362,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 	/**
 	 * For this test we remove the item by replacing the collection with a new instance that doesn't
 	 * contain it
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -1363,7 +1392,7 @@ public class CollectionsAuditLogBehaviorTest extends BaseBehaviorTest {
 		AuditLog al = patientLogs.get(0);
 		assertEquals(0, al.getChildAuditLogs().size());
 		assertNull(AuditLogUtil.getNewValueOfUpdatedItem("tags", al));
-		List<String> previousTagIds = getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("tags", al));
+		List<Object> previousTagIds = getAsList(AuditLogUtil.getPreviousValueOfUpdatedItem("tags", al));
 		for (LocationTag tag : previousTags) {
 			assertTrue(previousTagIds.contains(tag.getId().toString()));
 		}
