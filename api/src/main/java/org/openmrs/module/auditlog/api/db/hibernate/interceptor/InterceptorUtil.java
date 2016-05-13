@@ -14,6 +14,7 @@
 package org.openmrs.module.auditlog.api.db.hibernate.interceptor;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -82,16 +83,27 @@ final class InterceptorUtil {
 	 */
 	static String serializePersistentObject(Object object) {
 		//TODO Might be better to use xstream
-		Map<String, Serializable> propertyNameValueMap = null;
+		Map<String, Object> propertyNameValueMap = null;
 		ClassMetadata cmd = DAOUtils.getClassMetadata(AuditLogUtil.getActualType(object));
 		if (cmd != null) {
-			propertyNameValueMap = new HashMap<String, Serializable>();
+			propertyNameValueMap = new HashMap<String, Object>();
 			propertyNameValueMap.put(cmd.getIdentifierPropertyName(), cmd.getIdentifier(object, EntityMode.POJO));
 			for (String propertyName : cmd.getPropertyNames()) {
-				String serializedValue = AuditLogUtil.serializeObject(cmd.getPropertyValue(object, propertyName,
-				    EntityMode.POJO));
-				if (serializedValue != null) {
-					propertyNameValueMap.put(propertyName, serializedValue);
+				Object value = cmd.getPropertyValue(object, propertyName, EntityMode.POJO);
+				if (value != null) {
+					Object serializedValue = null;
+					if (cmd.getPropertyType(propertyName).isCollectionType()) {
+						if (Collection.class.isAssignableFrom(value.getClass())) {
+							serializedValue = AuditLogUtil.serializeCollectionItems((Collection) value);
+						} else if (Map.class.isAssignableFrom(value.getClass())) {
+							serializedValue = AuditLogUtil.serializeMapItems((Map) value);
+						}
+					} else {
+						serializedValue = AuditLogUtil.serializeObject(value);
+					}
+					if (serializedValue != null) {
+						propertyNameValueMap.put(propertyName, serializedValue);
+					}
 				}
 			}
 		}

@@ -195,7 +195,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 							previousValueString = previousValue.toString();
 						}
 						
-						//TODO Case sensibility here should be configurable via a GP by admin
+						//TODO Case sensibility here should be configurable via a GP
 						if (OpenmrsUtil.nullSafeEqualsIgnoreCase(previousValueString, currentStateString)) {
 							continue;
 						}
@@ -664,8 +664,9 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				if (previousCollOrMap.equals(currentCollOrMap)) {
 					return;
 				}
-				previousSerializedItems = AuditLogUtil.serializeMap((Map) previousCollOrMap);
-				newSerializedItems = AuditLogUtil.serializeMap((Map) currentCollOrMap);
+				
+				previousSerializedItems = AuditLogUtil.serializeMapItems((Map) previousCollOrMap);
+				newSerializedItems = AuditLogUtil.serializeMapItems((Map) currentCollOrMap);
 			}
 			
 			updates.get().peek().add(owningObject);

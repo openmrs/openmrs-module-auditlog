@@ -59,6 +59,15 @@ public class AuditLogUtil {
 	
 	private static final Log log = LogFactory.getLog(AuditLogUtil.class);
 	
+	private static ObjectMapper mapper = null;
+	
+	private static ObjectMapper getMapper() {
+		if (mapper == null) {
+			mapper = new ObjectMapper();
+		}
+		return mapper;
+	}
+	
 	/**
 	 * Converts a set of class objects to a list of class name strings
 	 * 
@@ -296,7 +305,7 @@ public class AuditLogUtil {
 			} else if (Collection.class.isAssignableFrom(clazz)) {
 				serializedValue = serializeToJson(serializeCollectionItems((Collection) obj));
 			} else if (Map.class.isAssignableFrom(clazz)) {
-				serializedValue = serializeMap((Map) obj);
+				serializedValue = serializeToJson(serializeMapItems((Map) obj));
 			}
 			if (StringUtils.isBlank(serializedValue)) {
 				ClassMetadata metadata = getClassMetadata(clazz);
@@ -341,9 +350,9 @@ public class AuditLogUtil {
 	 * Utility method that serializes the map entries to a string
 	 * 
 	 * @param map the Map object
-	 * @return The serialized map entries
+	 * @return A map of serialized map keys and values
 	 */
-	public static String serializeMap(Map<?, ?> map) {
+	public static Map<String, String> serializeMapItems(Map<?, ?> map) {
 		Map<String, String> serializedMap = null;
 		if (MapUtils.isNotEmpty(map)) {
 			serializedMap = new HashMap<String, String>(map.size());
@@ -356,12 +365,12 @@ public class AuditLogUtil {
 			}
 		}
 		
-		return serializeToJson(serializedMap);
+		return serializedMap;
 	}
 	
 	/**
-	 * Utility method that serializes the passed in data to json, this method asssumes all the
-	 * passed in data is already serialized
+	 * Utility method that serializes the passed in data to json, this method assumes all the passed
+	 * in data is already serialized
 	 * 
 	 * @param data the data to serialize
 	 * @return the generated json
@@ -370,7 +379,7 @@ public class AuditLogUtil {
 		String json = null;
 		if (data != null) {
 			try {
-				json = new ObjectMapper().writeValueAsString(data);
+				json = getMapper().writeValueAsString(data);
 			}
 			catch (Exception e) {
 				log.error("Failed to generate changes data", e);

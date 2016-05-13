@@ -15,6 +15,7 @@ package org.openmrs.module.auditlog.web.dwr;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +37,6 @@ import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.module.auditlog.web.util.AuditLogWebConstants;
-import org.openmrs.util.Reflect;
 
 /**
  * Processes DWR calls for the module
@@ -160,42 +160,62 @@ public class DWRAuditLogService {
 		}
 		
 		try {
-			if (Reflect.isCollection(propertyType)) {
+			if (Collection.class.isAssignableFrom(propertyType) || Map.class.isAssignableFrom(propertyType)) {
 				//TODO this not to fail if the primary key was a String e.g for privileges and had a ',' in it
-				List<Object> uuidsOrIds = (List<Object>) propertyValue;
-				List<Object> items = new ArrayList<Object>();
-				List<String> unmatchedUuidsOrIds = new ArrayList<String>();
-				for (Object currUuidOrId : uuidsOrIds) {
-					Object item = null;
-					String currUuidOrStr = currUuidOrId.toString().trim();
-					Class<?> itemType = AuditLogUtil.getCollectionElementType(owningType, propertyName);
-					if (AuditLogUtil.isPersistent(itemType)) {
-						try {
-							item = getService().getObjectById(itemType, Integer.valueOf(currUuidOrStr));
+				if (Collection.class.isAssignableFrom(propertyType)) {
+					if (((Collection) propertyValue).size() == 0) {
+						return displayString;
+					}
+					List<Object> uuidsOrIds = (List<Object>) propertyValue;
+					List<Object> items = new ArrayList<Object>();
+					List<String> unmatchedUuidsOrIds = new ArrayList<String>();
+					for (Object currUuidOrId : uuidsOrIds) {
+						Object item = null;
+						String currUuidOrStr = currUuidOrId.toString().trim();
+						Class<?> itemType = AuditLogUtil.getCollectionElementType(owningType, propertyName);
+						if (AuditLogUtil.isPersistent(itemType)) {
+							try {
+								item = getService().getObjectById(itemType, Integer.valueOf(currUuidOrStr));
+							}
+							catch (NumberFormatException nfe) {
+								//ignore
+							}
 						}
-						catch (NumberFormatException nfe) {
-							//ignore
+						
+						if (item != null) {
+							items.add(item);
+						} else {
+							unmatchedUuidsOrIds.add(currUuidOrStr);
 						}
 					}
 					
-					if (item != null) {
-						items.add(item);
-					} else {
-						unmatchedUuidsOrIds.add(currUuidOrStr);
+					StringBuilder sb = new StringBuilder("<ul class='" + AuditLogConstants.MODULE_ID
+					        + "_collection_property'>");
+					for (Object o1 : items) {
+						sb.append("<li class='" + AuditLogConstants.MODULE_ID + "_collection_item'>"
+						        + getDisplayString(o1, true) + "</li>");
 					}
+					for (String str : unmatchedUuidsOrIds) {
+						sb.append("<li class='" + AuditLogConstants.MODULE_ID + "_collection_item "
+						        + AuditLogConstants.MODULE_ID + "_collection_item_unmatched'>" + str + "</li>");
+					}
+					sb.append("</ul>");
+					displayString += sb.toString();
+				} else {
+					if (((Map) propertyValue).size() == 0) {
+						return displayString;
+					}
+					StringBuilder sb = new StringBuilder("<ul class='" + AuditLogConstants.MODULE_ID
+					        + "_collection_property'>");
+					
+					Map<Object, Object> map = (Map) propertyValue;
+					for (Object entry : map.entrySet()) {
+						sb.append("<li class='" + AuditLogConstants.MODULE_ID + "_collection_item'>"
+						        + getDisplayString(entry, true) + " = " + getDisplayString(entry, true) + "</li>");
+					}
+					sb.append("</ul>");
+					displayString += sb.toString();
 				}
-				
-				StringBuilder sb = new StringBuilder("<ul class='" + AuditLogConstants.MODULE_ID + "_collection_property'>");
-				for (Object o1 : items) {
-					sb.append("<li class='" + AuditLogConstants.MODULE_ID + "_collection_item'>"
-					        + getDisplayString(o1, true) + "</li>");
-				}
-				for (String str : unmatchedUuidsOrIds) {
-					sb.append("<li class='" + AuditLogConstants.MODULE_ID + "_collection_item "
-					        + AuditLogConstants.MODULE_ID + "_collection_item_unmatched'>" + str + "</li>");
-				}
-				sb.append("</ul>");
-				displayString += sb.toString();
 			} else {
 				String stringValue = propertyValue.toString();
 				if (StringUtils.isNotBlank(stringValue)) {

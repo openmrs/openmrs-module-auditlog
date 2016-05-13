@@ -29,8 +29,6 @@ public final class AuditLogConstants {
 	
 	public static final String SEPARATOR = ",";
 	
-	public static final String MAP_KEY_VALUE_SEPARATOR = ":";
-	
 	public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 	
 	//Specifies the auditing strategy in use
