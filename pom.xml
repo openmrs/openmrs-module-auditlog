@@ -8,7 +8,7 @@
 	<packaging>pom</packaging>
 	<name>Audit Log Module</name>
 	<description>Allows keeping an audit trail of changes in data in the database</description>
-	<url>https://wiki.openmrs.org/display/docs/Audit+Log+Module+Module</url>
+	<url>https://wiki.openmrs.org/display/docs/Audit+Log+Module</url>
 	
 	<developers>
 		<developer>
@@ -39,22 +39,7 @@
 	</properties>
 
 	<dependencyManagement>
-		<dependencies>
-		
-			<!--
-			Libraries to add as dependencies with compile or runtime scope:
-			Find matching dependencies in the maven central repository.
-			<dependency>
-				<groupId>org.other.library</groupId>
-				<artifactId>library-name</artifactId>
-				<version>library.version</version>
-				<scope>compile</scope>
-			</dependency>
-			-->
-			
-			
-
-			<!-- Begin OpenMRS core -->
+		<dependencies><!-- Begin OpenMRS core -->
 			
 			<dependency>
 				<groupId>org.openmrs.api</groupId>

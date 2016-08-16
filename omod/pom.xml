@@ -13,26 +13,12 @@
 	<description>OMOD project for AuditLog</description>
 
 	<dependencies>
-
-		<!-- 
-		Add other dependencies from parent's pom: 
-		<dependency> 
-			<groupId>org.other.library</groupId> 
-			<artifactId>library-name</artifactId> 
-		</dependency> 
-		-->
-		
-		<!-- Begin OpenMRS modules -->
 		
 		<dependency>
 			<groupId>${project.parent.groupId}</groupId>
 			<artifactId>${project.parent.artifactId}-api</artifactId>
 			<version>${project.parent.version}</version>
 		</dependency>
-		
-				
-		<!-- End OpenMRS modules -->
-		
 
 		<!-- Begin OpenMRS core -->
 
