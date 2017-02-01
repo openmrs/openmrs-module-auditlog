@@ -57,16 +57,18 @@
         <property>${project.parent.artifactId}.storeLastStateOfDeletedItems</property>
         <defaultValue>false</defaultValue>
         <description>
-            Specifies whether the last states of deleted items should be stored
+            Specifies whether the last states of deleted items should be serialized and
+            stored in the DB, defaults to false
         </description>
     </globalProperty>
 
     <globalProperty>
         <property>${project.parent.artifactId}.exceptions</property>
         <description>
-            Specifies the class names of objects for which to maintain an audit log when the auditing strategy is set
-            to NONE_EXCEPT otherwise specifies the class names of objects for which not to maintain an audit log,
-            when the auditing strategy is set to ALL_EXCEPT
+            Specifies the fully qualified java class names of domain objects for which to maintain
+            an audit trail when the auditing strategy is set to NONE_EXCEPT otherwise specifies the
+            class names of objects for which not to maintain an audit log, when the auditing strategy
+            is set to ALL_EXCEPT
         </description>
     </globalProperty>
 	
@@ -105,7 +107,7 @@
 
     <privilege>
         <name>Manage Audit Log</name>
-        <description>Able to get manage teh audit log</description>
+        <description>Able to get manage the audit log</description>
     </privilege>
 
 </module>
