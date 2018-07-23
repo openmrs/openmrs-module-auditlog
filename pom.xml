@@ -36,6 +36,7 @@
 	<properties>
 		<openMRSVersion>1.8.3</openMRSVersion>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <jsonAssertVersion>1.5.0</jsonAssertVersion>
 	</properties>
 
 	<dependencyManagement>
@@ -82,6 +83,13 @@
 			</dependency>
 						
 			<!-- End OpenMRS core -->
+
+            <dependency>
+                <groupId>org.skyscreamer</groupId>
+                <artifactId>jsonassert</artifactId>
+                <version>${jsonAssertVersion}</version>
+                <scope>test</scope>
+            </dependency>
 
 		</dependencies>
 	</dependencyManagement>
