@@ -17,8 +17,9 @@ After you've configured the module and you create, update or purge(delete foreve
 ## Known Issues
 - The module currently writes the audit log details to the DB, this table is expected to quickly grow big for a fairly large implementation depending on their configurations e.g if they track all domain object. Future versions of the module should be able to automatically archive logs older than a certain configured period to the file system in order to keep the size of the table down.
 - Any changes applied to the DB via liquibase by directly running SQL queries against the DB are not caught for logging.
-- The module's hibernate interceptor is called via the interceptor chaining process in core API, the order in which the registered interceptors are called is based on alphabetical order of their spring bean ids, this implies that if you run the module alongside another that registers its own interceptor that happends to come after it in the chain, it can potentially affect the auditlog module's functionality in case that other interceptor alters the persistent object's state, this can be addressed by making a switch from a hibernate interceptor to hibernate's event mechanism. 
+- The module's hibernate interceptor is called via the interceptor chaining process in core API, the order in which the registered interceptors are called is based on alphabetical order of their spring bean ids, this implies that if you run the module alongside another that registers its own interceptor that happens to come after it in the chain, it can potentially affect the auditlog module's functionality in case that other interceptor alters the persistent object's state, this can be addressed by making a switch from a hibernate interceptor to hibernate's event mechanism. 
 - Most likely the module is not compatible with versions 2.0 and above of OpenMRS core.
 
 ## Alternatives to the module
-Use triggers to create the audit trail or the inbuilt logging mechanism of your DB.
+- Use triggers to create the audit trail or the inbuilt logging mechanism of your DB.
+- Update events module to be based on debezium and embed the auditlog feature in the events module, but with debezium there would be no way to know the user that made the change
