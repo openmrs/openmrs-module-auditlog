@@ -21,5 +21,5 @@ After you've configured the module and you create, update or purge(delete foreve
 - Most likely the module is not compatible with versions 2.0 and above of OpenMRS core.
 
 ## Alternatives to the module
-- Use triggers to create the audit trail or the inbuilt logging mechanism of your DB.
+- Use triggers to create the audit trail or the built-in logging mechanism of your DB.
 - Update events module to be based on debezium and embed the auditlog feature in the events module, but with debezium there would be no way to know the user that made the change
