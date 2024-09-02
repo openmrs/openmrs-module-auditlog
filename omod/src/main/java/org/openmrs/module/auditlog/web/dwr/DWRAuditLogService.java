@@ -61,7 +61,7 @@ public class DWRAuditLogService {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public AuditLogDetails getAuditLogDetails(String auditLogUuid) {
+	public AuditLogDetails getAuditLogDetails(String auditLogUuid) throws ClassNotFoundException {
 		
 		Context.requirePrivilege(AuditLogWebConstants.PRIV_VIEW_AUDITLOG);
 		
@@ -71,7 +71,7 @@ public class DWRAuditLogService {
 				String displayString = "";
 				boolean objectExists = false;
 				Map<String, Object> otherData = new HashMap<String, Object>();
-				Class<?> clazz = auditLog.getType();
+				Class<?> clazz = Class.forName(auditLog.getType());
 				if (!auditLog.getAction().equals(Action.DELETED)) {
 					
 					Object obj = getService().getObjectById(clazz, auditLog.getIdentifier());

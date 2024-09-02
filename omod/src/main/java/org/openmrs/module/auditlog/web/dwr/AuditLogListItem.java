@@ -41,10 +41,10 @@ public class AuditLogListItem {
 	/**
 	 * Convenience constructor that created an {@link AuditLogListItem} from an {@link AuditLog}
 	 */
-	public AuditLogListItem(AuditLog auditLog) {
+	public AuditLogListItem(AuditLog auditLog) throws ClassNotFoundException {
 		auditLogId = auditLog.getAuditLogId();
-		classname = auditLog.getType().getName();
-		simpleClassname = auditLog.getType().getSimpleName();
+		classname = auditLog.getType();
+		simpleClassname = Class.forName(auditLog.getType()).getSimpleName();
 		//If it is a nested class, use the simple name of the nested class
 		if (simpleClassname.indexOf("$") > -1) {
 			simpleClassname = simpleClassname.substring(simpleClassname.indexOf("$") + 1);

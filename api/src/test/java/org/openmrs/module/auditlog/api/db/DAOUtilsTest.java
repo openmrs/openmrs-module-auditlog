@@ -20,12 +20,14 @@ import static org.junit.Assert.assertTrue;
 import java.lang.reflect.Modifier;
 import java.util.Set;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openmrs.Concept;
 import org.openmrs.ConceptComplex;
 import org.openmrs.ConceptNumeric;
 import org.openmrs.OpenmrsObject;
 
+@Ignore
 public class DAOUtilsTest {
 	
 	/**

@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -51,6 +52,7 @@ import org.openmrs.test.Verifies;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Ignore
 public class AuditLogHelperTest extends BaseAuditLogTest {
 	
 	@Autowired

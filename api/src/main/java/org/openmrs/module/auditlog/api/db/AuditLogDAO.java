@@ -47,6 +47,28 @@ public interface AuditLogDAO {
 	 */
 	public List<AuditLog> getAuditLogs(Serializable id, List<Class<?>> types, List<Action> actions, Date startDate,
 	                                   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length);
+
+	/**
+	 * Fetches the audit log entries matching the specified arguments
+	 *
+	 * @param ids the list of Ids
+	 * @param type the class name to match against e.g for object of type
+	 *            {@link org.openmrs.Concept}
+	 * @param actions the list of {@link org.openmrs.module.auditlog.AuditLog.Action}s to match
+	 *            against
+	 * @param startDate the creation date of the log entries to return should be after or equal to
+	 *            this date
+	 * @param endDate the creation date of the log entries to return should be before or equal to
+	 *            this date
+	 * @param excludeChildAuditLogs specifies if AuditLogs for collection items should excluded or
+	 *            not
+	 * @param start index to start with (defaults to 0 if <code>null<code>)
+	 * @param length number of results to return (default to return all matching results if
+	 *            <code>null<code>)
+	 * @return list of auditlogs
+	 */
+	public List<AuditLog> getAuditLogsWithIds(List<String> ids, Class<?> type, List<Action> actions, Date startDate,
+									   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length);
 	
 	/**
 	 * Saves the specified object to the database

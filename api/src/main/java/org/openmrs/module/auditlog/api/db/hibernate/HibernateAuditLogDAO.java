@@ -14,8 +14,10 @@
 package org.openmrs.module.auditlog.api.db.hibernate;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.logging.Log;
@@ -64,7 +66,10 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		}
 		
 		if (types != null) {
-			criteria.add(Restrictions.in("type", types));
+			List<String> classNames = types.stream()
+					.map(Class::getName)
+					.collect(Collectors.toList());
+			criteria.add(Restrictions.in("type", classNames));
 		}
 		if (actions != null) {
 			criteria.add(Restrictions.in("action", actions));
@@ -90,7 +95,42 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		
 		return criteria.list();
 	}
-	
+
+	@Override
+	public List<AuditLog> getAuditLogsWithIds(List<String> ids, Class<?> type, List<Action> actions, Date startDate, Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length) {
+		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(AuditLog.class);
+		if (ids != null) {
+			criteria.add(Restrictions.in("identifier", ids));
+		}
+
+		if (type != null) {
+			criteria.add(Restrictions.eq("type", type.getName()));
+		}
+		if (actions != null) {
+			criteria.add(Restrictions.in("action", actions));
+		}
+		if (excludeChildAuditLogs) {
+			criteria.add(Restrictions.isNull("parentAuditLog"));
+		}
+		if (startDate != null) {
+			criteria.add(Restrictions.ge("dateCreated", startDate));
+		}
+		if (endDate != null) {
+			criteria.add(Restrictions.le("dateCreated", endDate));
+		}
+		if (start != null) {
+			criteria.setFirstResult(start);
+		}
+		if (length != null && length > 0) {
+			criteria.setMaxResults(length);
+		}
+
+		//Show the latest logs first
+		criteria.addOrder(Order.desc("dateCreated"));
+
+		return criteria.list();
+	}
+
 	/**
 	 * @see AuditLogDAO#save(Object)
 	 */
@@ -175,7 +215,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 */
 	@Override
 	public Serializable getId(Object object) {
-		return sessionFactory.getClassMetadata(object.getClass()).getIdentifier(object, EntityMode.POJO);
+		return sessionFactory.getClassMetadata(object.getClass()).getIdentifier(object);
 	}
 	
 	/**

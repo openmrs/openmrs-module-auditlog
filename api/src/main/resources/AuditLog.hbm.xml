@@ -3,7 +3,7 @@
     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
     "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
 
-<hibernate-mapping package="${project.parent.groupId}.${project.parent.artifactId}">
+<hibernate-mapping package="org.openmrs.module.auditlog">
 
 	<class name="AuditLog" table="auditlog_audit_log">
 	
@@ -20,8 +20,9 @@
 		<property name="identifier" type="string" length="255" not-null="true" />
 		
 		<property name="action" length="50" not-null="true">
-			<type name="org.openmrs.util.HibernateEnumType">
-				<param name="enumClassName">${project.parent.groupId}.${project.parent.artifactId}.AuditLog$Action</param>
+			<type name="org.hibernate.type.EnumType">
+				<param name="enumClass">org.openmrs.module.auditlog.AuditLog$Action</param>
+				<param name="useNamed">true</param>
 			</type>
 		</property>
 		

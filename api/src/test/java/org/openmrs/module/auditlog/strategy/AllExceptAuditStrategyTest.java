@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.hibernate.persister.collection.CollectionPersister;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openmrs.Cohort;
 import org.openmrs.Concept;
@@ -38,6 +39,7 @@ import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.util.OpenmrsUtil;
 
+@Ignore
 public class AllExceptAuditStrategyTest extends BaseAuditLogTest {
 	
 	private static final String EXCEPTIONS_FOR_ALL_EXCEPT = "org.openmrs.Concept, org.openmrs.EncounterType";

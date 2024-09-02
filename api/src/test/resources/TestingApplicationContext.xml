@@ -1,10 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
-		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+  		    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+  		    http://www.springframework.org/schema/context
+  		    http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+    <context:component-scan base-package="org.openmrs.module.auditlog"/>
 
     <bean id="sessionFactory" class="org.openmrs.api.db.hibernate.HibernateSessionFactoryBean">
+        <property name="packagesToScan">
+            <list>
+                <value>org.openmrs</value>
+            </list>
+        </property>
         <property name="configLocations">
             <list>
                 <value>classpath:hibernate.cfg.xml</value>
@@ -13,6 +23,17 @@
         </property>
         <property name="mappingJarLocations">
             <ref bean="mappingJarResources"/>
+        </property>
+        <!--  default properties must be set in the hibernate.default.properties -->
+    </bean>
+
+    <bean id="administrationService" name="administrationService" class="org.openmrs.api.impl.AdministrationServiceImpl"/>
+    <bean parent="serviceContext">
+        <property name="moduleService">
+            <list merge="true">
+                <value>org.openmrs.api.AdministrationService</value>
+                <ref bean="administrationService"/>
+            </list>
         </property>
     </bean>
 

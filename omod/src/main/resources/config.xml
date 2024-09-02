@@ -24,6 +24,10 @@
 		<point>org.openmrs.admin.list</point>
 		<class>${project.parent.groupId}.${project.parent.artifactId}.extension.html.AdminList</class>
 	</extension>
+
+	<aware_of_modules>
+		<aware_of_module>org.openmrs.module.legacyui</aware_of_module>
+	</aware_of_modules>
 	
 	<!-- DWR -->
 	<dwr>
@@ -74,7 +78,6 @@
 	
 	<!-- Maps hibernate file's, if present -->
 	<mappingFiles>
-		AuditLog.hbm.xml			
 	</mappingFiles>
 
 	<!-- Internationalization -->

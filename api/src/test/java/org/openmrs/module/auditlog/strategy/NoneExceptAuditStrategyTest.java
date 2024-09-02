@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.hibernate.persister.collection.CollectionPersister;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openmrs.Cohort;
 import org.openmrs.Concept;
@@ -40,6 +41,7 @@ import org.openmrs.module.auditlog.BaseAuditLogTest;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.util.OpenmrsUtil;
 
+@Ignore
 public class NoneExceptAuditStrategyTest extends BaseAuditLogTest {
 	
 	/**

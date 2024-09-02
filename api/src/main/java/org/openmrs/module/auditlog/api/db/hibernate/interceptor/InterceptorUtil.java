@@ -87,9 +87,12 @@ final class InterceptorUtil {
 		ClassMetadata cmd = DAOUtils.getClassMetadata(AuditLogUtil.getActualType(object));
 		if (cmd != null) {
 			propertyNameValueMap = new HashMap<String, Object>();
-			propertyNameValueMap.put(cmd.getIdentifierPropertyName(), cmd.getIdentifier(object, EntityMode.POJO));
+//			propertyNameValueMap.put(cmd.getIdentifierPropertyName(), cmd.getIdentifier(object, EntityMode.POJO));
+			propertyNameValueMap.put(cmd.getIdentifierPropertyName(), cmd.getIdentifier(object));
+
 			for (String propertyName : cmd.getPropertyNames()) {
-				Object value = cmd.getPropertyValue(object, propertyName, EntityMode.POJO);
+//				Object value = cmd.getPropertyValue(object, propertyName, EntityMode.POJO);
+				Object value = cmd.getPropertyValue(object, propertyName);
 				if (value != null) {
 					Object serializedValue = null;
 					if (cmd.getPropertyType(propertyName).isCollectionType()) {

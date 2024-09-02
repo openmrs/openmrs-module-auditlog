@@ -16,12 +16,14 @@ package org.openmrs.module.auditlog.api.db;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.EntityMode;
 import org.hibernate.SessionFactory;
-import org.hibernate.engine.SessionFactoryImplementor;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metadata.ClassMetadata;
+import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.type.CollectionType;
 import org.hibernate.type.OneToOneType;
 import org.hibernate.type.Type;
@@ -117,27 +119,34 @@ public class DAOUtils {
 	 */
 	@SuppressWarnings("unchecked")
 	private static Set<Class<?>> getPersistentConcreteSubclassesInternal(Class<?> clazz, Set<Class<?>> foundSubclasses,
-	                                                                     Collection<ClassMetadata> mappedClasses) {
+																		 Collection<EntityPersister> mappedClasses) {
 		if (foundSubclasses == null) {
-			foundSubclasses = new HashSet<Class<?>>();
+			foundSubclasses = new HashSet<>();
 		}
+
+		// Initialize mappedClasses if null by retrieving all EntityPersisters
 		if (mappedClasses == null) {
-			mappedClasses = getSessionFactory().getAllClassMetadata().values();
+			SessionFactoryImplementor sessionFactoryImpl = (SessionFactoryImplementor) getSessionFactory();
+			Map<String, EntityPersister> entityPersisters = sessionFactoryImpl.getMetamodel().entityPersisters();
+			mappedClasses = entityPersisters.values();
 		}
-		
+
 		if (clazz != null) {
-			for (ClassMetadata cmd : mappedClasses) {
-				Class<?> possibleSubclass = cmd.getMappedClass(EntityMode.POJO);
-				if (!clazz.equals(possibleSubclass) && clazz.isAssignableFrom(possibleSubclass)) {
+			for (EntityPersister persister : mappedClasses) {
+				Class<?> possibleSubclass = persister.getMappedClass();
+
+				// Check if the class is a subclass of the given class
+				if (possibleSubclass != null && !clazz.equals(possibleSubclass) && clazz.isAssignableFrom(possibleSubclass)) {
+					// Check if the subclass is concrete (not abstract and not an interface)
 					if (!Modifier.isAbstract(possibleSubclass.getModifiers()) && !possibleSubclass.isInterface()) {
 						foundSubclasses.add(possibleSubclass);
 					}
-					foundSubclasses.addAll(getPersistentConcreteSubclassesInternal(possibleSubclass, foundSubclasses,
-					    mappedClasses));
+					// Recursively find subclasses
+					foundSubclasses.addAll(getPersistentConcreteSubclassesInternal(possibleSubclass, foundSubclasses, mappedClasses));
 				}
 			}
 		}
-		
+
 		return foundSubclasses;
 	}
 	

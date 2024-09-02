@@ -41,9 +41,11 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.hibernate.EntityMode;
 import org.hibernate.MappingException;
-import org.hibernate.engine.SessionFactoryImplementor;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.persister.collection.CollectionPersister;
+import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.proxy.HibernateProxy;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.APIException;
@@ -291,40 +293,62 @@ public class AuditLogUtil {
 	 */
 	public static String serializeObject(Object obj) {
 		String serializedValue = null;
+
 		if (obj != null) {
-			Class<?> clazz = getActualType(obj);
+			Class<?> clazz = getActualType(obj);  // Determine the actual class of the object
+
 			if (Date.class.isAssignableFrom(clazz)) {
-				//TODO We need to handle time zones issues better
 				serializedValue = new SimpleDateFormat(AuditLogConstants.DATE_FORMAT).format(obj);
 			} else if (Enum.class.isAssignableFrom(clazz)) {
-				//Use value.name() over value.toString() to ensure we always get back the enum
-				//constant value and not the value returned by the implementation of value.toString()
 				serializedValue = ((Enum<?>) obj).name();
 			} else if (Class.class.isAssignableFrom(clazz)) {
 				serializedValue = ((Class<?>) obj).getName();
 			} else if (Collection.class.isAssignableFrom(clazz)) {
-				serializedValue = serializeToJson(serializeCollectionItems((Collection) obj));
+				serializedValue = serializeToJson(serializeCollectionItems((Collection<?>) obj));
 			} else if (Map.class.isAssignableFrom(clazz)) {
-				serializedValue = serializeToJson(serializeMapItems((Map) obj));
+				serializedValue = serializeToJson(serializeMapItems((Map<?, ?>) obj));
+			} else if (Number.class.isAssignableFrom(clazz) || Boolean.class.isAssignableFrom(clazz) || Character.class.isAssignableFrom(clazz)) {
+				serializedValue = obj.toString();
+				//If it's a mapped entity, use the Metamodel API to get the identifier
+			} else if (isMappedEntity(clazz)) {
+				serializedValue = getEntityIdentifier(obj);
 			}
-			if (StringUtils.isBlank(serializedValue)) {
-				ClassMetadata metadata = getClassMetadata(clazz);
-				if (metadata != null) {
-					Serializable id = metadata.getIdentifier(obj, EntityMode.POJO);
-					if (id != null) {
-						serializedValue = id.toString();
-					}
-				}
-			}
-			
+
+			// If no metadata or serialization was successful, fall back to obj.toString()
 			if (StringUtils.isBlank(serializedValue)) {
 				serializedValue = obj.toString();
 			}
 		}
-		
+
 		return serializedValue;
 	}
-	
+
+
+
+	private static boolean isMappedEntity(Class<?> clazz) {
+		try {
+			// Ensure the class is a mapped entity by checking for its presence in the Metamodel
+			return DAOUtils.getSessionFactory().getMetamodel().entity(clazz) != null;
+		} catch (IllegalArgumentException e) {
+			return false;
+		}
+	}
+
+	private static String getEntityIdentifier(Object obj) {
+		SessionFactoryImplementor sessionFactoryImpl = (SessionFactoryImplementor) DAOUtils.getSessionFactory();
+		EntityPersister persister = sessionFactoryImpl.getMetamodel().entityPersister(obj.getClass());
+
+		if (persister != null) {
+			SharedSessionContractImplementor session = (SharedSessionContractImplementor) sessionFactoryImpl.getCurrentSession();
+			Serializable id = persister.getIdentifier(obj, session);
+
+			if (id != null) {
+				return id.toString();
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * Utility method that serializes the collection entries to a string
 	 * 

@@ -39,8 +39,9 @@ import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-import org.hibernate.collection.PersistentCollection;
-import org.hibernate.engine.SessionImplementor;
+import org.hibernate.collection.spi.PersistentCollection;
+import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.metadata.ClassMetadata;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.type.StringType;
@@ -49,11 +50,12 @@ import org.hibernate.type.Type;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.AuditLog;
 import org.openmrs.module.auditlog.AuditLog.Action;
+import org.openmrs.module.auditlog.api.db.DAOUtils;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.util.OpenmrsConstants;
 import org.openmrs.util.OpenmrsUtil;
-import org.springframework.orm.hibernate3.SessionFactoryUtils;
+import org.springframework.orm.hibernate5.SessionFactoryUtils;
 import org.springframework.stereotype.Component;
 
 /**
@@ -158,10 +160,13 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				Session tmpSession = null;
 				SessionFactory sf = InterceptorUtil.getSessionFactory();
 				try {
-					tmpSession = SessionFactoryUtils.getNewSession(sf);
+					tmpSession = sf.openSession();
 					Object obj = tmpSession.get(entity.getClass(), id);
-					EntityPersister ep = ((SessionImplementor) tmpSession).getEntityPersister(null, obj);
-					previousState = ep.getPropertyValues(obj, EntityMode.POJO);
+
+					SharedSessionContractImplementor sessionImpl = (SharedSessionContractImplementor) tmpSession;
+
+					EntityPersister ep = sessionImpl.getEntityPersister(null, obj);
+					previousState = ep.getPropertyValues(obj);
 				}
 				finally {
 					if (tmpSession != null) {
@@ -280,7 +285,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 				String role = persistentColl.getRole();
 				String propertyName = role.substring(role.lastIndexOf('.') + 1);
 				ClassMetadata cmd = AuditLogUtil.getClassMetadata(AuditLogUtil.getActualType(owningObject));
-				Object currentCollection = cmd.getPropertyValue(owningObject, propertyName, EntityMode.POJO);
+				Object currentCollection = cmd.getPropertyValue(owningObject, propertyName);
 				
 				//Hibernate calls onCollectionRemove whenever the underlying collection is replaced with a
 				//new instance i.e one calls the collection's setter and passes in a new instance even if the
@@ -505,7 +510,7 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 		
 		if ((ownerUuidChildLogsMap != null && ownerUuidChildLogsMap.get().peek().containsKey(object))) {
 			for (AuditLog child : ownerUuidChildLogsMap.get().peek().get(object)) {
-				auditLog.addChildAuditLog(child);
+				auditLog.getChildAuditLogs().add(child);
 			}
 		}
 		return auditLog;
@@ -522,23 +527,32 @@ public class HibernateAuditLogInterceptor extends EmptyInterceptor {
 	private AuditLog instantiateAuditLog(Object object, Action action) {
 		Serializable id = InterceptorUtil.getId(object);
 		String serializedId = AuditLogUtil.serializeObject(id);
-		AuditLog auditLog = new AuditLog(object.getClass(), serializedId, action, Context.getAuthenticatedUser(), date.get()
+		AuditLog auditLog = new AuditLog(object.getClass().getName(), serializedId, action, Context.getAuthenticatedUser(), date.get()
 		        .peek());
 		auditLog.setOpenmrsVersion(OpenmrsConstants.OPENMRS_VERSION_SHORT);
 		auditLog.setModuleVersion(AuditLogConstants.MODULE_VERSION);
 		if (action == Action.UPDATED || action == Action.DELETED) {
 			Map<String, Object[]> propertyValuesMap = null;
+			SessionFactory sf = DAOUtils.getSessionFactory();
+
 			if (action == Action.UPDATED) {
 				propertyValuesMap = objectChangesMap.get().peek().get(object);
+
 				if (propertyValuesMap != null) {
-					Blob blob = Hibernate.createBlob(AuditLogUtil.serializeToJson(propertyValuesMap).getBytes());
+					byte[] bytes = AuditLogUtil.serializeToJson(propertyValuesMap).getBytes();
+					Blob blob = sf.getCurrentSession().getLobHelper().createBlob(bytes);
+
+//					Blob blob = Hibernate.createBlob(AuditLogUtil.serializeToJson(propertyValuesMap).getBytes());
 					auditLog.setSerializedData(blob);
 				}
 			} else if (InterceptorUtil.storeLastStateOfDeletedItems()) {
 				//TODO if one edits and deletes an object in the same API call, the property
 				//value that gets serialized is the new one but actually was never saved
 				//Should we store the value in the DB or the one in the current session?
-				Blob blob = Hibernate.createBlob(InterceptorUtil.serializePersistentObject(object).getBytes());
+				byte[] serializedData = InterceptorUtil.serializePersistentObject(object).getBytes();
+				Blob blob = sf.getCurrentSession().getLobHelper().createBlob(serializedData);
+
+//				Blob blob = Hibernate.createBlob(InterceptorUtil.serializePersistentObject(object).getBytes());
 				auditLog.setSerializedData(blob);
 			}
 		}

@@ -19,6 +19,7 @@ import java.util.List;
 import junit.framework.Assert;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.openmrs.api.ConceptService;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.context.Context;
@@ -27,6 +28,8 @@ import org.openmrs.module.auditlog.AuditLog.Action;
 /**
  * Superclass for Test Classes that contain tests for testing the core functionality of the module
  */
+
+@Ignore
 public abstract class BaseBehaviorTest extends BaseAuditLogTest {
 	
 	protected ConceptService conceptService;

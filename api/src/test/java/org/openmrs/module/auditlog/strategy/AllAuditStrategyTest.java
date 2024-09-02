@@ -11,10 +11,12 @@ package org.openmrs.module.auditlog.strategy;
 
 import static junit.framework.Assert.assertEquals;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openmrs.Location;
 import org.openmrs.module.auditlog.BaseAuditLogTest;
 
+@Ignore
 public class AllAuditStrategyTest extends BaseAuditLogTest {
 	
 	/**

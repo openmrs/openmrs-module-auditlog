@@ -21,11 +21,15 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.openmrs.Concept;
 import org.openmrs.ConceptComplex;
 import org.openmrs.ConceptNumeric;
 import org.openmrs.EncounterType;
+import org.openmrs.GlobalProperty;
 import org.openmrs.PatientIdentifierType;
+import org.openmrs.api.AdministrationService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.api.AuditLogService;
 import org.openmrs.module.auditlog.strategy.AuditStrategy;
@@ -35,11 +39,22 @@ import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.openmrs.util.OpenmrsUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.times;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 /**
  * Superclass for Test Classes that need to guarantee that the AuditLog Configurations in the test
  * data set are still the same before each test
  */
+@PrepareForTest(Context.class)
 public abstract class BaseAuditLogTest extends BaseModuleContextSensitiveTest {
 	
 	protected static final String MODULE_TEST_DATA = "moduleTestData.xml";

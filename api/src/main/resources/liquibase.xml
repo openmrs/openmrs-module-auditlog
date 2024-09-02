@@ -33,5 +33,12 @@
 		 	baseTableName="auditlog_audit_log" baseColumnNames="user_id"   
 		 	referencedTableName="users" referencedColumnNames="user_id" />
  	</changeSet>
+
+	<changeSet id="create-sequence-auditlog" author="ekirapa">
+		<preConditions onFail="MARK_RAN">
+			<not><sequenceExists sequenceName="audit_log_audit_log_id_seq" /></not>
+		</preConditions>
+		<createSequence sequenceName="audit_log_audit_log_id_seq" startValue="1" incrementBy="1" />
+	</changeSet>
  
 </databaseChangeLog>

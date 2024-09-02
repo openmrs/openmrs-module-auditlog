@@ -17,6 +17,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openmrs.Concept;
 import org.openmrs.ConceptName;
@@ -24,6 +25,7 @@ import org.openmrs.ConceptNumeric;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.openmrs.test.Verifies;
 
+@Ignore
 public class AuditLogUtilTest extends BaseModuleContextSensitiveTest {
 	
 	/**

@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
@@ -24,8 +25,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.EntityMode;
 import org.hibernate.FlushMode;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metadata.ClassMetadata;
+import org.hibernate.persister.entity.EntityPersister;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.APIException;
 import org.openmrs.api.AdministrationService;
@@ -85,14 +89,15 @@ public class AuditLogHelper implements GlobalPropertyListener {
 		//logic will be called again which will result in an infinite loop/stack overflow
 		if (exceptionsTypeCache == null || auditingStrategyCache == null) {
 			SessionFactory sf = DAOUtils.getSessionFactory();
-			FlushMode originalFlushMode = sf.getCurrentSession().getFlushMode();
-			sf.getCurrentSession().setFlushMode(FlushMode.MANUAL);
+			Session session = sf.getCurrentSession();
+			FlushMode originalFlushMode = session.getHibernateFlushMode();
+			session.setHibernateFlushMode(FlushMode.MANUAL);
 			try {
 				return isAuditedInternal(clazz);
 			}
 			finally {
 				//reset
-				sf.getCurrentSession().setFlushMode(originalFlushMode);
+				session.setHibernateFlushMode(originalFlushMode);
 			}
 		}
 		
@@ -115,14 +120,16 @@ public class AuditLogHelper implements GlobalPropertyListener {
 		//logic will be called again which will result in an infinite loop/stack overflow
 		if (implicitlyAuditedTypeCache == null) {
 			SessionFactory sf = DAOUtils.getSessionFactory();
-			FlushMode originalFlushMode = sf.getCurrentSession().getFlushMode();
-			sf.getCurrentSession().setFlushMode(FlushMode.MANUAL);
+
+			Session session = sf.getCurrentSession();
+			FlushMode originalFlushMode = session.getHibernateFlushMode();
+			session.setHibernateFlushMode(FlushMode.MANUAL);
 			try {
 				return isImplicitlyAuditedInternal(clazz);
 			}
 			finally {
 				//reset
-				sf.getCurrentSession().setFlushMode(originalFlushMode);
+				session.setHibernateFlushMode(originalFlushMode);
 			}
 		}
 		
@@ -155,10 +162,21 @@ public class AuditLogHelper implements GlobalPropertyListener {
 				//this is: Say Concept is marked as audited and strategy is set to All Except
 				//and say ConceptName is for some reason marked as un audited we should still audit
 				//concept names otherwise it poses inconsistencies
-				Collection<ClassMetadata> allClassMetadata = DAOUtils.getSessionFactory().getAllClassMetadata().values();
-				for (ClassMetadata classMetadata : allClassMetadata) {
-					Class<?> mappedClass = classMetadata.getMappedClass(EntityMode.POJO);
+
+				SessionFactory sessionFactory = DAOUtils.getSessionFactory();
+				SessionFactoryImplementor sessionFactoryImpl = (SessionFactoryImplementor) sessionFactory;
+
+				// Retrieve all entity persisters
+				Map<String, EntityPersister> entityPersisters = sessionFactoryImpl.getMetamodel().entityPersisters();
+				Collection<EntityPersister> allEntityPersisters = entityPersisters.values();
+
+				// Iterate through all entity persisters
+				for (EntityPersister persister : allEntityPersisters) {
+					Class<?> mappedClass = persister.getMappedClass();
+
+					// Check if the mapped class is not in the exception list
 					if (!getExceptions().contains(mappedClass)) {
+						// Check if the mapped class is not in the core exceptions
 						if (!AuditLogHelper.CORE_EXCEPTIONS.contains(mappedClass)) {
 							addAssociationTypes(mappedClass);
 						}
