@@ -40,7 +40,7 @@
 		<legacyUiVersion>1.2.3</legacyUiVersion>
 
 		<!--test dependencies-->
-		<junitVersion>4.13</junitVersion>
+		<junitVersion>4.13.1</junitVersion>
 		<powerMockVersion>2.0.7</powerMockVersion>
 		<hamcrestVersion>2.2</hamcrestVersion>
 		<mockitoVersion>3.5.11</mockitoVersion>
