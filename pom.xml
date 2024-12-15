@@ -4,7 +4,7 @@
 
 	<groupId>org.openmrs.module</groupId>
 	<artifactId>auditlog</artifactId>
-	<version>1.1</version>
+	<version>1.2-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>Audit Log Module</name>
 	<description>Allows keeping an audit trail of changes in data in the database</description>
@@ -25,7 +25,7 @@
         <connection>scm:git:https://github.com/openmrs/openmrs-module-auditlog</connection>
         <developerConnection>scm:git:https://github.com/openmrs/openmrs-module-auditlog</developerConnection>
         <url>https://github.com/openmrs/openmrs-module-auditlog</url>
-        <tag>1.1</tag>
+        <tag>HEAD</tag>
     </scm>
 
 	<modules>
