@@ -113,18 +113,36 @@ function displayLogDetails(logDetails, isChildLog){
                 otherDataCount++;
                 var currentProperty = auditLogChanges[propertyName];
                 if(isUpdate){
-                    $j("#"+auditlog_moduleId+idPart+"-changes-table tr:last").after(
-                        "<tr>" +
-                            "<td class=\"auditlog_align_text_left\" valign=\"top\">"+propertyName+"</td>"+
-                            "<td class=\"auditlog_align_text_left\" valign=\"top\">"+currentProperty[0]+"</td>"+
-                            "<td class=\"auditlog_align_text_left\" valign=\"top\">"+currentProperty[1]+"</td>" +
-                            "</tr>");
+
+                    var newVal = currentProperty[0];
+                    var oldVal = currentProperty[1];
+
+                    if(!newVal || newVal === "Unable to read"){
+                        newVal = "";
+                    }
+
+                   if(!oldVal || oldVal === "Unable to read"){
+                        oldVal = "";
+                    }
+
+                   $j("#"+auditlog_moduleId+idPart+"-changes-table tr:last").after(
+                      "<tr>" +
+                      "<td class=\"auditlog_align_text_left\" valign=\"top\">"+propertyName+"</td>"+
+                      "<td class=\"auditlog_align_text_left\" valign=\"top\">"+newVal+"</td>"+
+                      "<td class=\"auditlog_align_text_left\" valign=\"top\">"+oldVal+"</td>" +
+                      "</tr>");
                 }else{
+                   var val = currentProperty;
+
+                   if(!val || val === "Unable to read"){
+                        val = "";
+                    }
                     $j("#"+auditlog_moduleId+idPart+"-delete-otherData-table tr:last").after(
-                        "<tr>" +
-                            "<td class=\"auditlog_align_text_left\" valign=\"top\">"+propertyName+"</td>"+
-                            "<td class=\"auditlog_align_text_left\" valign=\"top\">"+currentProperty+"</td>" +
-                            "</tr>");
+                    "<tr>" +
+                    "<td class=\"auditlog_align_text_left\" valign=\"top\">"+propertyName+"</td>"+
+                    "<td class=\"auditlog_align_text_left\" valign=\"top\">"+val+"</td>"+
+                    "</tr>");
+                   
                 }
             });
 
