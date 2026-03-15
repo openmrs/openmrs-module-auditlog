@@ -93,17 +93,17 @@ function displayLogDetails(logDetails, isChildLog){
     $j("#"+auditlog_moduleId+idPart+"-delete-otherData-table").hide();
     if(logDetails) {
         if (logDetails.objectExists == true) {
-            $j("#" + auditlog_moduleId + idPart + "-changes-summary").html(logDetails.displayString);
+            $j("#" + auditlog_moduleId + idPart + "-changes-summary").text(logDetails.displayString);
         }
         else if (logDetails.action != 'DELETED') {
             $j("#" + auditlog_moduleId + idPart + "-changes-summary").html("<span class='auditlog_deleted'>" + auditlog_messages.objectDoesnotExit + "</span>");
         }
 
         if (logDetails.identifier) {
-            $j("#" + auditlog_moduleId + idPart + "-changes-identifier").html(logDetails.identifier);
+            $j("#" + auditlog_moduleId + idPart + "-changes-identifier").text(logDetails.identifier);
         }
         if (logDetails.openmrsVersion) {
-            $j("#" + auditlog_moduleId + idPart + "-changes-openmrsVersion").html(logDetails.openmrsVersion);
+            $j("#" + auditlog_moduleId + idPart + "-changes-openmrsVersion").text(logDetails.openmrsVersion);
         }
         if(logDetails.changes){
             var auditLogChanges = logDetails.changes;
