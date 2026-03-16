@@ -93,17 +93,21 @@ function displayLogDetails(logDetails, isChildLog){
     $j("#"+auditlog_moduleId+idPart+"-delete-otherData-table").hide();
     if(logDetails) {
         if (logDetails.objectExists == true) {
-            $j("#" + auditlog_moduleId + idPart + "-changes-summary").text(logDetails.displayString);
+            $j("#" + auditlog_moduleId + idPart + "-changes-summary").text(logDetails.displayString || '');
         }
         else if (logDetails.action != 'DELETED') {
-            $j("#" + auditlog_moduleId + idPart + "-changes-summary").html("<span class='auditlog_deleted'>" + auditlog_messages.objectDoesnotExit + "</span>");
+           $j("#" + auditlog_moduleId + idPart + "-changes-summary")
+.html("<span class='auditlog_deleted'></span>");
+
+$j("#" + auditlog_moduleId + idPart + "-changes-summary span")
+.text(auditlog_messages.objectDoesnotExit || '');
         }
 
         if (logDetails.identifier) {
-            $j("#" + auditlog_moduleId + idPart + "-changes-identifier").text(logDetails.identifier);
+            $j("#" + auditlog_moduleId + idPart + "-changes-identifier").text(logDetails.identifier || '');
         }
         if (logDetails.openmrsVersion) {
-            $j("#" + auditlog_moduleId + idPart + "-changes-openmrsVersion").text(logDetails.openmrsVersion);
+            $j("#" + auditlog_moduleId + idPart + "-changes-openmrsVersion").text(logDetails.openmrsVersion || '');
         }
         if(logDetails.changes){
             var auditLogChanges = logDetails.changes;
@@ -113,8 +117,8 @@ function displayLogDetails(logDetails, isChildLog){
                 otherDataCount++;
                 var currentProperty = auditLogChanges[propertyName];
                if(isUpdate){
-                    var newVal = currentProperty[0];
-                    var oldVal = currentProperty[1];
+                    let newVal = currentProperty[0];
+                    let oldVal = currentProperty[1];
 
                     if(!newVal || newVal === "Unable to read"){
                             newVal = "";
