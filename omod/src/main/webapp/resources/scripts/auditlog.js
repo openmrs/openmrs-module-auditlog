@@ -95,7 +95,7 @@ function displayLogDetails(logDetails, isChildLog){
         if (logDetails.objectExists == true) {
             $j("#" + auditlog_moduleId + idPart + "-changes-summary").html(logDetails.displayString);
         }
-        else if (logDetails.action != 'DELETED') {
+        else if (logDetails.action != 'DELETED' && logDetails.action != 'VOIDED') {
             $j("#" + auditlog_moduleId + idPart + "-changes-summary").html("<span class='auditlog_deleted'>" + auditlog_messages.objectDoesnotExit + "</span>");
         }
 
@@ -106,8 +106,12 @@ function displayLogDetails(logDetails, isChildLog){
             $j("#" + auditlog_moduleId + idPart + "-changes-openmrsVersion").html(logDetails.openmrsVersion);
         }
         if(logDetails.changes){
+            if(Object.keys(logDetails.changes).length === 0){
+                $j("#"+auditlog_moduleId+idPart+"-changes-table").show();
+                return;
+                    }
             var auditLogChanges = logDetails.changes;
-            var isUpdate = logDetails.action == 'UPDATED' ? true : false;
+            var isUpdate = (logDetails.action == 'UPDATED' || logDetails.action == 'VOIDED');
             var otherDataCount = 0;
             $j.each(auditLogChanges, function(propertyName){
                 otherDataCount++;
