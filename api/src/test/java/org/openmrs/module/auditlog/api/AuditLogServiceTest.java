@@ -18,6 +18,7 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
+import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -48,7 +49,7 @@ import org.openmrs.util.OpenmrsUtil;
 /**
  * Contains tests for methods in {@link AuditLogService}
  */
-@Ignore
+
 public class AuditLogServiceTest extends BaseAuditLogTest {
 	
 	private static final String MODULE_TEST_DATA_AUDIT_LOGS = "moduleTestData-initialAuditLogs.xml";
@@ -314,5 +315,11 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	public void isAudited_shouldReturnFalseForCoreExceptions() throws Exception {
 		startAuditing(AuditLog.class);
 		assertEquals(false, auditLogService.isAudited(AuditLog.class));
+	}
+	@Test
+	public void isAudited_shouldReturnFalseWhenClassIsNull() throws Exception {
+		// We are removing @Verifies to stop the annotation errors
+		boolean result = auditLogService.isAudited(null);
+		Assert.assertFalse(result);
 	}
 }
