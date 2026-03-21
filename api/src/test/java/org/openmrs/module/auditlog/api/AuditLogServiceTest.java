@@ -322,4 +322,19 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 		boolean result = auditLogService.isAudited(null);
 		Assert.assertFalse(result);
 	}
+	/**
+	 * @see AuditLogService#getObjectByUuid(Class, String)
+	 * @verifies return null if uuid is blank
+	 */
+	@Test
+	public void getObjectByUuid_shouldReturnNullIfUuidIsBlank() throws Exception {
+		// Testing with null
+		assertNull(auditLogService.getObjectByUuid(Location.class, null));
+
+		// Testing with an empty string
+		assertNull(auditLogService.getObjectByUuid(Location.class, ""));
+
+		// Testing with only whitespace
+		assertNull(auditLogService.getObjectByUuid(Location.class, "   "));
+	}
 }
