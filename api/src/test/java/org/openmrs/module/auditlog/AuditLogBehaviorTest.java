@@ -567,4 +567,18 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		assertEquals(oldName, AuditLogUtil.getPreviousValueOfUpdatedItem("name", log));
 		assertEquals(newName, AuditLogUtil.getNewValueOfUpdatedItem("name", log));
 	}
+	
+    @Test
+	
+	public void shouldNotCreateLogWhenSavingObjectWithNoChanges() throws Exception {
+		// Testing that saving an existing object without any modifications 
+	    // results in zero new audit logs. This ensures database efficiency.
+		Concept concept = conceptService.getConcept(3);
+		int initialLogCount = getAllLogs().size();
+		
+		conceptService.saveConcept(concept);
+		
+		List<AuditLog> logsAfterSave = getAllLogs();
+		assertEquals(initialLogCount, logsAfterSave.size());
+	}
 }
