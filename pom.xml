@@ -226,6 +226,11 @@
 						<includes>
 							<include>**/*Test.java</include>
 						</includes>
+						<argLine>
+							--add-opens java.base/java.lang=ALL-UNNAMED
+							--add-opens java.base/java.util=ALL-UNNAMED
+							--add-opens java.base/java.io=ALL-UNNAMED
+						</argLine>
 					</configuration>
 				</plugin>
 
