@@ -34,6 +34,25 @@
 		 	referencedTableName="users" referencedColumnNames="user_id" />
  	</changeSet>
 
+	<changeSet id="auditlog-20260420-indexes" author="ashthe25">
+		<preConditions onFail="MARK_RAN">
+			<tableExists tableName="auditlog_audit_log" />
+		</preConditions>
+		<comment>AUDIT-37: Add indexes on frequently filtered columns to prevent full table scans</comment>
+		<createIndex tableName="auditlog_audit_log" indexName="idx_auditlog_date_created">
+			<column name="date_created" />
+		</createIndex>
+		<createIndex tableName="auditlog_audit_log" indexName="idx_auditlog_action">
+			<column name="action" />
+		</createIndex>
+		<createIndex tableName="auditlog_audit_log" indexName="idx_auditlog_user_id">
+			<column name="user_id" />
+		</createIndex>
+		<createIndex tableName="auditlog_audit_log" indexName="idx_auditlog_parent_id">
+			<column name="parent_auditlog_id" />
+		</createIndex>
+	</changeSet>
+
 	<changeSet id="create-sequence-auditlog" author="ekirapa">
 		<preConditions onFail="MARK_RAN">
 			<not><sequenceExists sequenceName="audit_log_audit_log_id_seq" /></not>
