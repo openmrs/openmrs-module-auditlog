@@ -96,6 +96,43 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		return criteria.list();
 	}
 
+	/**
+	 * @see AuditLogDAO#getAuditLogs(String, List, Date, Date, boolean, Integer, Integer)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<AuditLog> getAuditLogs(String userUuid, List<Action> actions, Date startDate, Date endDate,
+	                                   boolean excludeChildAuditLogs, Integer start, Integer length) {
+
+		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(AuditLog.class);
+
+		if (userUuid != null) {
+			criteria.createAlias("user", "u").add(Restrictions.eq("u.uuid", userUuid));
+		}
+		if (actions != null && !actions.isEmpty()) {
+			criteria.add(Restrictions.in("action", actions));
+		}
+		if (excludeChildAuditLogs) {
+			criteria.add(Restrictions.isNull("parentAuditLog"));
+		}
+		if (startDate != null) {
+			criteria.add(Restrictions.ge("dateCreated", startDate));
+		}
+		if (endDate != null) {
+			criteria.add(Restrictions.le("dateCreated", endDate));
+		}
+		if (start != null && start > 0) {
+			criteria.setFirstResult(start);
+		}
+		if (length != null && length > 0) {
+			criteria.setMaxResults(length);
+		}
+
+		criteria.addOrder(Order.desc("dateCreated"));
+
+		return criteria.list();
+	}
+
 	@Override
 	public List<AuditLog> getAuditLogsWithIds(List<String> ids, Class<?> type, List<Action> actions, Date startDate, Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length) {
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(AuditLog.class);
