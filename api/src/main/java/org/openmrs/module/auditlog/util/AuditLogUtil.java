@@ -273,11 +273,12 @@ public class AuditLogUtil {
 	}
 	
 	public static String getAsString(Blob blob) throws Exception {
-		BufferedReader br = new BufferedReader(new InputStreamReader(blob.getBinaryStream()));
-		StringBuffer sb = new StringBuffer();
-		String line;
-		while ((line = br.readLine()) != null) {
-			sb.append(line);
+		StringBuilder sb = new StringBuilder();
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(blob.getBinaryStream()))) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				sb.append(line);
+			}
 		}
 		return sb.toString();
 	}
