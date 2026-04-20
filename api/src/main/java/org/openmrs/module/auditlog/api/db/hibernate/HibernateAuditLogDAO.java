@@ -136,17 +136,21 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 */
 	@Override
 	public <T> T save(T object) {
+		saveInternal(object, 0);
+		return object;
+	}
+
+	private void saveInternal(Object object, int depth) {
+		if (depth > 50) {
+			throw new IllegalStateException("AuditLog parent chain exceeds maximum depth of 50; possible cycle detected");
+		}
 		if (object instanceof AuditLog) {
 			AuditLog auditLog = (AuditLog) object;
-			//Hibernate has issues with saving the parentAuditLog field if the parent isn't yet saved
-			//so we need to first save the parent before its children
 			if (auditLog.getParentAuditLog() != null && auditLog.getParentAuditLog().getAuditLogId() == null) {
-				save(auditLog.getParentAuditLog());
+				saveInternal(auditLog.getParentAuditLog(), depth + 1);
 			}
 		}
-		
 		sessionFactory.getCurrentSession().saveOrUpdate(object);
-		return object;
 	}
 	
 	/**
