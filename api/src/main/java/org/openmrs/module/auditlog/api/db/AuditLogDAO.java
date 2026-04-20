@@ -94,9 +94,23 @@ public interface AuditLogDAO {
 	public <T> T getObjectByUuid(Class<T> clazz, String uuid);
 	
 	/**
+	 * Returns the total number of audit log entries matching the specified arguments, without
+	 * applying any pagination.
+	 *
+	 * @param types the class names to match against
+	 * @param actions the list of {@link Action}s to match against
+	 * @param startDate lower bound for date_created (inclusive)
+	 * @param endDate upper bound for date_created (inclusive)
+	 * @param excludeChildAuditLogs if true, only top-level logs are counted
+	 * @return the total count of matching audit log entries
+	 */
+	public long countAuditLogs(List<Class<?>> types, List<Action> actions, Date startDate, Date endDate,
+	                           boolean excludeChildAuditLogs);
+
+	/**
 	 * Returns true or false depending on the value of the
 	 * AuditLogConstants#GP_STORE_LAST_STATE_OF_DELETED_ITEMS global property
-	 * 
+	 *
 	 * @return true is allowed otherwise false
 	 */
 	public boolean storeLastStateOfDeletedItems();

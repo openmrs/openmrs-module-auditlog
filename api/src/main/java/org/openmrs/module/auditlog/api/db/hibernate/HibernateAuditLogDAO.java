@@ -26,6 +26,7 @@ import org.hibernate.Criteria;
 import org.hibernate.EntityMode;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.openmrs.GlobalProperty;
 import org.openmrs.api.GlobalPropertyListener;
@@ -129,6 +130,35 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 		criteria.addOrder(Order.desc("dateCreated"));
 
 		return criteria.list();
+	}
+
+	/**
+	 * @see AuditLogDAO#countAuditLogs(List, List, Date, Date, boolean)
+	 */
+	@Override
+	public long countAuditLogs(List<Class<?>> types, List<Action> actions, Date startDate, Date endDate,
+	                           boolean excludeChildAuditLogs) {
+		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(AuditLog.class);
+		if (types != null) {
+			List<String> classNames = types.stream()
+					.map(Class::getName)
+					.collect(Collectors.toList());
+			criteria.add(Restrictions.in("type", classNames));
+		}
+		if (actions != null) {
+			criteria.add(Restrictions.in("action", actions));
+		}
+		if (excludeChildAuditLogs) {
+			criteria.add(Restrictions.isNull("parentAuditLog"));
+		}
+		if (startDate != null) {
+			criteria.add(Restrictions.ge("dateCreated", startDate));
+		}
+		if (endDate != null) {
+			criteria.add(Restrictions.le("dateCreated", endDate));
+		}
+		criteria.setProjection(Projections.rowCount());
+		return (Long) criteria.uniqueResult();
 	}
 
 	/**

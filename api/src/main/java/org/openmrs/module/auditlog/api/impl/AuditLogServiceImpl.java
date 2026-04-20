@@ -165,4 +165,24 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	                                   boolean excludeChildAuditLogs) {
 		return getAuditLogs(dao.getId(object), object.getClass(), actions, startDate, endDate, excludeChildAuditLogs);
 	}
+
+	/**
+	 * @see AuditLogService#countAuditLogs(List, List, Date, Date, boolean)
+	 */
+	@Override
+	@Transactional(readOnly = true)
+	public long countAuditLogs(List<Class<?>> clazzes, List<Action> actions, Date startDate, Date endDate,
+	                           boolean excludeChildAuditLogs) {
+		List<Class<?>> classesToMatch = null;
+		if (clazzes != null) {
+			classesToMatch = new ArrayList<Class<?>>();
+			for (Class clazz : clazzes) {
+				classesToMatch.add(clazz);
+				for (Class subclass : DAOUtils.getPersistentConcreteSubclasses(clazz)) {
+					classesToMatch.add(subclass);
+				}
+			}
+		}
+		return dao.countAuditLogs(classesToMatch, actions, startDate, endDate, excludeChildAuditLogs);
+	}
 }
