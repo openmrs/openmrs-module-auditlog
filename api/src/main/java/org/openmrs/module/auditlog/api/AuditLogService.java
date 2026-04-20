@@ -154,7 +154,7 @@ public interface AuditLogService extends OpenmrsService {
 	 * @return matching audit logs ordered by dateCreated descending
 	 */
 	@Authorized(AuditLogConstants.PRIV_GET_AUDITLOGS)
-	public List<AuditLog> getAuditLogs(String userUuid, List<Action> actions, Date startDate, Date endDate,
+	public List<AuditLog> getAuditLogsByUser(String userUuid, List<Action> actions, Date startDate, Date endDate,
 	                                   boolean excludeChildAuditLogs, Integer start, Integer length);
 
 	/**

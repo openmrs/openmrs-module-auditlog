@@ -94,7 +94,7 @@ public class AuditLogRestController {
 
 		AuditLogService service = Context.getService(AuditLogService.class);
 
-		List<AuditLog> logs = service.getAuditLogs(userUuid, actions, startDate, endDate, true, startIndex, limit);
+		List<AuditLog> logs = service.getAuditLogsByUser(userUuid, actions, startDate, endDate, true, startIndex, limit);
 		List<AuditLogDTO> results = new ArrayList<AuditLogDTO>(logs.size());
 		for (AuditLog log : logs) {
 			results.add(AuditLogDTO.from(log));

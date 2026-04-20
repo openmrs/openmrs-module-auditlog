@@ -101,7 +101,7 @@ public class HibernateAuditLogDAO implements AuditLogDAO, GlobalPropertyListener
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<AuditLog> getAuditLogs(String userUuid, List<Action> actions, Date startDate, Date endDate,
+	public List<AuditLog> getAuditLogsByUser(String userUuid, List<Action> actions, Date startDate, Date endDate,
 	                                   boolean excludeChildAuditLogs, Integer start, Integer length) {
 
 		Criteria criteria = sessionFactory.getCurrentSession().createCriteria(AuditLog.class);

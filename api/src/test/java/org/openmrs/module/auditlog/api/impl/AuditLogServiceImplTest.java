@@ -58,15 +58,15 @@ public class AuditLogServiceImplTest {
 
 		AuditLog mockLog = new AuditLog();
 		mockLog.setUuid("log-uuid-1");
-		when(dao.getAuditLogs(userUuid, actions, startDate, endDate, false, 0, 10))
+		when(dao.getAuditLogsByUser(userUuid, actions, startDate, endDate, false, 0, 10))
 		        .thenReturn(Arrays.asList(mockLog));
 
-		List<AuditLog> result = service.getAuditLogs(userUuid, actions, startDate, endDate, false, 0, 10);
+		List<AuditLog> result = service.getAuditLogsByUser(userUuid, actions, startDate, endDate, false, 0, 10);
 
 		assertNotNull(result);
 		assertEquals(1, result.size());
 		assertEquals("log-uuid-1", result.get(0).getUuid());
-		verify(dao).getAuditLogs(userUuid, actions, startDate, endDate, false, 0, 10);
+		verify(dao).getAuditLogsByUser(userUuid, actions, startDate, endDate, false, 0, 10);
 	}
 
 	@Test

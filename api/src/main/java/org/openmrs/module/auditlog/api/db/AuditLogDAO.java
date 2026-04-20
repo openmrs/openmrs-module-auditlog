@@ -82,7 +82,7 @@ public interface AuditLogDAO {
 	 * @param length                max results to return
 	 * @return list of matching AuditLogs ordered by dateCreated desc
 	 */
-	public List<AuditLog> getAuditLogs(String userUuid, List<Action> actions, Date startDate, Date endDate,
+	public List<AuditLog> getAuditLogsByUser(String userUuid, List<Action> actions, Date startDate, Date endDate,
 	                                   boolean excludeChildAuditLogs, Integer start, Integer length);
 
 	/**
