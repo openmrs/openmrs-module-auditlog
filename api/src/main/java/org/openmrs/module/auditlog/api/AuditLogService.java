@@ -142,8 +142,24 @@ public interface AuditLogService extends OpenmrsService {
 									   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length);
 	
 	/**
+	 * AUDIT-36: Fetches audit logs filtered by user, action, and date range with pagination.
+	 *
+	 * @param userUuid              UUID of the user who performed the action; null means all users
+	 * @param actions               list of {@link Action}s to include; null means all actions
+	 * @param startDate             inclusive lower bound on dateCreated; null means no lower bound
+	 * @param endDate               inclusive upper bound on dateCreated; null means no upper bound
+	 * @param excludeChildAuditLogs whether to exclude child (collection) audit log entries
+	 * @param start                 zero-based offset (defaults to 0 if null)
+	 * @param length                maximum number of results (returns all if null)
+	 * @return matching audit logs ordered by dateCreated descending
+	 */
+	@Authorized(AuditLogConstants.PRIV_GET_AUDITLOGS)
+	public List<AuditLog> getAuditLogs(String userUuid, List<Action> actions, Date startDate, Date endDate,
+	                                   boolean excludeChildAuditLogs, Integer start, Integer length);
+
+	/**
 	 * Gets all audit logs for the object that match the other specified arguments
-	 * 
+	 *
 	 * @param object the uuid of the object to match against
 	 * @param actions the actions to match against
 	 * @param startDate the start date to match against

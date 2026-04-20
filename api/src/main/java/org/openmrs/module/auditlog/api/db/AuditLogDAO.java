@@ -71,6 +71,21 @@ public interface AuditLogDAO {
 									   Date endDate, boolean excludeChildAuditLogs, Integer start, Integer length);
 	
 	/**
+	 * AUDIT-36: Fetches audit logs filtered by user UUID, action, and date range.
+	 *
+	 * @param userUuid              UUID of the user; null matches any user
+	 * @param actions               actions to include; null matches all
+	 * @param startDate             inclusive lower date bound; null means unbounded
+	 * @param endDate               inclusive upper date bound; null means unbounded
+	 * @param excludeChildAuditLogs exclude child log entries when true
+	 * @param start                 pagination offset (0-based)
+	 * @param length                max results to return
+	 * @return list of matching AuditLogs ordered by dateCreated desc
+	 */
+	public List<AuditLog> getAuditLogs(String userUuid, List<Action> actions, Date startDate, Date endDate,
+	                                   boolean excludeChildAuditLogs, Integer start, Integer length);
+
+	/**
 	 * Saves the specified object to the database
 	 * 
 	 * @param object the object to save
