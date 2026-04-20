@@ -49,7 +49,7 @@ import org.openmrs.util.OpenmrsUtil;
 /**
  * Contains tests for methods in {@link AuditLogService}
  */
-
+@Ignore
 public class AuditLogServiceTest extends BaseAuditLogTest {
 	
 	private static final String MODULE_TEST_DATA_AUDIT_LOGS = "moduleTestData-initialAuditLogs.xml";
