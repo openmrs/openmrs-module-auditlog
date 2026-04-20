@@ -39,7 +39,7 @@
                          src="<openmrs:contextPath />/moduleResources/${moduleId}/images/${auditLog.action}.gif" />
                 </td>
                 <td>
-                    ${auditLog.simpleTypeName}
+                    <c:out value="${auditLog.simpleTypeName}" />
                     <c:if test="${fn:length(auditLog.childAuditLogs) > 0}"> (${fn:length(auditLog.childAuditLogs)})</c:if>
                 </td>
                 <td>
@@ -49,7 +49,7 @@
                             <spring:message code="${moduleId}.systemAction" />
                         </c:when>
                         <c:otherwise>
-                            ${auditLog.user.personName} <c:if test="${fn:trim(auditLog.user.username) != ''}">[${auditLog.user.username}]</c:if>
+                            <c:out value="${auditLog.user.personName}" /> <c:if test="${fn:trim(auditLog.user.username) != ''}">[<c:out value="${auditLog.user.username}" />]</c:if>
                         </c:otherwise>
                     </c:choose>
                 </td>
