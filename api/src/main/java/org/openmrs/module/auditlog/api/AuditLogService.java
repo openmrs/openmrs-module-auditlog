@@ -143,7 +143,7 @@ public interface AuditLogService extends OpenmrsService {
 	
 	/**
 	 * Gets all audit logs for the object that match the other specified arguments
-	 * 
+	 *
 	 * @param object the uuid of the object to match against
 	 * @param actions the actions to match against
 	 * @param startDate the start date to match against
@@ -156,4 +156,19 @@ public interface AuditLogService extends OpenmrsService {
 	@Authorized(AuditLogConstants.PRIV_GET_AUDITLOGS)
 	public List<AuditLog> getAuditLogs(Object object, List<Action> actions, Date startDate, Date endDate,
 	                                   boolean excludeChildAuditLogs);
+
+	/**
+	 * Returns the total number of audit log entries matching the specified arguments, without
+	 * applying pagination. Useful for building paged UIs that need a total-count header.
+	 *
+	 * @param clazzes the class types to match against
+	 * @param actions the list of {@link Action}s to match against
+	 * @param startDate lower bound for date_created (inclusive)
+	 * @param endDate upper bound for date_created (inclusive)
+	 * @param excludeChildAuditLogs if true, child logs for collection items are excluded
+	 * @return the total count of matching audit log entries
+	 */
+	@Authorized(AuditLogConstants.PRIV_GET_AUDITLOGS)
+	public long countAuditLogs(List<Class<?>> clazzes, List<Action> actions, Date startDate, Date endDate,
+	                           boolean excludeChildAuditLogs);
 }
