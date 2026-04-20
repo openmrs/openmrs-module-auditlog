@@ -21,6 +21,7 @@ import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
  * This class configured as controller using annotation and mapped with the URL of
@@ -38,7 +39,7 @@ public class ViewAuditLogController {
 	/**
 	 * @return
 	 */
-	@RequestMapping(VIEW_AUDIT_LOG_FORM)
+	@RequestMapping(value = VIEW_AUDIT_LOG_FORM, method = RequestMethod.GET)
 	public void showForm(ModelMap model) {
 		if (log.isDebugEnabled()) {
 			log.debug("Fetching audit log entries...");
