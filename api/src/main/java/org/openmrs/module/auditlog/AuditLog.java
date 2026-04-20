@@ -13,6 +13,11 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "auditlog_audit_log")
+/**
+ * Represents a single audit log entry recording a change made to an audited object.
+ * Each entry captures the type of action, the affected object, the user responsible,
+ * and the timestamp of the change.
+ */
 public class AuditLog implements Serializable {
 
 	private static final long serialVersionUID = 1L;
