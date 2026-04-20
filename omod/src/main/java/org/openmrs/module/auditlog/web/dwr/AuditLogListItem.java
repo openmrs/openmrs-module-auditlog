@@ -51,7 +51,7 @@ public class AuditLogListItem {
 		}
 		identifier = auditLog.getIdentifier();
 		action = auditLog.getAction().toString();
-		if (auditLog.getUser() == null) {
+		if (auditLog.getUser() != null) {
 			if (auditLog.getUser().getUuid().equals(DAEMON_USER_UUID)) {
 				userDetails = Context.getMessageSourceService().getMessage(AuditLogConstants.MODULE_ID + ".systemChange");
 			} else {
