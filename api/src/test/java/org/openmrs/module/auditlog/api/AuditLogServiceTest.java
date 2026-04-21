@@ -18,6 +18,7 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
+import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -314,5 +315,26 @@ public class AuditLogServiceTest extends BaseAuditLogTest {
 	public void isAudited_shouldReturnFalseForCoreExceptions() throws Exception {
 		startAuditing(AuditLog.class);
 		assertEquals(false, auditLogService.isAudited(AuditLog.class));
+	}
+	@Test
+	public void isAudited_shouldReturnFalseWhenClassIsNull() throws Exception {
+		// We are removing @Verifies to stop the annotation errors
+		boolean result = auditLogService.isAudited(null);
+		Assert.assertFalse(result);
+	}
+	/**
+	 * @see AuditLogService#getObjectByUuid(Class, String)
+	 * @verifies return null if uuid is blank
+	 */
+	@Test
+	public void getObjectByUuid_shouldReturnNullIfUuidIsBlank() throws Exception {
+		// Testing with null
+		assertNull(auditLogService.getObjectByUuid(Location.class, null));
+
+		// Testing with an empty string
+		assertNull(auditLogService.getObjectByUuid(Location.class, ""));
+
+		// Testing with only whitespace
+		assertNull(auditLogService.getObjectByUuid(Location.class, "   "));
 	}
 }
