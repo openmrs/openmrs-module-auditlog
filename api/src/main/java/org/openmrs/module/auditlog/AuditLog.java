@@ -1,6 +1,8 @@
 package org.openmrs.module.auditlog;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.openmrs.User;
 
 import javax.persistence.*;
@@ -16,6 +18,7 @@ import java.util.UUID;
 public class AuditLog implements Serializable {
 
 	private static final long serialVersionUID = 1L;
+    private static final Log log = LogFactory.getLog(AuditLog.class);
 
 	@Id
 	@GeneratedValue
@@ -205,7 +208,8 @@ public class AuditLog implements Serializable {
 		try {
 			sections = StringUtils.splitByCharacterTypeCamelCase(Class.forName(getType()).getSimpleName());
 		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
+            log.warn("Could not find class: " + getType() , e);
+            return getType();
 		}
 		return StringUtils.join(sections, " ");
 	}
