@@ -62,6 +62,9 @@ public class AuditLogServiceImpl extends BaseOpenmrsService implements AuditLogS
 	 */
 	@Transactional(readOnly = true)
 	public boolean isAudited(Class<?> clazz) {
+		if (clazz == null) {
+			return false;
+		}
 		return helper.isAudited(clazz);
 	}
 	
