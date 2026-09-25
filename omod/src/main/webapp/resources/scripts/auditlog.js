@@ -112,12 +112,23 @@ function displayLogDetails(logDetails, isChildLog){
             $j.each(auditLogChanges, function(propertyName){
                 otherDataCount++;
                 var currentProperty = auditLogChanges[propertyName];
-                if(isUpdate){
+               if(isUpdate){
+                    var newVal = currentProperty[0];
+                    var oldVal = currentProperty[1];
+
+                    if(!newVal || newVal === "Unable to read"){
+                            newVal = "";
+                        }
+
+                    if(!oldVal || oldVal === "Unable to read"){
+                            oldVal = "";
+                        }
+
                     $j("#"+auditlog_moduleId+idPart+"-changes-table tr:last").after(
-                        "<tr>" +
+                            "<tr>" +
                             "<td class=\"auditlog_align_text_left\" valign=\"top\">"+propertyName+"</td>"+
-                            "<td class=\"auditlog_align_text_left\" valign=\"top\">"+currentProperty[0]+"</td>"+
-                            "<td class=\"auditlog_align_text_left\" valign=\"top\">"+currentProperty[1]+"</td>" +
+                            "<td class=\"auditlog_align_text_left\" valign=\"top\">"+newVal+"</td>"+
+                            "<td class=\"auditlog_align_text_left\" valign=\"top\">"+oldVal+"</td>" +
                             "</tr>");
                 }else{
                     $j("#"+auditlog_moduleId+idPart+"-delete-otherData-table tr:last").after(
