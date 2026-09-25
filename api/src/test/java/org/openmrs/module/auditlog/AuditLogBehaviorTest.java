@@ -75,8 +75,10 @@ public class AuditLogBehaviorTest extends BaseBehaviorTest {
 		ConceptName cn = new ConceptName("new", Locale.ENGLISH);
 		cn.setConcept(concept);
 		concept.addName(cn);
-		concept.setDatatype(conceptService.getConceptDatatype(4));
-		concept.setConceptClass(conceptService.getConceptClass(4));
+		// Refactored: Using UUID-based lookups instead of deprecated Integer IDs
+		// to ensure compatibility across different OpenMRS database environments.
+		concept.setDatatype(conceptService.getConceptDatatypeByUuid(ConceptDatatype.NUMERIC_UUID));
+		concept.setConceptClass(conceptService.getConceptClassByUuid("8d492774-c2cc-11de-8d13-0010c6dffd0f"));
 		conceptService.saveConcept(concept);
 		List<AuditLog> logs = getAllLogs();
 		assertNotNull(concept.getConceptId());
