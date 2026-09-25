@@ -144,7 +144,7 @@ public interface AuditLogService extends OpenmrsService {
 	/**
 	 * Gets all audit logs for the object that match the other specified arguments
 	 * 
-	 * @param object the uuid of the object to match against
+	 * @param object id the id of the object to match against
 	 * @param actions the actions to match against
 	 * @param startDate the start date to match against
 	 * @param endDate the end date to match against
