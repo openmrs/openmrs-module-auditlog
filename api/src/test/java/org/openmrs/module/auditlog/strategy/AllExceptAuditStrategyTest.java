@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.hibernate.persister.collection.CollectionPersister;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.openmrs.Cohort;
 import org.openmrs.Concept;
@@ -34,12 +33,13 @@ import org.openmrs.LocationTag;
 import org.openmrs.PatientIdentifierType;
 import org.openmrs.Person;
 import org.openmrs.PersonName;
+import org.openmrs.api.EncounterService;
+import org.openmrs.api.context.Context;
 import org.openmrs.module.auditlog.BaseAuditLogTest;
 import org.openmrs.module.auditlog.util.AuditLogConstants;
 import org.openmrs.module.auditlog.util.AuditLogUtil;
 import org.openmrs.util.OpenmrsUtil;
 
-@Ignore
 public class AllExceptAuditStrategyTest extends BaseAuditLogTest {
 	
 	private static final String EXCEPTIONS_FOR_ALL_EXCEPT = "org.openmrs.Concept, org.openmrs.EncounterType";
@@ -229,5 +229,22 @@ public class AllExceptAuditStrategyTest extends BaseAuditLogTest {
 		assertEquals(newStrategy, auditLogService.getAuditingStrategy());
 		assertFalse(auditLogService.isAudited(EncounterType.class));
 		assertFalse(auditLogService.isAudited(Location.class));
+	}
+	
+	/**
+	 * @verifies not fail the save of an excluded type
+	 * @see AllExceptAuditStrategy#isAudited(Class)
+	 */
+	@Test
+	public void isAudited_shouldNotFailTheSaveOfAnExcludedType() throws Exception {
+		setAuditConfiguration(AuditStrategy.ALL_EXCEPT, EncounterType.class.getName(), false);
+		EncounterService es = Context.getEncounterService();
+		EncounterType encounterType = es.getEncounterType(1);
+		encounterType.setDescription("new description");
+		
+		//Checking if the excluded type is implicitly audited looks up the association types of all
+		//the mapped types, including those that have collections of values e.g User.userProperties
+		es.saveEncounterType(encounterType);
+		Context.flushSession();
 	}
 }

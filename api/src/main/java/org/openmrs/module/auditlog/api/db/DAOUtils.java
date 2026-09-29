@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.EntityMode;
+import org.hibernate.MappingException;
 import org.hibernate.SessionFactory;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.metadata.ClassMetadata;
@@ -57,14 +58,14 @@ public class DAOUtils {
 			foundAssocTypes = new HashSet<Class<?>>();
 		}
 		
-		ClassMetadata cmd = getSessionFactory().getClassMetadata(clazz);
+		ClassMetadata cmd = getClassMetadata(clazz);
 		if (cmd != null) {
 			for (Type type : cmd.getPropertyTypes()) {
 				//If this is a OneToOne or a collection type
 				if (type.isCollectionType() || OneToOneType.class.isAssignableFrom(type.getClass())) {
-					CollectionType collType = (CollectionType) type;
+					CollectionType collType = null;
 					boolean isManyToManyColl = false;
-					if (collType.isCollectionType()) {
+					if (type.isCollectionType()) {
 						collType = (CollectionType) type;
 						isManyToManyColl = ((SessionFactoryImplementor) getSessionFactory()).getCollectionPersister(
 						    collType.getRole()).isManyToMany();
@@ -76,7 +77,7 @@ public class DAOUtils {
 					}
 					
 					//Ignore non persistent types
-					if (getSessionFactory().getClassMetadata(assocType) == null) {
+					if (getClassMetadata(assocType) == null) {
 						continue;
 					}
 					
@@ -150,8 +151,21 @@ public class DAOUtils {
 		return foundSubclasses;
 	}
 	
+	/**
+	 * Gets the ClassMetadata for the specified class
+	 * 
+	 * @param clazz the class to match against
+	 * @return the ClassMetadata of the class if it is a mapped entity otherwise null
+	 * @should return null for a class that is not mapped
+	 */
 	public static ClassMetadata getClassMetadata(Class<?> clazz) {
-		return getSessionFactory().getClassMetadata(clazz);
+		try {
+			return getSessionFactory().getClassMetadata(clazz);
+		}
+		catch (MappingException e) {
+			//Hibernate 5 throws an exception for a class that is not mapped instead of returning null
+			return null;
+		}
 	}
 	
 	public static SessionFactory getSessionFactory() {

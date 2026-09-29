@@ -15,20 +15,22 @@ package org.openmrs.module.auditlog.api.db;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.Modifier;
 import java.util.Set;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.openmrs.Concept;
 import org.openmrs.ConceptComplex;
 import org.openmrs.ConceptNumeric;
 import org.openmrs.OpenmrsObject;
+import org.openmrs.User;
+import org.openmrs.test.BaseModuleContextSensitiveTest;
 
-@Ignore
-public class DAOUtilsTest {
+public class DAOUtilsTest extends BaseModuleContextSensitiveTest {
 	
 	/**
 	 * @verifies exclude interfaces and abstract classes
@@ -55,5 +57,34 @@ public class DAOUtilsTest {
 		assertEquals(2, subclasses.size());
 		assertTrue(subclasses.contains(ConceptNumeric.class));
 		assertTrue(subclasses.contains(ConceptComplex.class));
+	}
+	
+	/**
+	 * @verifies return null for a class that is not mapped
+	 * @see DAOUtils#getClassMetadata(Class)
+	 */
+	@Test
+	public void getClassMetadata_shouldReturnNullForAClassThatIsNotMapped() throws Exception {
+		assertNotNull(DAOUtils.getClassMetadata(Concept.class));
+		assertNull(DAOUtils.getClassMetadata(String.class));
+	}
+	
+	/**
+	 * @see DAOUtils#getAssociationTypesToAudit(Class)
+	 */
+	@Test
+	public void getAssociationTypesToAudit_shouldIgnoreTheElementsOfACollectionOfATypeThatIsNotMapped() throws Exception {
+		//User.userProperties is a map of Strings
+		Set<Class<?>> types = DAOUtils.getAssociationTypesToAudit(User.class);
+		assertFalse(types.contains(String.class));
+	}
+	
+	/**
+	 * @see DAOUtils#getAssociationTypesToAudit(Class)
+	 */
+	@Test
+	public void getAssociationTypesToAudit_shouldIncludeTheTypeOfAOneToOneAssociation() throws Exception {
+		Set<Class<?>> types = DAOUtils.getAssociationTypesToAudit(OneToOneOwner.class);
+		assertTrue(types.contains(OneToOneOwned.class));
 	}
 }
