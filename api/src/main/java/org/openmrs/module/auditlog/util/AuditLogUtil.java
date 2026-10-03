@@ -335,6 +335,14 @@ public class AuditLogUtil {
 	}
 
 	private static String getEntityIdentifier(Object obj) {
+		//A lazy association is a hibernate proxy, whose runtime class e.g User$HibernateProxy$... is not
+		//a mapped entity, so looking up its persister fails, get the identifier from the proxy instead,
+		//this also avoids initializing it
+		if (obj instanceof HibernateProxy) {
+			Serializable id = ((HibernateProxy) obj).getHibernateLazyInitializer().getIdentifier();
+			return id != null ? id.toString() : null;
+		}
+		
 		SessionFactoryImplementor sessionFactoryImpl = (SessionFactoryImplementor) DAOUtils.getSessionFactory();
 		EntityPersister persister = sessionFactoryImpl.getMetamodel().entityPersister(obj.getClass());
 
