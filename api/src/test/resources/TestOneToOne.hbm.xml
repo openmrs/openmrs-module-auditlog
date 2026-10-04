@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+    "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+
+<!-- Test only entities, core has no entity with a one to one association -->
+<hibernate-mapping package="org.openmrs.module.auditlog.api.db">
+	<class name="OneToOneOwner" table="auditlog_test_one_to_one_owner">
+		<id name="id" type="java.lang.Integer" column="id">
+			<generator class="native" />
+		</id>
+		<one-to-one name="owned" class="OneToOneOwned" property-ref="owner" />
+	</class>
+	<class name="OneToOneOwned" table="auditlog_test_one_to_one_owned">
+		<id name="id" type="java.lang.Integer" column="id">
+			<generator class="native" />
+		</id>
+		<many-to-one name="owner" class="OneToOneOwner" column="owner_id" unique="true" />
+	</class>
+</hibernate-mapping>

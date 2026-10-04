@@ -6,5 +6,6 @@
 <hibernate-configuration>
     <session-factory>
       <mapping resource="AuditLog.hbm.xml" />
+      <mapping resource="TestOneToOne.hbm.xml" />
     </session-factory>
 </hibernate-configuration>
